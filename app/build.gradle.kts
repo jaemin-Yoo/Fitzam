@@ -30,6 +30,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+
+        isCoreLibraryDesugaringEnabled = true // Java 8 API 지원
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -56,4 +58,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    /**
+     * Java 8 API 지원
+     * LocalDate 사용
+     */
+    coreLibraryDesugaring(libs.android.desugarJdkLibs)
 }
