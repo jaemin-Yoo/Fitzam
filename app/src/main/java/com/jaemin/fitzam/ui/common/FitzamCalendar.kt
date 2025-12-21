@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,9 +22,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +51,7 @@ import java.util.Locale
 @Composable
 fun FitzamCalendar(
     modifier: Modifier = Modifier,
+    cellContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val currentDate = LocalDate.now()
     var selectedDate by remember { mutableStateOf(currentDate) }
@@ -74,6 +79,7 @@ fun FitzamCalendar(
                 selectedDate = selectedDate,
                 currentDate = currentDate,
                 onDateSelected = { selectedDate = it },
+                cellContent = { cellContent(it) }
             )
         }
     }
@@ -118,6 +124,7 @@ private fun FitzamCalendarContent(
     currentDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
+    cellContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val monthDays = remember(selectedDate) {
         getCalendarMonthDays(YearMonth.from(selectedDate))
@@ -155,6 +162,7 @@ private fun FitzamCalendarContent(
                     isSelected = dayDate == selectedDate,
                     isToday = dayDate == currentDate,
                     onClick = { onDateSelected(it) },
+                    content = { cellContent(it) }
                 )
             }
         }
@@ -168,14 +176,12 @@ private fun FitzamCalendarCell(
     isToday: Boolean,
     onClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     Column(
         modifier = modifier
             .height(80.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(
-                color = if (isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.Transparent
-            )
             .then(
                 if (isSelected) {
                     Modifier.border(
@@ -187,14 +193,41 @@ private fun FitzamCalendarCell(
                     Modifier
                 }
             )
-            .clickable(enabled = dayDate != null) { onClick(dayDate!!) },
+            .clickable(enabled = dayDate != null) { dayDate?.let(onClick) },
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = dayDate?.dayOfMonth?.toString() ?: "",
-            color = if (isToday) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+            modifier = Modifier
+                .padding(
+                    start = 2.dp,
+                    end = 2.dp,
+                    top = 2.dp,
+                )
+                .then(
+                    if (isToday) {
+                        Modifier.background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(8.dp),
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
+                .fillMaxWidth(),
+            color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
+        if (dayDate != null) {
+            CompositionLocalProvider(
+                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                    content(dayDate)
+                }
+            }
+        }
     }
 }
 
