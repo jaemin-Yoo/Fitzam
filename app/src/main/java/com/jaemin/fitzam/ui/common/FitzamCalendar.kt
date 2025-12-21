@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,6 +51,14 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
+private const val MAX_CELL_ITEM_COUNT = 3
+
+data class CalendarCellItem(
+    val date: LocalDate,
+    val text: String,
+    val color: Color,
+)
+
 @Composable
 fun FitzamCalendar(
     modifier: Modifier = Modifier,
@@ -82,6 +93,39 @@ fun FitzamCalendar(
                 cellContent = { cellContent(it) }
             )
         }
+    }
+}
+
+@Composable
+fun FitzamCalendarCellList(
+    cellDate: LocalDate,
+    itemList: List<CalendarCellItem>,
+) {
+    if (itemList.size <= MAX_CELL_ITEM_COUNT) {
+        // 아이템이 3개 이하인 경우, 리스트 형태로 표시
+        itemList.forEach { item ->
+            if (cellDate == item.date) {
+                Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .padding(vertical = 2.dp)
+                            .fillMaxHeight()
+                            .background(
+                                color = item.color,
+                                shape = RoundedCornerShape(16.dp),
+                            ),
+                    )
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text = item.text,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+    } else {
+        TODO("아이템이 3개 이상인 경우, 원 형태로 표시")
     }
 }
 
@@ -236,10 +280,29 @@ private fun FitzamCalendarCell(
 private fun FitzamCalendarPreview() {
     FitzamTheme {
         Box(
-            Modifier.background(Color.White)
+            Modifier
+                .background(Color.White)
                 .padding(16.dp)
         ) {
-            FitzamCalendar()
+            FitzamCalendar(
+                cellContent = { date ->
+                    FitzamCalendarCellList(
+                        cellDate = date,
+                        itemList = listOf(
+                            CalendarCellItem(
+                                date = LocalDate.now(),
+                                text = "가슴",
+                                color = Color.Blue,
+                            ),
+                            CalendarCellItem(
+                                date = LocalDate.now(),
+                                text = "유산소",
+                                color = Color.Green,
+                            ),
+                        )
+                    )
+                }
+            )
         }
     }
 }
