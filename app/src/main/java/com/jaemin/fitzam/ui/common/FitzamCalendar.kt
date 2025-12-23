@@ -31,10 +31,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,11 +58,12 @@ data class CalendarCellItem(
 
 @Composable
 fun FitzamCalendar(
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    cellContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
+    dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val currentDate = LocalDate.now()
-    var selectedDate by remember { mutableStateOf(currentDate) }
 
     Card(
         modifier = modifier,
@@ -77,11 +75,15 @@ fun FitzamCalendar(
                 selectedDate = selectedDate,
                 onPreviousMonthClick = {
                     // 이전 달로 이동 시 이전 달 1일 선택
-                    selectedDate = selectedDate.minusMonths(1).withDayOfMonth(1)
+                    onDateSelected(
+                        selectedDate.minusMonths(1).withDayOfMonth(1)
+                    )
                 },
                 onNextMonthClick = {
                     // 다음 달로 이동 시 다음 달 1일 선택
-                    selectedDate = selectedDate.plusMonths(1).withDayOfMonth(1)
+                    onDateSelected(
+                        selectedDate.plusMonths(1).withDayOfMonth(1)
+                    )
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -89,8 +91,8 @@ fun FitzamCalendar(
             FitzamCalendarContent(
                 selectedDate = selectedDate,
                 currentDate = currentDate,
-                onDateSelected = { selectedDate = it },
-                cellContent = { cellContent(it) }
+                onDateSelected = onDateSelected,
+                dateContent = { dateContent(it) }
             )
         }
     }
@@ -168,7 +170,7 @@ private fun FitzamCalendarContent(
     currentDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    cellContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
+    dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val monthDays = remember(selectedDate) {
         getCalendarMonthDays(YearMonth.from(selectedDate))
@@ -206,7 +208,7 @@ private fun FitzamCalendarContent(
                     isSelected = dayDate == selectedDate,
                     isToday = dayDate == currentDate,
                     onClick = { onDateSelected(it) },
-                    content = { cellContent(it) }
+                    content = { dateContent(it) }
                 )
             }
         }
@@ -285,7 +287,9 @@ private fun FitzamCalendarPreview() {
                 .padding(16.dp)
         ) {
             FitzamCalendar(
-                cellContent = { date ->
+                selectedDate = LocalDate.now(),
+                onDateSelected = {},
+                dateContent = { date ->
                     FitzamCalendarCellList(
                         cellDate = date,
                         itemList = listOf(
