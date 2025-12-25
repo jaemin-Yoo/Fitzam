@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.screen
+package com.jaemin.fitzam.ui.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

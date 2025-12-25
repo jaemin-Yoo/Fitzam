@@ -5,8 +5,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.jaemin.fitzam.screen.HomeScreen
-import com.jaemin.fitzam.screen.WorkoutPartSelectScreen
+import com.jaemin.fitzam.ui.screen.HomeScreen
+import com.jaemin.fitzam.ui.screen.WorkoutPartSelectScreen
 import kotlinx.serialization.Serializable
 
 sealed interface Screen {
