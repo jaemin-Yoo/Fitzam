@@ -30,7 +30,9 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onAddWorkout: () -> Unit,
+) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
 
     Scaffold(
@@ -42,7 +44,7 @@ fun HomeScreen() {
         floatingActionButton = {
             FitzamFloatingActionButton(
                 icon = ImageVector.vectorResource(R.drawable.ic_plus),
-                onClick = {},
+                onClick = onAddWorkout,
             )
         }
     ) { paddingValues ->
@@ -72,7 +74,7 @@ fun HomeScreen() {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${selectedDate.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.KOREAN)})",
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier.padding(8.dp),
                     )
                 }
             }
@@ -84,6 +86,8 @@ fun HomeScreen() {
 @Composable
 fun HomeScreenPreview() {
     FitzamTheme {
-        HomeScreen()
+        HomeScreen(
+            onAddWorkout = {},
+        )
     }
 }

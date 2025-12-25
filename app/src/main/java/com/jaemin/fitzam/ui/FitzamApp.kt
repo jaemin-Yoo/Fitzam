@@ -23,10 +23,14 @@ fun FitzamApp() {
         onBack = { backStack.removeLastOrNull() },
         entryProvider = entryProvider {
             entry<Screen.Home> {
-                HomeScreen()
+                HomeScreen(
+                    onAddWorkout = { backStack.add(Screen.WorkoutPartSelect) }
+                )
             }
             entry<Screen.WorkoutPartSelect> {
-                WorkoutPartSelectScreen()
+                WorkoutPartSelectScreen(
+                    onBackClick = { backStack.removeLastOrNull() }
+                )
             }
         }
     )

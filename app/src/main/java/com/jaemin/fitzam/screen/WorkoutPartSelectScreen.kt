@@ -2,7 +2,6 @@ package com.jaemin.fitzam.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,7 +14,9 @@ import com.jaemin.fitzam.ui.common.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 
 @Composable
-fun WorkoutPartSelectScreen() {
+fun WorkoutPartSelectScreen(
+    onBackClick: () -> Unit,
+) {
     Scaffold(
         topBar = {
             FitzamTopAppBar(
@@ -23,13 +24,13 @@ fun WorkoutPartSelectScreen() {
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
-                    onClick = { TODO("뒤로 가기 동작 구현") }
+                    onClick = onBackClick,
                 )
             )
         }
     ) { paddingValues ->
         Column(Modifier.padding(paddingValues)) {
-            MaterialTheme.colorScheme.onBack
+
         }
     }
 }
@@ -38,6 +39,8 @@ fun WorkoutPartSelectScreen() {
 @Composable
 fun WorkoutPartSelectScreenPreview() {
     FitzamTheme {
-        WorkoutPartSelectScreen()
+        WorkoutPartSelectScreen(
+            onBackClick = {},
+        )
     }
 }
