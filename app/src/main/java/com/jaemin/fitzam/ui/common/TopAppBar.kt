@@ -36,7 +36,7 @@ data class TopAppBarItem(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FitzamCenterAlignedTopAppBar(
+fun FitzamTopAppBar(
     title: String,
     modifier: Modifier = Modifier,
     navigation: TopAppBarItem? = null,
