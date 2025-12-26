@@ -21,7 +21,7 @@ import androidx.room.PrimaryKey
 data class WorkoutSetEntity(
     val entryId: Long,
     val setIndex: Int,
-    val weightKg: Float,
+    val weightKg: Double,
     val reps: Int,
     val createdAt: Long,
 )

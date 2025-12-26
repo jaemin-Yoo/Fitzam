@@ -8,6 +8,4 @@ data class WorkoutRecordEntity(
     @PrimaryKey
     val date: String, // YYYY-MM-DD
     val partIds: String,
-    val createdAt: Long,
-    val updatedAt: Long,
 )

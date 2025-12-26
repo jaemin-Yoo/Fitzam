@@ -11,5 +11,5 @@ interface WorkoutPartDao {
     fun getWorkoutPartEntities(): List<WorkoutPartEntity>
 
     @Query("SELECT * FROM workout_part WHERE id = :id")
-    fun getWorkoutPartEntityById(id: Long): List<WorkoutPartEntity>
+    fun getWorkoutPartEntityById(id: Long): WorkoutPartEntity
 }

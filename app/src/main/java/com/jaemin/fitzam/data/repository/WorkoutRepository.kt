@@ -7,8 +7,10 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutEntryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.model.WorkoutEntry
 import com.jaemin.fitzam.model.WorkoutRecord
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.YearMonth
@@ -27,13 +29,34 @@ class WorkoutRepository @Inject constructor(
         val startDate = yearMonth.atDay(1).toString()
         val endDate = yearMonth.atEndOfMonth().toString()
 
-        return recordDao.getWorkoutRecordEntities(startDate, endDate).map { workoutRecords ->
-            workoutRecords.map { record ->
-                val partNames = record.partIds.split(",").map {
-                    partDao.getWorkoutPartEntityById(it.toLong()).displayName
-                }
+        return recordDao.getWorkoutRecordEntities(startDate, endDate).map { records ->
+            records.map { record ->
+                val partNames = resolvePartNames(record.partIds)
                 record.toModel(partNames)
             }
+        }
+    }
+
+    fun getWorkoutEntries(date: LocalDate): Flow<List<WorkoutEntry>> {
+        return entryDao.getWorkoutEntryEntities(date.toString()).map { entities ->
+            entities.map { entry ->
+                val exercise = exerciseDao.getExerciseEntity(entry.exerciseId)
+                val part = partDao.getWorkoutPartEntityById(entry.partId)
+                val sets = setDao.getSetEntities(entry.id).map { entities ->
+                    entities.map { it.toModel() }
+                }.first() // TODO: 확인 필요
+                entry.toModel(
+                    exerciseName = exercise.name,
+                    partName = part.displayName,
+                    sets = sets,
+                )
+            }
+        }
+    }
+
+    private fun resolvePartNames(partIds: String): List<String> {
+        return partIds.split(",").map { strId ->
+            partDao.getWorkoutPartEntityById(strId.toLong()).displayName
         }
     }
 }

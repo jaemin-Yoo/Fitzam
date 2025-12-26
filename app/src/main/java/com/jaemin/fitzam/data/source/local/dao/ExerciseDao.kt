@@ -13,4 +13,12 @@ interface ExerciseDao {
         ORDER BY id
     """)
     fun getExerciseEntities(partCode: String): List<ExerciseEntity>
+
+    @Query(
+        """
+            SELECT * FROM exercise
+            WHERE id = :id
+        """
+    )
+    fun getExerciseEntity(id: Long): ExerciseEntity
 }
