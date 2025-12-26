@@ -15,14 +15,23 @@ interface WorkoutRecordDao {
         """
         SELECT *
         FROM workout_record
+        WHERE date = :date
+    """
+    )
+    fun getWorkoutRecordEntity(date: String): Flow<WorkoutRecordEntity>
+
+    @Query(
+        """
+        SELECT *
+        FROM workout_record
         WHERE date BETWEEN :startDate AND :endDate
         ORDER BY date
     """
     )
-    fun getWorkoutRecordEntity(
+    fun getWorkoutRecordEntities(
         startDate: String,
         endDate: String,
-    ): Flow<WorkoutRecordEntity>
+    ): Flow<List<WorkoutRecordEntity>>
 
     @Insert(onConflict = OnConflictStrategy.NONE)
     suspend fun insert(record: WorkoutRecordEntity)
