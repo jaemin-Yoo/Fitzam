@@ -9,4 +9,5 @@ data class WorkoutPartEntity(
     val id: Long = 0,
     val code: String,
     val displayName: String,
+    val imagePath: String,
 )

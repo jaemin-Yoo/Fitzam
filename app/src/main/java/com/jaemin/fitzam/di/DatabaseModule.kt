@@ -11,11 +11,15 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutEntryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.data.source.local.entity.WorkoutPartEntity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -33,6 +37,63 @@ object DatabaseModule {
             "fitzam.db"
         )
             .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val database = Room.databaseBuilder(
+                            context,
+                            FitzamDatabase::class.java,
+                            "fitzam.db"
+                        ).build()
+
+                        database.workoutPartDao().insertAll(
+                            listOf(
+                                WorkoutPartEntity(
+                                    code = "CHEST",
+                                    displayName = "가슴",
+                                    imagePath = "fitzam/chest"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "BACK",
+                                    displayName = "등",
+                                    imagePath = "fitzam/back"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "SHOULDER",
+                                    displayName = "어깨",
+                                    imagePath = "fitzam/shoulder"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "triceps",
+                                    displayName = "삼두",
+                                    imagePath = "fitzam/triceps"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "biceps",
+                                    displayName = "이두",
+                                    imagePath = "fitzam/biceps"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "LOWER_BODY",
+                                    displayName = "하체",
+                                    imagePath = "fitzam/lower_body"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "abs",
+                                    displayName = "복근",
+                                    imagePath = "fitzam/abs"
+                                ),
+                                WorkoutPartEntity(
+                                    code = "aerobic",
+                                    displayName = "유산소",
+                                    imagePath = "fitzam/aerobic"
+                                ),
+                            )
+                        )
+                    }
+                }
+
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     db.execSQL("PRAGMA foreign_keys=ON;")
                 }
