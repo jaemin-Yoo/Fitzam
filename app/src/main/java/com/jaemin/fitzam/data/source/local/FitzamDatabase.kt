@@ -9,6 +9,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
 import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
+import com.jaemin.fitzam.data.source.local.entity.FavoriteExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutEntryEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutPartEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
@@ -21,6 +22,7 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
         WorkoutSetEntity::class,
         WorkoutPartEntity::class,
         ExerciseEntity::class,
+        FavoriteExerciseEntity::class,
     ],
     version = 1
 )
