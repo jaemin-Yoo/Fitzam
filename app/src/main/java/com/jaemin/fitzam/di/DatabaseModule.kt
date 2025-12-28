@@ -22,6 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
+private const val WORKOUT_PART_PATH = "fitzam/workout_part"
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -52,42 +54,42 @@ object DatabaseModule {
                                 WorkoutPartEntity(
                                     code = "CHEST",
                                     displayName = "가슴",
-                                    imagePath = "fitzam/chest"
+                                    imagePath = "${WORKOUT_PART_PATH}/chest.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "BACK",
                                     displayName = "등",
-                                    imagePath = "fitzam/back"
+                                    imagePath = "${WORKOUT_PART_PATH}/back.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "SHOULDER",
                                     displayName = "어깨",
-                                    imagePath = "fitzam/shoulder"
+                                    imagePath = "${WORKOUT_PART_PATH}/shoulder.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "triceps",
                                     displayName = "삼두",
-                                    imagePath = "fitzam/triceps"
+                                    imagePath = "${WORKOUT_PART_PATH}/triceps.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "biceps",
                                     displayName = "이두",
-                                    imagePath = "fitzam/biceps"
+                                    imagePath = "${WORKOUT_PART_PATH}/biceps.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "LOWER_BODY",
                                     displayName = "하체",
-                                    imagePath = "fitzam/lower_body"
+                                    imagePath = "${WORKOUT_PART_PATH}/lower_body.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "abs",
                                     displayName = "복근",
-                                    imagePath = "fitzam/abs"
+                                    imagePath = "${WORKOUT_PART_PATH}/abs.png"
                                 ),
                                 WorkoutPartEntity(
                                     code = "aerobic",
                                     displayName = "유산소",
-                                    imagePath = "fitzam/aerobic"
+                                    imagePath = "${WORKOUT_PART_PATH}/aerobic.png"
                                 ),
                             )
                         )
