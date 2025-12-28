@@ -1,9 +1,11 @@
 package com.jaemin.fitzam.data.mapper
 
 import com.jaemin.fitzam.data.source.local.entity.WorkoutEntryEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutPartEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
 import com.jaemin.fitzam.model.WorkoutEntry
+import com.jaemin.fitzam.model.WorkoutPart
 import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutSet
 import java.time.LocalDate
@@ -40,5 +42,13 @@ fun WorkoutSetEntity.toModel(): WorkoutSet {
         index = setIndex,
         weightKg = weightKg,
         reps = reps,
+    )
+}
+
+fun WorkoutPartEntity.toModel(imageUrl: String): WorkoutPart {
+    return WorkoutPart(
+        code = code,
+        displayName = displayName,
+        imageUrl = imageUrl,
     )
 }

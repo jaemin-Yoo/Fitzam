@@ -7,7 +7,9 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutEntryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.data.source.remote.FirebaseUtil
 import com.jaemin.fitzam.model.WorkoutEntry
+import com.jaemin.fitzam.model.WorkoutPart
 import com.jaemin.fitzam.model.WorkoutRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -51,6 +53,14 @@ class WorkoutRepository @Inject constructor(
                     sets = sets,
                 )
             }
+        }
+    }
+
+    suspend fun getWorkoutParts(): List<WorkoutPart> {
+        return partDao.getWorkoutPartEntities().map { entity ->
+            val imageUrl = runCatching { FirebaseUtil.getImageUrl(entity.imagePath) }
+                .getOrElse { entity.imagePath }
+            entity.toModel(imageUrl)
         }
     }
 
