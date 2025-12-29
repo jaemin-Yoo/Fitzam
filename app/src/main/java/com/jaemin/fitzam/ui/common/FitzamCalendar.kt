@@ -178,7 +178,10 @@ private fun FitzamCalendarContent(
 
     Column(modifier = modifier) {
         // 요일
-        Row {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             dayOfWeek.forEach { day ->
                 Text(
                     text = day.getDisplayName(TextStyle.NARROW, Locale.KOREAN),
@@ -196,6 +199,7 @@ private fun FitzamCalendarContent(
 
         // 날짜
         LazyVerticalGrid(
+            modifier = Modifier.fillMaxWidth(),
             columns = GridCells.Fixed(7),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
