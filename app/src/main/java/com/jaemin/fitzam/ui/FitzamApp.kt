@@ -1,6 +1,9 @@
 package com.jaemin.fitzam.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -32,6 +35,6 @@ fun FitzamApp() {
                     onBackClick = { backStack.removeLastOrNull() }
                 )
             }
-        }
+        },
     )
 }

@@ -6,11 +6,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -40,6 +40,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.WorkoutPart
+import com.jaemin.fitzam.ui.common.DZamButton
+import com.jaemin.fitzam.ui.common.DZamOutlinedButton
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
@@ -82,21 +84,47 @@ fun WorkoutPartSelectScreen(
                     onClick = onBackClick,
                 )
             )
-        }
+        },
     ) { paddingValues ->
-        WorkoutPartGrid(
-            parts = parts,
-            selectedCodes = selectedCodes,
-            onPartClick = { part ->
-                selectedCodes = if (selectedCodes.contains(part.code)) {
-                    selectedCodes - part.code
-                } else {
-                    selectedCodes + part.code
-                }
-                onPartClick(part)
-            },
-            modifier = Modifier.padding(paddingValues),
-        )
+        Column(
+            modifier = Modifier.padding(
+                top = paddingValues.calculateTopPadding(),
+                bottom = paddingValues.calculateBottomPadding(),
+                start = 16.dp,
+                end = 16.dp,
+            )
+        ) {
+            WorkoutPartGrid(
+                parts = parts,
+                selectedCodes = selectedCodes,
+                onPartClick = { part ->
+                    selectedCodes = if (selectedCodes.contains(part.code)) {
+                        selectedCodes - part.code
+                    } else {
+                        selectedCodes + part.code
+                    }
+                    onPartClick(part)
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 24.dp)
+                ,
+            )
+            DZamOutlinedButton(
+                text = "세부 운동 추가하기",
+                onClick = {},
+                modifier = Modifier
+                    .fillMaxWidth(),
+                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
+            )
+            Spacer(Modifier.height(32.dp))
+            DZamButton(
+                text = "완료",
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+        }
     }
 }
 
@@ -110,7 +138,6 @@ private fun WorkoutPartGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
