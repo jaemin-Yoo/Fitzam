@@ -104,14 +104,13 @@ fun WorkoutPartSelectScreen(
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(vertical = 24.dp)
-                ,
+                    .padding(vertical = 24.dp),
             )
             DZamOutlinedButton(
                 text = "세부 운동 추가하기",
                 onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedIds.isNotEmpty(),
                 trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
             )
             Spacer(Modifier.height(32.dp))
@@ -119,6 +118,7 @@ fun WorkoutPartSelectScreen(
                 text = "완료",
                 onClick = onCompleteClick,
                 modifier = Modifier.fillMaxWidth(),
+                enabled = selectedIds.isNotEmpty(),
             )
             Spacer(Modifier.height(8.dp))
         }

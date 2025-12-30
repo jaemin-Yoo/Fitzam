@@ -1,23 +1,22 @@
 package com.jaemin.fitzam.ui.common
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 /**
@@ -37,13 +36,17 @@ fun DZamButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    colors: ButtonColors = ButtonDefaults.buttonColors(
+        disabledContainerColor = MaterialTheme.colorScheme.primary,
+        disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+    ),
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
 ) {
+    val appliedModifier = if (enabled) modifier else modifier.alpha(0.3f)
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = appliedModifier,
         enabled = enabled,
         shape = RoundedCornerShape(8.dp),
         colors = colors,
@@ -93,16 +96,20 @@ fun DZamOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: ButtonColors = ButtonDefaults.outlinedButtonColors(),
+    colors: ButtonColors = ButtonDefaults.outlinedButtonColors(
+        disabledContentColor = MaterialTheme.colorScheme.primary,
+    ),
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
 ) {
+    val appliedModifier = if (enabled) modifier else modifier.alpha(0.3f)
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = appliedModifier,
         enabled = enabled,
         shape = RoundedCornerShape(8.dp),
         colors = colors,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         contentPadding = PaddingValues(16.dp)
     ) {
         if (leadingIcon != null) {
