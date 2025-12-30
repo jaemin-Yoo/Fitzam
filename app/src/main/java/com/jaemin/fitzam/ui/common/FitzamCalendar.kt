@@ -5,18 +5,24 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -51,7 +57,6 @@ import java.util.Locale
 private const val MAX_CELL_ITEM_COUNT = 3
 
 data class CalendarCellItem(
-    val date: LocalDate,
     val text: String,
     val color: Color,
 )
@@ -123,7 +128,27 @@ fun FitzamCalendarCellList(
             }
         }
     } else {
-        // TODO("아이템이 3개 이상인 경우, 원 형태로 표시")
+        // "아이템이 4개 이상인 경우, 원 형태로 표시"
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(2.dp),
+        ) {
+            items(
+                count = itemList.size,
+                key = { index -> itemList[index].text }
+            ) { index ->
+                val item = itemList[index]
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(CircleShape)
+                        .background(item.color),
+                )
+            }
+        }
     }
 }
 
@@ -294,14 +319,37 @@ private fun FitzamCalendarPreview() {
                         FitzamCalendarCellList(
                             itemList = listOf(
                                 CalendarCellItem(
-                                    date = LocalDate.now(),
                                     text = "가슴",
                                     color = Color.Blue,
                                 ),
                                 CalendarCellItem(
-                                    date = LocalDate.now(),
                                     text = "유산소",
                                     color = Color.Green,
+                                ),
+                            )
+                        )
+                    } else if (date == LocalDate.now().plusDays(1)) {
+                        FitzamCalendarCellList(
+                            itemList = listOf(
+                                CalendarCellItem(
+                                    text = "가슴",
+                                    color = Color.Blue,
+                                ),
+                                CalendarCellItem(
+                                    text = "유산소",
+                                    color = Color.Green,
+                                ),
+                                CalendarCellItem(
+                                    text = "어깨",
+                                    color = Color.Black,
+                                ),
+                                CalendarCellItem(
+                                    text = "복근",
+                                    color = Color.Red,
+                                ),
+                                CalendarCellItem(
+                                    text = "삼두",
+                                    color = Color.Gray,
                                 ),
                             )
                         )

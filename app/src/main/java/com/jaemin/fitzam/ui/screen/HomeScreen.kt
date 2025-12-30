@@ -89,7 +89,6 @@ fun HomeScreen(
                             FitzamCalendarCellList(
                                 itemList = record.partNames.map { partCode ->
                                     CalendarCellItem(
-                                        date = record.date,
                                         text = partCode,
                                         color = Color.Black
                                     )
