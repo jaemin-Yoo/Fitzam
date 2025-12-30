@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +32,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.WorkoutPart
@@ -51,14 +51,14 @@ fun WorkoutPartSelectScreen(
     onCompleteClick: () -> Unit,
     viewModel: WorkoutPartSelectViewModel = hiltViewModel(),
 ) {
-    val parts by viewModel.workoutParts.collectAsState()
-    val selectedCodes by viewModel.selectedCodes.collectAsState()
+    val parts by viewModel.workoutParts.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     WorkoutPartSelectScreen(
         parts = parts,
-        selectedCodes = selectedCodes,
+        selectedIds = selectedIds,
         onBackClick = onBackClick,
         onPartClick = { part ->
-            viewModel.togglePart(part.code)
+            viewModel.togglePart(part.id)
             onPartClick(part)
         },
         onCompleteClick = {
@@ -71,7 +71,7 @@ fun WorkoutPartSelectScreen(
 @Composable
 fun WorkoutPartSelectScreen(
     parts: List<WorkoutPart>,
-    selectedCodes: Set<String>,
+    selectedIds: Set<Long>,
     onBackClick: () -> Unit,
     onPartClick: (WorkoutPart) -> Unit,
     onCompleteClick: () -> Unit,
@@ -98,7 +98,7 @@ fun WorkoutPartSelectScreen(
         ) {
             WorkoutPartGrid(
                 parts = parts,
-                selectedCodes = selectedCodes,
+                selectedIds = selectedIds,
                 onPartClick = { part ->
                     onPartClick(part)
                 },
@@ -128,7 +128,7 @@ fun WorkoutPartSelectScreen(
 @Composable
 private fun WorkoutPartGrid(
     parts: List<WorkoutPart>,
-    selectedCodes: Set<String>,
+    selectedIds: Set<Long>,
     onPartClick: (WorkoutPart) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -140,12 +140,12 @@ private fun WorkoutPartGrid(
     ) {
         items(
             count = parts.size,
-            key = { index -> parts[index].code },
+            key = { index -> parts[index].id },
         ) { index ->
             val part = parts[index]
             WorkoutPartGridItem(
                 part = part,
-                isSelected = selectedCodes.contains(part.code),
+                isSelected = selectedIds.contains(part.id),
                 onClick = { onPartClick(part) },
             )
         }
@@ -178,7 +178,7 @@ private fun WorkoutPartGridItem(
         ) {
             AsyncImage(
                 model = part.imageUrl,
-                contentDescription = part.displayName,
+                contentDescription = part.name,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(8.dp)
@@ -188,7 +188,7 @@ private fun WorkoutPartGridItem(
         }
         Spacer(modifier = Modifier.size(4.dp))
         Text(
-            text = part.displayName,
+            text = part.name,
             style = MaterialTheme.typography.labelLarge,
         )
     }
@@ -200,12 +200,12 @@ fun WorkoutPartSelectScreenPreview() {
     FitzamTheme {
         WorkoutPartSelectScreen(
             parts = listOf(
-                WorkoutPart(code = "CHEST", displayName = "가슴", imageUrl = ""),
-                WorkoutPart(code = "BACK", displayName = "등", imageUrl = ""),
-                WorkoutPart(code = "SHOULDER", displayName = "어깨", imageUrl = ""),
-                WorkoutPart(code = "TRICEPS", displayName = "삼두", imageUrl = ""),
+                WorkoutPart(id = 0, name = "가슴", imageUrl = "", colorHex = "", colorDarkHex = ""),
+                WorkoutPart(id = 1, name = "등", imageUrl = "", colorHex = "", colorDarkHex = ""),
+                WorkoutPart(id = 2, name = "어깨", imageUrl = "", colorHex = "", colorDarkHex = ""),
+                WorkoutPart(id = 3, name = "삼두", imageUrl = "", colorHex = "", colorDarkHex = ""),
             ),
-            selectedCodes = emptySet(),
+            selectedIds = emptySet(),
             onBackClick = {},
             onPartClick = {},
             onCompleteClick = {},

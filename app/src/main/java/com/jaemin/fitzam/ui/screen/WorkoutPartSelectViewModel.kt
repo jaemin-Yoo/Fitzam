@@ -22,8 +22,8 @@ class WorkoutPartSelectViewModel @Inject constructor(
     private val _workoutParts = MutableStateFlow<List<WorkoutPart>>(emptyList())
     val workoutParts: StateFlow<List<WorkoutPart>> = _workoutParts.asStateFlow()
 
-    private val _selectedCodes = MutableStateFlow<Set<String>>(emptySet())
-    val selectedCodes: StateFlow<Set<String>> = _selectedCodes.asStateFlow()
+    private val _selectedIds = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedIds: StateFlow<Set<Long>> = _selectedIds.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -31,21 +31,19 @@ class WorkoutPartSelectViewModel @Inject constructor(
         }
     }
 
-    fun togglePart(code: String) {
-        _selectedCodes.value = if (_selectedCodes.value.contains(code)) {
-            _selectedCodes.value - code
+    fun togglePart(id: Long) {
+        _selectedIds.value = if (_selectedIds.value.contains(id)) {
+            _selectedIds.value - id
         } else {
-            _selectedCodes.value + code
+            _selectedIds.value + id
         }
     }
 
     fun complete(date: LocalDate) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.insertWorkoutRecord(
-                WorkoutRecord(
-                    date = date,
-                    partCodes = _selectedCodes.value.toList(),
-                )
+                date = date,
+                partIds = _selectedIds.value.toList(),
             )
         }
     }

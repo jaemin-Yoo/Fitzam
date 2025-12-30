@@ -9,16 +9,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
+import com.jaemin.fitzam.model.WorkoutRecord
+import com.jaemin.fitzam.ui.common.CalendarCellItem
 import com.jaemin.fitzam.ui.common.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.common.FitzamCalendar
 import com.jaemin.fitzam.ui.common.FitzamCalendarCellList
@@ -28,13 +34,34 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onAddWorkout: (LocalDate) -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val workoutRecords by viewModel.workoutRecords.collectAsStateWithLifecycle()
+    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
 
+    LaunchedEffect(selectedDate) {
+        viewModel.loadRecordsForDate(selectedDate)
+    }
+
+    HomeScreen(
+        selectedDate = selectedDate,
+        onDateSelected = { selectedDate = it },
+        workoutRecords = workoutRecords,
+        onAddWorkout = onAddWorkout,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
+    workoutRecords: List<WorkoutRecord>,
+    onAddWorkout: (LocalDate) -> Unit,
+) {
     Scaffold(
         topBar = {
             FitzamBrandTopAppBar(
@@ -51,16 +78,25 @@ fun HomeScreen(
         Column(modifier = Modifier.padding(paddingValues)) {
             FitzamCalendar(
                 selectedDate = selectedDate,
-                onDateSelected = { selectedDate = it },
+                onDateSelected = onDateSelected,
                 modifier = Modifier.padding(
                     vertical = 8.dp,
                     horizontal = 16.dp,
                 ),
                 dateContent = { date ->
-                    FitzamCalendarCellList(
-                        cellDate = date,
-                        itemList = emptyList(),
-                    )
+                    workoutRecords.forEach { record ->
+                        if (date == record.date) {
+                            FitzamCalendarCellList(
+                                itemList = record.partNames.map { partCode ->
+                                    CalendarCellItem(
+                                        date = record.date,
+                                        text = partCode,
+                                        color = Color.Black
+                                    )
+                                },
+                            )
+                        }
+                    }
                 }
             )
             Card(
@@ -72,7 +108,12 @@ fun HomeScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${selectedDate.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.KOREAN)})",
+                        text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${
+                            selectedDate.dayOfWeek.getDisplayName(
+                                TextStyle.NARROW,
+                                Locale.KOREAN
+                            )
+                        })",
                         modifier = Modifier.padding(8.dp),
                     )
                 }
@@ -86,6 +127,9 @@ fun HomeScreen(
 fun HomeScreenPreview() {
     FitzamTheme {
         HomeScreen(
+            selectedDate = LocalDate.now(),
+            onDateSelected = {},
+            workoutRecords = emptyList(),
             onAddWorkout = {},
         )
     }

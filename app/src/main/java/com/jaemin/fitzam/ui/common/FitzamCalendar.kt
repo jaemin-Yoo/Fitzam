@@ -99,34 +99,31 @@ fun FitzamCalendar(
 
 @Composable
 fun FitzamCalendarCellList(
-    cellDate: LocalDate,
     itemList: List<CalendarCellItem>,
 ) {
     if (itemList.size <= MAX_CELL_ITEM_COUNT) {
         // 아이템이 3개 이하인 경우, 리스트 형태로 표시
         itemList.forEach { item ->
-            if (cellDate == item.date) {
-                Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                    Box(
-                        modifier = Modifier
-                            .width(4.dp)
-                            .padding(vertical = 2.dp)
-                            .fillMaxHeight()
-                            .background(
-                                color = item.color,
-                                shape = RoundedCornerShape(16.dp),
-                            ),
-                    )
-                    Spacer(Modifier.width(2.dp))
-                    Text(
-                        text = item.text,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .padding(vertical = 2.dp)
+                        .fillMaxHeight()
+                        .background(
+                            color = item.color,
+                            shape = RoundedCornerShape(16.dp),
+                        ),
+                )
+                Spacer(Modifier.width(2.dp))
+                Text(
+                    text = item.text,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     } else {
-        TODO("아이템이 3개 이상인 경우, 원 형태로 표시")
+        // TODO("아이템이 3개 이상인 경우, 원 형태로 표시")
     }
 }
 
@@ -293,21 +290,22 @@ private fun FitzamCalendarPreview() {
                 selectedDate = LocalDate.now(),
                 onDateSelected = {},
                 dateContent = { date ->
-                    FitzamCalendarCellList(
-                        cellDate = date,
-                        itemList = listOf(
-                            CalendarCellItem(
-                                date = LocalDate.now(),
-                                text = "가슴",
-                                color = Color.Blue,
-                            ),
-                            CalendarCellItem(
-                                date = LocalDate.now(),
-                                text = "유산소",
-                                color = Color.Green,
-                            ),
+                    if (date == LocalDate.now()) {
+                        FitzamCalendarCellList(
+                            itemList = listOf(
+                                CalendarCellItem(
+                                    date = LocalDate.now(),
+                                    text = "가슴",
+                                    color = Color.Blue,
+                                ),
+                                CalendarCellItem(
+                                    date = LocalDate.now(),
+                                    text = "유산소",
+                                    color = Color.Green,
+                                ),
+                            )
                         )
-                    )
+                    }
                 }
             )
         }

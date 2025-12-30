@@ -52,44 +52,52 @@ object DatabaseModule {
                         database.workoutPartDao().insertAll(
                             listOf(
                                 WorkoutPartEntity(
-                                    code = "CHEST",
-                                    displayName = "가슴",
-                                    imagePath = "${WORKOUT_PART_PATH}/chest.png"
+                                    name = "가슴",
+                                    imagePath = "${WORKOUT_PART_PATH}/chest.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "BACK",
-                                    displayName = "등",
-                                    imagePath = "${WORKOUT_PART_PATH}/back.png"
+                                    name = "등",
+                                    imagePath = "${WORKOUT_PART_PATH}/back.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "SHOULDER",
-                                    displayName = "어깨",
-                                    imagePath = "${WORKOUT_PART_PATH}/shoulder.png"
+                                    name = "어깨",
+                                    imagePath = "${WORKOUT_PART_PATH}/shoulder.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "triceps",
-                                    displayName = "삼두",
-                                    imagePath = "${WORKOUT_PART_PATH}/triceps.png"
+                                    name = "삼두",
+                                    imagePath = "${WORKOUT_PART_PATH}/triceps.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "biceps",
-                                    displayName = "이두",
-                                    imagePath = "${WORKOUT_PART_PATH}/biceps.png"
+                                    name = "이두",
+                                    imagePath = "${WORKOUT_PART_PATH}/biceps.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "LOWER_BODY",
-                                    displayName = "하체",
-                                    imagePath = "${WORKOUT_PART_PATH}/lower_body.png"
+                                    name = "하체",
+                                    imagePath = "${WORKOUT_PART_PATH}/lower_body.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "abs",
-                                    displayName = "복근",
-                                    imagePath = "${WORKOUT_PART_PATH}/abs.png"
+                                    name = "복근",
+                                    imagePath = "${WORKOUT_PART_PATH}/abs.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                                 WorkoutPartEntity(
-                                    code = "aerobic",
-                                    displayName = "유산소",
-                                    imagePath = "${WORKOUT_PART_PATH}/aerobic.png"
+                                    name = "유산소",
+                                    imagePath = "${WORKOUT_PART_PATH}/aerobic.png",
+                                    colorHex = "0xFFD32F2F",
+                                    colorDarkHex = "0xFFD32F2F",
                                 ),
                             )
                         )

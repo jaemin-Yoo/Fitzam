@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 data class WorkoutPartEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val code: String,
-    val displayName: String,
+    val name: String,
     val imagePath: String,
+    val colorHex: String,
+    val colorDarkHex: String,
 )

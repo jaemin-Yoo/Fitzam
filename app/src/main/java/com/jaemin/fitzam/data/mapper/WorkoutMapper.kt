@@ -10,17 +10,17 @@ import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutSet
 import java.time.LocalDate
 
-fun WorkoutRecordEntity.toModel(partNames: List<String>): WorkoutRecord {
+fun WorkoutRecordEntity.toModel(partCodes: List<String>): WorkoutRecord {
     return WorkoutRecord(
         date = LocalDate.parse(date),
-        partNames = partNames,
+        partNames = partCodes,
     )
 }
 
-fun WorkoutRecord.toEntity(partCodes: String): WorkoutRecordEntity {
+fun WorkoutRecord.toEntity(partIds: String): WorkoutRecordEntity {
     return WorkoutRecordEntity(
         date = date.toString(),
-        partCodes = partCodes,
+        partIds = partIds,
     )
 }
 
@@ -47,8 +47,10 @@ fun WorkoutSetEntity.toModel(): WorkoutSet {
 
 fun WorkoutPartEntity.toModel(imageUrl: String): WorkoutPart {
     return WorkoutPart(
-        code = code,
-        displayName = displayName,
+        id = id,
+        name = name,
         imageUrl = imageUrl,
+        colorHex = colorHex,
+        colorDarkHex = colorDarkHex,
     )
 }

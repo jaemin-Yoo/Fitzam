@@ -8,6 +8,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutEntryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
 import com.jaemin.fitzam.data.source.remote.FirebaseUtil
 import com.jaemin.fitzam.model.WorkoutEntry
 import com.jaemin.fitzam.model.WorkoutPart
@@ -34,7 +35,7 @@ class WorkoutRepository @Inject constructor(
 
         return recordDao.getWorkoutRecordEntities(startDate, endDate).map { records ->
             records.map { record ->
-                val partNames = resolvePartNames(record.partCodes)
+                val partNames = resolvePartNames(record.partIds)
                 record.toModel(partNames)
             }
         }
@@ -50,7 +51,7 @@ class WorkoutRepository @Inject constructor(
                 }.first() // TODO: 확인 필요
                 entry.toModel(
                     exerciseName = exercise.name,
-                    partName = part.displayName,
+                    partName = part.name,
                     sets = sets,
                 )
             }
@@ -65,14 +66,17 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
-    suspend fun insertWorkoutRecord(record: WorkoutRecord) {
-        val partCodes = record.partCodes.joinToString(",")
-        recordDao.insert(record.toEntity(partCodes))
+    suspend fun insertWorkoutRecord(date: LocalDate, partIds: List<Long>) {
+        val record = WorkoutRecordEntity(
+            date = date.toString(),
+            partIds = partIds.joinToString(","),
+        )
+        recordDao.insert(record)
     }
 
-    private fun resolvePartNames(partCodes: String): List<String> {
-        return partCodes.split(",").map { strId ->
-            partDao.getWorkoutPartEntityById(strId.toLong()).displayName
+    private fun resolvePartNames(partIds: String): List<String> {
+        return partIds.split(",").map { strId ->
+            partDao.getWorkoutPartEntityById(strId.toLong()).name
         }
     }
 }
