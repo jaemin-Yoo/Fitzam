@@ -22,10 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -45,35 +41,41 @@ import com.jaemin.fitzam.ui.common.DZamOutlinedButton
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
+import java.time.LocalDate
 
 @Composable
 fun WorkoutPartSelectScreen(
+    selectedDate: LocalDate,
     onBackClick: () -> Unit,
+    onPartClick: (WorkoutPart) -> Unit,
+    onCompleteClick: () -> Unit,
     viewModel: WorkoutPartSelectViewModel = hiltViewModel(),
-    onPartClick: (WorkoutPart) -> Unit = {},
 ) {
     val parts by viewModel.workoutParts.collectAsState()
+    val selectedCodes by viewModel.selectedCodes.collectAsState()
     WorkoutPartSelectScreen(
         parts = parts,
+        selectedCodes = selectedCodes,
         onBackClick = onBackClick,
-        onPartClick = onPartClick,
+        onPartClick = { part ->
+            viewModel.togglePart(part.code)
+            onPartClick(part)
+        },
+        onCompleteClick = {
+            viewModel.complete(selectedDate)
+            onCompleteClick()
+        },
     )
 }
 
 @Composable
 fun WorkoutPartSelectScreen(
     parts: List<WorkoutPart>,
+    selectedCodes: Set<String>,
     onBackClick: () -> Unit,
-    onPartClick: (WorkoutPart) -> Unit = {},
+    onPartClick: (WorkoutPart) -> Unit,
+    onCompleteClick: () -> Unit,
 ) {
-    val selectedCodesSaver = listSaver<Set<String>, String>(
-        save = { it.toList() },
-        restore = { it.toSet() },
-    )
-    var selectedCodes by rememberSaveable(stateSaver = selectedCodesSaver) {
-        mutableStateOf(emptySet())
-    }
-
     Scaffold(
         topBar = {
             FitzamTopAppBar(
@@ -98,11 +100,6 @@ fun WorkoutPartSelectScreen(
                 parts = parts,
                 selectedCodes = selectedCodes,
                 onPartClick = { part ->
-                    selectedCodes = if (selectedCodes.contains(part.code)) {
-                        selectedCodes - part.code
-                    } else {
-                        selectedCodes + part.code
-                    }
                     onPartClick(part)
                 },
                 modifier = Modifier
@@ -120,7 +117,7 @@ fun WorkoutPartSelectScreen(
             Spacer(Modifier.height(32.dp))
             DZamButton(
                 text = "완료",
-                onClick = {},
+                onClick = onCompleteClick,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(8.dp))
@@ -208,7 +205,10 @@ fun WorkoutPartSelectScreenPreview() {
                 WorkoutPart(code = "SHOULDER", displayName = "어깨", imageUrl = ""),
                 WorkoutPart(code = "TRICEPS", displayName = "삼두", imageUrl = ""),
             ),
+            selectedCodes = emptySet(),
             onBackClick = {},
+            onPartClick = {},
+            onCompleteClick = {},
         )
     }
 }

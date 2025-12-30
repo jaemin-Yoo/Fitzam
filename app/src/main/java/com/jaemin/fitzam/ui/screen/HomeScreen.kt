@@ -31,7 +31,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onAddWorkout: () -> Unit,
+    onAddWorkout: (LocalDate) -> Unit,
 ) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
 
@@ -44,7 +44,7 @@ fun HomeScreen(
         floatingActionButton = {
             FitzamFloatingActionButton(
                 icon = ImageVector.vectorResource(R.drawable.ic_plus),
-                onClick = onAddWorkout,
+                onClick = { onAddWorkout(selectedDate) },
             )
         }
     ) { paddingValues ->

@@ -4,5 +4,5 @@ import java.time.LocalDate
 
 data class WorkoutRecord(
     val date: LocalDate,
-    val partNames: List<String>,
+    val partCodes: List<String>,
 )

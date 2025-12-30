@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 data class WorkoutRecordEntity(
     @PrimaryKey
     val date: String, // YYYY-MM-DD
-    val partIds: String,
+    val partCodes: String,
 )

@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.data.repository
 
+import com.jaemin.fitzam.data.mapper.toEntity
 import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
@@ -33,7 +34,7 @@ class WorkoutRepository @Inject constructor(
 
         return recordDao.getWorkoutRecordEntities(startDate, endDate).map { records ->
             records.map { record ->
-                val partNames = resolvePartNames(record.partIds)
+                val partNames = resolvePartNames(record.partCodes)
                 record.toModel(partNames)
             }
         }
@@ -64,8 +65,13 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
-    private fun resolvePartNames(partIds: String): List<String> {
-        return partIds.split(",").map { strId ->
+    suspend fun insertWorkoutRecord(record: WorkoutRecord) {
+        val partCodes = record.partCodes.joinToString(",")
+        recordDao.insert(record.toEntity(partCodes))
+    }
+
+    private fun resolvePartNames(partCodes: String): List<String> {
+        return partCodes.split(",").map { strId ->
             partDao.getWorkoutPartEntityById(strId.toLong()).displayName
         }
     }

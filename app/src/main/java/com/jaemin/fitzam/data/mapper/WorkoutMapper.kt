@@ -17,10 +17,10 @@ fun WorkoutRecordEntity.toModel(partNames: List<String>): WorkoutRecord {
     )
 }
 
-fun WorkoutRecord.toEntity(partIds: String): WorkoutRecordEntity {
+fun WorkoutRecord.toEntity(partCodes: String): WorkoutRecordEntity {
     return WorkoutRecordEntity(
         date = date.toString(),
-        partIds = partIds,
+        partCodes = partCodes,
     )
 }
 
