@@ -87,13 +87,14 @@ class WorkoutRepository @Inject constructor(
         return workoutCategoryDao.getExerciseCategoryIds(date.toString())
     }
 
-    suspend fun insertWorkout(date: LocalDate, categoryIds: List<Long>) {
+    suspend fun upsertWorkout(date: LocalDate, categoryIds: List<Long>) {
         val workout = WorkoutEntity(
             date = date.toString(),
         )
         workoutDao.insert(workout)
 
-        // 매핑 데이터 추가
+        // 매핑 데이터 삭제 후 추가
+        workoutCategoryDao.deleteByDate(date.toString())
         categoryIds.forEach { id ->
             val workoutCategory = WorkoutCategoryEntity(
                 workoutDate = date.toString(),

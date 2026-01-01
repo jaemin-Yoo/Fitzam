@@ -48,7 +48,7 @@ class ExerciseCategorySelectViewModel @Inject constructor(
 
     fun complete(date: LocalDate) {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.insertWorkout(
+            workoutRepository.upsertWorkout(
                 date = date,
                 categoryIds = _selectedIds.value.toList(),
             )

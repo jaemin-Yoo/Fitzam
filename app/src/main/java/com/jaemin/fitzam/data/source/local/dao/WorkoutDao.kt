@@ -23,7 +23,7 @@ interface WorkoutDao {
         endDate: String,
     ): Flow<List<WorkoutEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.NONE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(workout: WorkoutEntity)
 
     @Query("DELETE FROM workout WHERE date = :date")

@@ -14,4 +14,7 @@ interface WorkoutCategoryDao {
 
     @Insert(onConflict = OnConflictStrategy.NONE)
     suspend fun insert(workoutCategory: WorkoutCategoryEntity)
+
+    @Query("DELETE FROM workout_category WHERE workoutDate = :date")
+    suspend fun deleteByDate(date: String)
 }
