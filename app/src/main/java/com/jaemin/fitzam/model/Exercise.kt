@@ -1,9 +1,8 @@
 package com.jaemin.fitzam.model
 
-data class WorkoutPart(
+data class Exercise(
     val id: Long,
     val name: String,
+    val category: ExerciseCategory,
     val imageUrl: String,
-    val colorHex: String,
-    val colorDarkHex: String,
 )

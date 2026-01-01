@@ -7,11 +7,13 @@ import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 @Dao
 interface ExerciseDao {
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM exercise
-        WHERE partCode = :partCode
+        WHERE categoryId = :partCode
         ORDER BY id
-    """)
+    """
+    )
     fun getExerciseEntities(partCode: String): List<ExerciseEntity>
 
     @Query(

@@ -12,11 +12,11 @@ interface WorkoutSetDao {
     @Query(
         """
         SELECT * FROM workout_set
-        WHERE entryId = :entryId
+        WHERE workoutExerciseId = :workoutExerciseId
         ORDER BY setIndex
     """
     )
-    fun getSetEntities(entryId: Long): Flow<List<WorkoutSetEntity>>
+    fun getSetEntities(workoutExerciseId: Long): Flow<List<WorkoutSetEntity>>
 
     @Upsert
     suspend fun insertOrUpdateAll(sets: List<WorkoutSetEntity>)
@@ -24,12 +24,12 @@ interface WorkoutSetDao {
     @Query(
         """
             DELETE FROM workout_set
-            WHERE entryId = :entryId
+            WHERE workoutExerciseId = :workoutExerciseId
             AND setIndex IN (:setIndexes)
     """
     )
     suspend fun deleteSets(
-        entryId: Long,
+        workoutExerciseId: Long,
         setIndexes: List<Int>,
     )
 }

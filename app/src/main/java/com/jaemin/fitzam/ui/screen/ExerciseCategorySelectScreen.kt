@@ -35,7 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.jaemin.fitzam.R
-import com.jaemin.fitzam.model.WorkoutPart
+import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.common.DZamButton
 import com.jaemin.fitzam.ui.common.DZamOutlinedButton
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
@@ -44,22 +44,22 @@ import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
 
 @Composable
-fun WorkoutPartSelectScreen(
+fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
     onBackClick: () -> Unit,
-    onPartClick: (WorkoutPart) -> Unit,
+    onCategoryClick: (ExerciseCategory) -> Unit,
     onCompleteClick: () -> Unit,
-    viewModel: WorkoutPartSelectViewModel = hiltViewModel(),
+    viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
-    val parts by viewModel.workoutParts.collectAsStateWithLifecycle()
+    val categories by viewModel.exerciseCategories.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
-    WorkoutPartSelectScreen(
-        parts = parts,
+    ExerciseCategorySelectScreen(
+        categories = categories,
         selectedIds = selectedIds,
         onBackClick = onBackClick,
-        onPartClick = { part ->
-            viewModel.togglePart(part.id)
-            onPartClick(part)
+        onCategoryClick = { category ->
+            viewModel.togglePart(category.id)
+            onCategoryClick(category)
         },
         onCompleteClick = {
             viewModel.complete(selectedDate)
@@ -69,11 +69,11 @@ fun WorkoutPartSelectScreen(
 }
 
 @Composable
-fun WorkoutPartSelectScreen(
-    parts: List<WorkoutPart>,
+fun ExerciseCategorySelectScreen(
+    categories: List<ExerciseCategory>,
     selectedIds: Set<Long>,
     onBackClick: () -> Unit,
-    onPartClick: (WorkoutPart) -> Unit,
+    onCategoryClick: (ExerciseCategory) -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     Scaffold(
@@ -96,11 +96,11 @@ fun WorkoutPartSelectScreen(
                 end = 16.dp,
             )
         ) {
-            WorkoutPartGrid(
-                parts = parts,
+            ExerciseCategoryGrid(
+                categories = categories,
                 selectedIds = selectedIds,
-                onPartClick = { part ->
-                    onPartClick(part)
+                onCategoryClick = { category ->
+                    onCategoryClick(category)
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -126,10 +126,10 @@ fun WorkoutPartSelectScreen(
 }
 
 @Composable
-private fun WorkoutPartGrid(
-    parts: List<WorkoutPart>,
+private fun ExerciseCategoryGrid(
+    categories: List<ExerciseCategory>,
     selectedIds: Set<Long>,
-    onPartClick: (WorkoutPart) -> Unit,
+    onCategoryClick: (ExerciseCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -139,22 +139,22 @@ private fun WorkoutPartGrid(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(
-            count = parts.size,
-            key = { index -> parts[index].id },
+            count = categories.size,
+            key = { index -> categories[index].id },
         ) { index ->
-            val part = parts[index]
-            WorkoutPartGridItem(
-                part = part,
-                isSelected = selectedIds.contains(part.id),
-                onClick = { onPartClick(part) },
+            val category = categories[index]
+            ExerciseCategoryGridItem(
+                category = category,
+                isSelected = selectedIds.contains(category.id),
+                onClick = { onCategoryClick(category) },
             )
         }
     }
 }
 
 @Composable
-private fun WorkoutPartGridItem(
-    part: WorkoutPart,
+private fun ExerciseCategoryGridItem(
+    category: ExerciseCategory,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -177,8 +177,8 @@ private fun WorkoutPartGridItem(
                 .clickable(onClick = onClick),
         ) {
             AsyncImage(
-                model = part.imageUrl,
-                contentDescription = part.name,
+                model = category.imageUrl,
+                contentDescription = category.name,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(8.dp)
@@ -188,7 +188,7 @@ private fun WorkoutPartGridItem(
         }
         Spacer(modifier = Modifier.size(4.dp))
         Text(
-            text = part.name,
+            text = category.name,
             style = MaterialTheme.typography.labelLarge,
         )
     }
@@ -196,18 +196,42 @@ private fun WorkoutPartGridItem(
 
 @Preview
 @Composable
-fun WorkoutPartSelectScreenPreview() {
+fun ExerciseCategorySelectScreenPreview() {
     FitzamTheme {
-        WorkoutPartSelectScreen(
-            parts = listOf(
-                WorkoutPart(id = 0, name = "가슴", imageUrl = "", colorHex = "", colorDarkHex = ""),
-                WorkoutPart(id = 1, name = "등", imageUrl = "", colorHex = "", colorDarkHex = ""),
-                WorkoutPart(id = 2, name = "어깨", imageUrl = "", colorHex = "", colorDarkHex = ""),
-                WorkoutPart(id = 3, name = "삼두", imageUrl = "", colorHex = "", colorDarkHex = ""),
+        ExerciseCategorySelectScreen(
+            categories = listOf(
+                ExerciseCategory(
+                    id = 0,
+                    name = "가슴",
+                    imageUrl = "",
+                    colorHex = "",
+                    colorDarkHex = ""
+                ),
+                ExerciseCategory(
+                    id = 1,
+                    name = "등",
+                    imageUrl = "",
+                    colorHex = "",
+                    colorDarkHex = ""
+                ),
+                ExerciseCategory(
+                    id = 2,
+                    name = "어깨",
+                    imageUrl = "",
+                    colorHex = "",
+                    colorDarkHex = ""
+                ),
+                ExerciseCategory(
+                    id = 3,
+                    name = "삼두",
+                    imageUrl = "",
+                    colorHex = "",
+                    colorDarkHex = ""
+                ),
             ),
             selectedIds = emptySet(),
             onBackClick = {},
-            onPartClick = {},
+            onCategoryClick = {},
             onCompleteClick = {},
         )
     }

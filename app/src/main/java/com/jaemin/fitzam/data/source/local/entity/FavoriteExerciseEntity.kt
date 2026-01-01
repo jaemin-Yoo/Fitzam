@@ -18,5 +18,4 @@ import androidx.room.PrimaryKey
 data class FavoriteExerciseEntity(
     @PrimaryKey
     val exerciseId: Long,
-    val createdAt: Long,
 )

@@ -9,13 +9,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.jaemin.fitzam.ui.screen.HomeScreen
-import com.jaemin.fitzam.ui.screen.WorkoutPartSelectScreen
+import com.jaemin.fitzam.ui.screen.ExerciseCategorySelectScreen
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
 sealed interface Screen {
     @Serializable data object Home : NavKey
-    @Serializable data class WorkoutPartSelect(val selectedDate: String) : NavKey
+    @Serializable data class ExerciseCategorySelect(val selectedDate: String) : NavKey
 }
 
 @Composable
@@ -29,15 +29,15 @@ fun FitzamApp() {
             entry<Screen.Home> {
                 HomeScreen(
                     onAddWorkout = { selectedDate ->
-                        backStack.add(Screen.WorkoutPartSelect(selectedDate = selectedDate.toString()))
+                        backStack.add(Screen.ExerciseCategorySelect(selectedDate = selectedDate.toString()))
                     }
                 )
             }
-            entry<Screen.WorkoutPartSelect> { screen ->
-                WorkoutPartSelectScreen(
+            entry<Screen.ExerciseCategorySelect> { screen ->
+                ExerciseCategorySelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     onBackClick = { backStack.removeLastOrNull() },
-                    onPartClick = {},
+                    onCategoryClick = {},
                     onCompleteClick = { backStack.removeLastOrNull() },
                 )
             }

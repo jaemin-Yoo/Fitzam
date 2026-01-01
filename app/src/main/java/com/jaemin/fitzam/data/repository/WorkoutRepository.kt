@@ -1,18 +1,17 @@
 package com.jaemin.fitzam.data.repository
 
-import com.jaemin.fitzam.data.mapper.toEntity
 import com.jaemin.fitzam.data.mapper.toModel
+import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutEntryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
-import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
 import com.jaemin.fitzam.data.source.remote.FirebaseUtil
-import com.jaemin.fitzam.model.WorkoutEntry
-import com.jaemin.fitzam.model.WorkoutPart
-import com.jaemin.fitzam.model.WorkoutRecord
+import com.jaemin.fitzam.model.Workout
+import com.jaemin.fitzam.model.WorkoutExercise
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -21,62 +20,73 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 class WorkoutRepository @Inject constructor(
-    private val recordDao: WorkoutRecordDao,
-    private val entryDao: WorkoutEntryDao,
-    private val setDao: WorkoutSetDao,
-    private val partDao: WorkoutPartDao,
+    private val workoutDao: WorkoutDao,
+    private val workoutCategoryDao: WorkoutCategoryDao,
+    private val workoutExerciseDao: WorkoutExerciseDao,
+    private val exerciseCategoryDao: ExerciseCategoryDao,
     private val exerciseDao: ExerciseDao,
-    private val favoriteExerciseDao: FavoriteExerciseDao,
+    private val setDao: WorkoutSetDao,
 ) {
 
-    fun getWorkoutRecordsForMonth(yearMonth: YearMonth): Flow<List<WorkoutRecord>> {
+    fun getWorkoutsForMonth(yearMonth: YearMonth): Flow<List<Workout>> {
         val startDate = yearMonth.atDay(1).toString()
         val endDate = yearMonth.atEndOfMonth().toString()
 
-        return recordDao.getWorkoutRecordEntities(startDate, endDate).map { records ->
-            records.map { record ->
-                val partNames = resolvePartNames(record.partIds)
-                record.toModel(partNames)
+        return workoutDao.getWorkoutEntities(startDate, endDate).map { entities ->
+            entities.map { workout ->
+                val exerciseCategoryIds = workoutCategoryDao.getExerciseCategoryIds(workout.date)
+                val exerciseCategories = exerciseCategoryIds.map { id ->
+                    exerciseCategoryDao.getExerciseCategoryEntityById(id)
+                }
+                workout.toModel(
+                    exerciseCategories = exerciseCategories.map { category ->
+                        category.toModel(FirebaseUtil.getImageUrl(category.imagePath))
+                    },
+                )
             }
         }
     }
 
-    fun getWorkoutEntries(date: LocalDate): Flow<List<WorkoutEntry>> {
-        return entryDao.getWorkoutEntryEntities(date.toString()).map { entities ->
-            entities.map { entry ->
-                val exercise = exerciseDao.getExerciseEntity(entry.exerciseId)
-                val part = partDao.getWorkoutPartEntityById(entry.partId)
-                val sets = setDao.getSetEntities(entry.id).map { entities ->
-                    entities.map { it.toModel() }
+    fun getWorkoutExercises(date: LocalDate): Flow<List<WorkoutExercise>> {
+        return workoutExerciseDao.getWorkoutExerciseEntities(date.toString()).map { entities ->
+            entities.map { workoutExercise ->
+                val exerciseEntity = exerciseDao.getExerciseEntity(workoutExercise.exerciseId)
+                val categoryEntity = exerciseCategoryDao.getExerciseCategoryEntityById(
+                    exerciseEntity.categoryId,
+                )
+                val sets = setDao.getSetEntities(workoutExercise.id).map { entities ->
+                    entities.map { entity -> entity.toModel() }
                 }.first() // TODO: 확인 필요
-                entry.toModel(
-                    exerciseName = exercise.name,
-                    partName = part.name,
+
+                val category = categoryEntity.toModel(
+                    FirebaseUtil.getImageUrl(categoryEntity.imagePath),
+                )
+                val exercise = exerciseEntity.toModel(
+                    category = category,
+                    imageUrl = FirebaseUtil.getImageUrl(exerciseEntity.imagePath),
+                )
+
+                workoutExercise.toModel(
+                    exercise = exercise,
                     sets = sets,
                 )
             }
         }
     }
 
-    suspend fun getWorkoutParts(): List<WorkoutPart> {
-        return partDao.getWorkoutPartEntities().map { entity ->
-            val imageUrl = runCatching { FirebaseUtil.getImageUrl(entity.imagePath) }
-                .getOrElse { entity.imagePath }
-            entity.toModel(imageUrl)
-        }
-    }
-
-    suspend fun insertWorkoutRecord(date: LocalDate, partIds: List<Long>) {
-        val record = WorkoutRecordEntity(
+    suspend fun insertWorkout(date: LocalDate, categoryIds: List<Long>) {
+        val workout = WorkoutEntity(
             date = date.toString(),
-            partIds = partIds.joinToString(","),
         )
-        recordDao.insert(record)
-    }
+        workoutDao.insert(workout)
 
-    private fun resolvePartNames(partIds: String): List<String> {
-        return partIds.split(",").map { strId ->
-            partDao.getWorkoutPartEntityById(strId.toLong()).name
+        // 매핑 데이터 추가
+        categoryIds.forEach { id ->
+            val workoutCategory = WorkoutCategoryEntity(
+                workoutDate = date.toString(),
+                exerciseCategoryId = id,
+            )
+            workoutCategoryDao.insert(workoutCategory)
         }
     }
 }

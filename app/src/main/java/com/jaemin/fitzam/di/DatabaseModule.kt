@@ -7,11 +7,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutEntryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutPartDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
+import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
-import com.jaemin.fitzam.data.source.local.entity.WorkoutPartEntity
+import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
-private const val WORKOUT_PART_PATH = "fitzam/workout_part"
+private const val EXERCISE_CATEGORY_PATH = "fitzam/workout_part"
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -49,53 +50,53 @@ object DatabaseModule {
                             "fitzam.db"
                         ).build()
 
-                        database.workoutPartDao().insertAll(
+                        database.exerciseCategoryDao().insertAll(
                             listOf(
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "가슴",
-                                    imagePath = "${WORKOUT_PART_PATH}/chest.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/chest.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "등",
-                                    imagePath = "${WORKOUT_PART_PATH}/back.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/back.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "어깨",
-                                    imagePath = "${WORKOUT_PART_PATH}/shoulder.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/shoulder.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "삼두",
-                                    imagePath = "${WORKOUT_PART_PATH}/triceps.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/triceps.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "이두",
-                                    imagePath = "${WORKOUT_PART_PATH}/biceps.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/biceps.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "하체",
-                                    imagePath = "${WORKOUT_PART_PATH}/lower_body.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/lower_body.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "복근",
-                                    imagePath = "${WORKOUT_PART_PATH}/abs.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/abs.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
-                                WorkoutPartEntity(
+                                ExerciseCategoryEntity(
                                     name = "유산소",
-                                    imagePath = "${WORKOUT_PART_PATH}/aerobic.png",
+                                    imagePath = "${EXERCISE_CATEGORY_PATH}/aerobic.png",
                                     colorHex = "0xFFD32F2F",
                                     colorDarkHex = "0xFFD32F2F",
                                 ),
@@ -111,20 +112,24 @@ object DatabaseModule {
             .build()
 
     @Provides
-    fun provideWorkoutRecordDao(db: FitzamDatabase): WorkoutRecordDao =
-        db.workoutRecordDao()
+    fun provideWorkoutDao(db: FitzamDatabase): WorkoutDao =
+        db.workoutDao()
 
     @Provides
-    fun provideWorkoutEntryDao(db: FitzamDatabase): WorkoutEntryDao =
-        db.workoutEntryDao()
+    fun provideWorkoutCategoryDao(db: FitzamDatabase): WorkoutCategoryDao =
+        db.workoutCategoryDao()
+
+    @Provides
+    fun provideWorkoutExerciseDao(db: FitzamDatabase): WorkoutExerciseDao =
+        db.workoutExerciseDao()
 
     @Provides
     fun provideWorkoutSetDao(db: FitzamDatabase): WorkoutSetDao =
         db.workoutSetDao()
 
     @Provides
-    fun provideWorkoutPartDao(db: FitzamDatabase): WorkoutPartDao =
-        db.workoutPartDao()
+    fun provideExerciseCategoryDao(db: FitzamDatabase): ExerciseCategoryDao =
+        db.exerciseCategoryDao()
 
     @Provides
     fun provideExerciseDao(db: FitzamDatabase): ExerciseDao =

@@ -1,8 +1,7 @@
 package com.jaemin.fitzam.model
 
-data class WorkoutEntry(
+data class WorkoutExercise(
     val id: Long,
-    val exerciseName: String,
-    val partName: String,
+    val exercise: Exercise,
     val sets: List<WorkoutSet>,
 )

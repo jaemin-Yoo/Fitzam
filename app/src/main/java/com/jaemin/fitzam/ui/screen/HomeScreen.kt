@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
-import com.jaemin.fitzam.model.WorkoutRecord
+import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.ui.common.CalendarCellItem
 import com.jaemin.fitzam.ui.common.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.common.FitzamCalendar
@@ -39,11 +39,11 @@ fun HomeScreen(
     onAddWorkout: (LocalDate) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val workoutRecords by viewModel.workoutRecords.collectAsStateWithLifecycle()
+    val workoutRecords by viewModel.workouts.collectAsStateWithLifecycle()
     var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
 
     LaunchedEffect(selectedDate) {
-        viewModel.loadRecordsForDate(selectedDate)
+        viewModel.loadWorkoutsForDate(selectedDate)
     }
 
     HomeScreen(
@@ -59,7 +59,7 @@ fun HomeScreen(
 fun HomeScreen(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    workoutRecords: List<WorkoutRecord>,
+    workoutRecords: List<Workout>,
     onAddWorkout: (LocalDate) -> Unit,
 ) {
     Scaffold(
@@ -87,9 +87,9 @@ fun HomeScreen(
                     workoutRecords.forEach { record ->
                         if (date == record.date) {
                             FitzamCalendarCellList(
-                                itemList = record.partNames.map { partCode ->
+                                itemList = record.exerciseCategories.map { part ->
                                     CalendarCellItem(
-                                        text = partCode,
+                                        text = part.name,
                                         color = Color.Black
                                     )
                                 },

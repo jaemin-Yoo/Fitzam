@@ -8,6 +8,6 @@ data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val partCode: String,
-    val createdAt: Long,
+    val categoryId: Long,
+    val imagePath: String,
 )

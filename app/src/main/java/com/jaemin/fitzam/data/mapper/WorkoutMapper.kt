@@ -1,39 +1,40 @@
 package com.jaemin.fitzam.data.mapper
 
-import com.jaemin.fitzam.data.source.local.entity.WorkoutEntryEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutPartEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
+import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
+import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
-import com.jaemin.fitzam.model.WorkoutEntry
-import com.jaemin.fitzam.model.WorkoutPart
-import com.jaemin.fitzam.model.WorkoutRecord
+import com.jaemin.fitzam.model.Exercise
+import com.jaemin.fitzam.model.ExerciseCategory
+import com.jaemin.fitzam.model.Workout
+import com.jaemin.fitzam.model.WorkoutExercise
 import com.jaemin.fitzam.model.WorkoutSet
 import java.time.LocalDate
 
-fun WorkoutRecordEntity.toModel(partCodes: List<String>): WorkoutRecord {
-    return WorkoutRecord(
+fun WorkoutEntity.toModel(exerciseCategories: List<ExerciseCategory>): Workout {
+    return Workout(
         date = LocalDate.parse(date),
-        partNames = partCodes,
+        exerciseCategories = exerciseCategories,
     )
 }
 
-fun WorkoutRecord.toEntity(partIds: String): WorkoutRecordEntity {
-    return WorkoutRecordEntity(
-        date = date.toString(),
-        partIds = partIds,
-    )
-}
-
-fun WorkoutEntryEntity.toModel(
-    exerciseName: String,
-    partName: String,
-    sets: List<WorkoutSet>,
-): WorkoutEntry {
-    return WorkoutEntry(
+fun ExerciseCategoryEntity.toModel(imageUrl: String): ExerciseCategory {
+    return ExerciseCategory(
         id = id,
-        exerciseName = exerciseName,
-        partName = partName,
-        sets = sets,
+        name = name,
+        imageUrl = imageUrl,
+        colorHex = colorHex,
+        colorDarkHex = colorDarkHex,
+    )
+}
+
+fun ExerciseEntity.toModel(category: ExerciseCategory, imageUrl: String): Exercise {
+    return Exercise(
+        id = id,
+        name = name,
+        category = category,
+        imageUrl = imageUrl,
     )
 }
 
@@ -45,12 +46,13 @@ fun WorkoutSetEntity.toModel(): WorkoutSet {
     )
 }
 
-fun WorkoutPartEntity.toModel(imageUrl: String): WorkoutPart {
-    return WorkoutPart(
+fun WorkoutExerciseEntity.toModel(
+    exercise: Exercise,
+    sets: List<WorkoutSet>,
+): WorkoutExercise {
+    return WorkoutExercise(
         id = id,
-        name = name,
-        imageUrl = imageUrl,
-        colorHex = colorHex,
-        colorDarkHex = colorDarkHex,
+        exercise = exercise,
+        sets = sets,
     )
 }

@@ -2,7 +2,7 @@ package com.jaemin.fitzam.model
 
 import java.time.LocalDate
 
-data class WorkoutRecord(
+data class Workout(
     val date: LocalDate,
-    val partNames: List<String>,
+    val exerciseCategories: List<ExerciseCategory>,
 )
