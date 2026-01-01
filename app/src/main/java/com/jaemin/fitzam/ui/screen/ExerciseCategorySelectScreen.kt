@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,11 @@ fun ExerciseCategorySelectScreen(
 ) {
     val categories by viewModel.exerciseCategories.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedDate) {
+        viewModel.loadSelectedCategories(selectedDate)
+    }
+
     ExerciseCategorySelectScreen(
         categories = categories,
         selectedIds = selectedIds,
@@ -106,14 +112,14 @@ fun ExerciseCategorySelectScreen(
                     .weight(1f)
                     .padding(vertical = 24.dp),
             )
-            DZamOutlinedButton(
-                text = "세부 운동 추가하기",
-                onClick = {},
-                modifier = Modifier.fillMaxWidth(),
-                enabled = selectedIds.isNotEmpty(),
-                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-            )
-            Spacer(Modifier.height(32.dp))
+//            DZamOutlinedButton(
+//                text = "세부 운동 추가하기",
+//                onClick = {},
+//                modifier = Modifier.fillMaxWidth(),
+//                enabled = selectedIds.isNotEmpty(),
+//                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
+//            )
+//            Spacer(Modifier.height(32.dp))
             DZamButton(
                 text = "완료",
                 onClick = onCompleteClick,

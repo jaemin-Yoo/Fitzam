@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.screen
+﻿package com.jaemin.fitzam.ui.screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,13 +6,13 @@ import com.jaemin.fitzam.data.repository.ExerciseCategoryRepository
 import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.model.ExerciseCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
 
 @HiltViewModel
 class ExerciseCategorySelectViewModel @Inject constructor(
@@ -29,6 +29,12 @@ class ExerciseCategorySelectViewModel @Inject constructor(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             _exerciseCategories.value = exerciseCategoryRepository.getExerciseCategories()
+        }
+    }
+
+    fun loadSelectedCategories(date: LocalDate) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _selectedIds.value = workoutRepository.getSelectedCategoryIds(date).toSet()
         }
     }
 

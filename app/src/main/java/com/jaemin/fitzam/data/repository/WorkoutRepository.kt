@@ -82,6 +82,11 @@ class WorkoutRepository @Inject constructor(
                 }
             }
     }
+
+    fun getExerciseCategoryIds(date: LocalDate): List<Long> {
+        return workoutCategoryDao.getExerciseCategoryIds(date.toString())
+    }
+
     suspend fun insertWorkout(date: LocalDate, categoryIds: List<Long>) {
         val workout = WorkoutEntity(
             date = date.toString(),
@@ -97,6 +102,9 @@ class WorkoutRepository @Inject constructor(
             workoutCategoryDao.insert(workoutCategory)
         }
     }
-}
 
+    suspend fun getSelectedCategoryIds(date: LocalDate): List<Long> {
+        return workoutCategoryDao.getExerciseCategoryIds(date.toString())
+    }
+}
 
