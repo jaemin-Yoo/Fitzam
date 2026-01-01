@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.data.repository
+﻿package com.jaemin.fitzam.data.repository
 
 import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
@@ -12,8 +12,11 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
 import com.jaemin.fitzam.data.source.remote.FirebaseUtil
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.YearMonth
@@ -47,33 +50,38 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getWorkoutExercises(date: LocalDate): Flow<List<WorkoutExercise>> {
-        return workoutExerciseDao.getWorkoutExerciseEntities(date.toString()).map { entities ->
-            entities.map { workoutExercise ->
-                val exerciseEntity = exerciseDao.getExerciseEntity(workoutExercise.exerciseId)
-                val categoryEntity = exerciseCategoryDao.getExerciseCategoryEntityById(
-                    exerciseEntity.categoryId,
-                )
-                val sets = setDao.getSetEntities(workoutExercise.id).map { entities ->
-                    entities.map { entity -> entity.toModel() }
-                }.first() // TODO: 확인 필요
-
-                val category = categoryEntity.toModel(
-                    FirebaseUtil.getImageUrl(categoryEntity.imagePath),
-                )
-                val exercise = exerciseEntity.toModel(
-                    category = category,
-                    imageUrl = FirebaseUtil.getImageUrl(exerciseEntity.imagePath),
-                )
-
-                workoutExercise.toModel(
-                    exercise = exercise,
-                    sets = sets,
-                )
+        return workoutExerciseDao.getWorkoutExerciseEntities(date.toString())
+            .flatMapLatest { entities ->
+                if (entities.isEmpty()) {
+                    flowOf(emptyList())
+                } else {
+                    val flows = entities.map { workoutExercise ->
+                        setDao.getSetEntities(workoutExercise.id).map { setEntities ->
+                            val exerciseEntity = exerciseDao.getExerciseEntity(
+                                workoutExercise.exerciseId,
+                            )
+                            val categoryEntity = exerciseCategoryDao.getExerciseCategoryEntityById(
+                                exerciseEntity.categoryId,
+                            )
+                            val category = categoryEntity.toModel(
+                                FirebaseUtil.getImageUrl(categoryEntity.imagePath),
+                            )
+                            val exercise = exerciseEntity.toModel(
+                                category = category,
+                                imageUrl = FirebaseUtil.getImageUrl(exerciseEntity.imagePath),
+                            )
+                            workoutExercise.toModel(
+                                exercise = exercise,
+                                sets = setEntities.map { entity -> entity.toModel() },
+                            )
+                        }
+                    }
+                    combine(flows) { values -> values.toList() }
+                }
             }
-        }
     }
-
     suspend fun insertWorkout(date: LocalDate, categoryIds: List<Long>) {
         val workout = WorkoutEntity(
             date = date.toString(),
@@ -90,3 +98,5 @@ class WorkoutRepository @Inject constructor(
         }
     }
 }
+
+
