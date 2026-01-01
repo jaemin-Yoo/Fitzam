@@ -126,7 +126,7 @@ fun ExerciseCategorySelectScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = selectedIds.isNotEmpty(),
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
