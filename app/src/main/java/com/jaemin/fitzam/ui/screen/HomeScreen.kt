@@ -36,10 +36,10 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(
-    onAddWorkout: (LocalDate) -> Unit,
+    onAddOrEditWorkout: (LocalDate) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val workoutRecords by viewModel.workouts.collectAsStateWithLifecycle()
+    val workouts by viewModel.workouts.collectAsStateWithLifecycle()
     var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
 
     LaunchedEffect(selectedDate) {
@@ -49,8 +49,8 @@ fun HomeScreen(
     HomeScreen(
         selectedDate = selectedDate,
         onDateSelected = { selectedDate = it },
-        workoutRecords = workoutRecords,
-        onAddWorkout = onAddWorkout,
+        workouts = workouts,
+        onAddOrEditWorkout = onAddOrEditWorkout,
     )
 }
 
@@ -59,8 +59,8 @@ fun HomeScreen(
 fun HomeScreen(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    workoutRecords: List<Workout>,
-    onAddWorkout: (LocalDate) -> Unit,
+    workouts: List<Workout>,
+    onAddOrEditWorkout: (LocalDate) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -70,8 +70,12 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FitzamFloatingActionButton(
-                icon = ImageVector.vectorResource(R.drawable.ic_plus),
-                onClick = { onAddWorkout(selectedDate) },
+                icon = if (workouts.any { it.date == selectedDate }) {
+                    ImageVector.vectorResource(R.drawable.ic_edit)
+                } else {
+                    ImageVector.vectorResource(R.drawable.ic_plus)
+                },
+                onClick = { onAddOrEditWorkout(selectedDate) },
             )
         }
     ) { paddingValues ->
@@ -84,10 +88,10 @@ fun HomeScreen(
                     horizontal = 16.dp,
                 ),
                 dateContent = { date ->
-                    workoutRecords.forEach { record ->
-                        if (date == record.date) {
+                    workouts.forEach { workout ->
+                        if (date == workout.date) {
                             FitzamCalendarCellList(
-                                itemList = record.exerciseCategories.map { part ->
+                                itemList = workout.exerciseCategories.map { part ->
                                     CalendarCellItem(
                                         text = part.name,
                                         color = Color.Black
@@ -128,8 +132,8 @@ fun HomeScreenPreview() {
         HomeScreen(
             selectedDate = LocalDate.now(),
             onDateSelected = {},
-            workoutRecords = emptyList(),
-            onAddWorkout = {},
+            workouts = emptyList(),
+            onAddOrEditWorkout = {},
         )
     }
 }

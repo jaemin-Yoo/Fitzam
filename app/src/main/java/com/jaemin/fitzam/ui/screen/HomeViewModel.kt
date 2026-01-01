@@ -20,7 +20,7 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val _workouts = MutableStateFlow<List<Workout>>(emptyList())
     val workouts = _workouts.asStateFlow()
-    private var recordsJob: Job? = null
+    private var workoutsJob: Job? = null
 
     init {
         loadWorkoutsForDate(LocalDate.now())
@@ -28,10 +28,10 @@ class HomeViewModel @Inject constructor(
 
     fun loadWorkoutsForDate(date: LocalDate) {
         val yearMonth = YearMonth.from(date)
-        recordsJob?.cancel()
-        recordsJob = viewModelScope.launch(Dispatchers.IO) {
-            repository.getWorkoutsForMonth(yearMonth).collect { records ->
-                _workouts.value = records
+        workoutsJob?.cancel()
+        workoutsJob = viewModelScope.launch(Dispatchers.IO) {
+            repository.getWorkoutsForMonth(yearMonth).collect { workouts ->
+                _workouts.value = workouts
             }
         }
     }
