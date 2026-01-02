@@ -9,6 +9,6 @@ data class ExerciseCategoryEntity(
     val id: Long = 0,
     val name: String,
     val imagePath: String,
-    val colorHex: String,
-    val colorDarkHex: String,
+    val colorHex: Long,
+    val colorDarkHex: Long,
 )

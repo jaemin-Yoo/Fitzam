@@ -5,12 +5,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
+import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
 import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
 import dagger.Module
@@ -55,50 +55,50 @@ object DatabaseModule {
                                 ExerciseCategoryEntity(
                                     name = "가슴",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/chest.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFF2563EB,
+                                    colorDarkHex = 0xFF2563EB,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "등",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/back.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFF06B6D4,
+                                    colorDarkHex = 0xFF06B6D4,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "어깨",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/shoulder.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFFD81DAF,
+                                    colorDarkHex = 0xFFD81DAF,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "삼두",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/triceps.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFF3CAD36,
+                                    colorDarkHex = 0xFF3CAD36,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "이두",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/biceps.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFFFACC15,
+                                    colorDarkHex = 0xFFFACC15,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "하체",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/lower_body.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFFF97316,
+                                    colorDarkHex = 0xFFF97316,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "복근",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/abs.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFF8B5CF6,
+                                    colorDarkHex = 0xFF8B5CF6,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "유산소",
                                     imagePath = "${EXERCISE_CATEGORY_PATH}/aerobic.png",
-                                    colorHex = "0xFFD32F2F",
-                                    colorDarkHex = "0xFFD32F2F",
+                                    colorHex = 0xFF64748B,
+                                    colorDarkHex = 0xFF64748B,
                                 ),
                             )
                         )

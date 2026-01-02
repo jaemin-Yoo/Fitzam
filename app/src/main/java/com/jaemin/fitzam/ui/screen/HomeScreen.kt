@@ -1,11 +1,13 @@
 package com.jaemin.fitzam.ui.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.ui.common.CalendarCellItem
+import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.common.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.common.FitzamCalendar
 import com.jaemin.fitzam.ui.common.FitzamCalendarCellList
@@ -79,22 +82,26 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Column(
+            modifier = Modifier.padding(
+                top = paddingValues.calculateTopPadding(),
+                bottom = paddingValues.calculateBottomPadding(),
+                start = 16.dp,
+                end = 16.dp,
+            )
+        ) {
             FitzamCalendar(
                 selectedDate = selectedDate,
                 onDateSelected = onDateSelected,
-                modifier = Modifier.padding(
-                    vertical = 8.dp,
-                    horizontal = 16.dp,
-                ),
+                modifier = Modifier.padding(vertical = 8.dp),
                 dateContent = { date ->
                     workouts.forEach { workout ->
                         if (date == workout.date) {
                             FitzamCalendarCellList(
-                                itemList = workout.exerciseCategories.map { part ->
+                                itemList = workout.exerciseCategories.map { category ->
                                     CalendarCellItem(
-                                        text = part.name,
-                                        color = Color.Black
+                                        text = category.name,
+                                        color = Color(category.colorHex),
                                     )
                                 },
                             )
@@ -102,25 +109,49 @@ fun HomeScreen(
                     }
                 }
             )
-            Card(
-                modifier = Modifier.padding(
-                    vertical = 16.dp,
-                    horizontal = 16.dp,
-                ),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${
+                    selectedDate.dayOfWeek.getDisplayName(
+                        TextStyle.NARROW,
+                        Locale.KOREAN
+                    )
+                })",
+                modifier = Modifier.padding(8.dp)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${
-                            selectedDate.dayOfWeek.getDisplayName(
-                                TextStyle.NARROW,
-                                Locale.KOREAN
-                            )
-                        })",
-                        modifier = Modifier.padding(8.dp),
+                val workoutOfSelectedDate = workouts.firstOrNull { it.date == selectedDate }
+                workoutOfSelectedDate?.exerciseCategories?.forEach { category ->
+                    ExerciseCategoryTag(
+                        name = category.name,
+                        borderColor = Color(category.colorHex),
                     )
                 }
             }
+
+//            Card(
+//                modifier = Modifier.padding(
+//                    vertical = 16.dp,
+//                    horizontal = 16.dp,
+//                ),
+//                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+//            ) {
+//                Column(modifier = Modifier.padding(16.dp)) {
+//                    Text(
+//                        text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${
+//                            selectedDate.dayOfWeek.getDisplayName(
+//                                TextStyle.NARROW,
+//                                Locale.KOREAN
+//                            )
+//                        })",
+//                        modifier = Modifier.padding(8.dp),
+//                    )
+//                }
+//            }
         }
     }
 }

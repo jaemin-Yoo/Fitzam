@@ -38,7 +38,6 @@ import coil.compose.AsyncImage
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.common.DZamButton
-import com.jaemin.fitzam.ui.common.DZamOutlinedButton
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
@@ -210,29 +209,29 @@ fun ExerciseCategorySelectScreenPreview() {
                     id = 0,
                     name = "가슴",
                     imageUrl = "",
-                    colorHex = "",
-                    colorDarkHex = ""
+                    colorHex = 0xFF1D4ED8,
+                    colorDarkHex = 0xFF2563EB
                 ),
                 ExerciseCategory(
                     id = 1,
                     name = "등",
                     imageUrl = "",
-                    colorHex = "",
-                    colorDarkHex = ""
+                    colorHex = 0xFF0891B2,
+                    colorDarkHex = 0xFF14B8A6
                 ),
                 ExerciseCategory(
                     id = 2,
                     name = "어깨",
                     imageUrl = "",
-                    colorHex = "",
-                    colorDarkHex = ""
+                    colorHex = 0xFF15803D,
+                    colorDarkHex = 0xFF22C55E
                 ),
                 ExerciseCategory(
                     id = 3,
                     name = "삼두",
                     imageUrl = "",
-                    colorHex = "",
-                    colorDarkHex = ""
+                    colorHex = 0xFF65A30D,
+                    colorDarkHex = 0xFFA3E635
                 ),
             ),
             selectedIds = emptySet(),

@@ -4,6 +4,6 @@ data class ExerciseCategory(
     val id: Long,
     val name: String,
     val imageUrl: String,
-    val colorHex: String,
-    val colorDarkHex: String,
+    val colorHex: Long,
+    val colorDarkHex: Long,
 )
