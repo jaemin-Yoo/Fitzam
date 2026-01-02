@@ -1,12 +1,13 @@
 package com.jaemin.fitzam.data.repository
 
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
-import com.jaemin.fitzam.data.source.remote.FirebaseUtil
+import com.jaemin.fitzam.data.repository.ImageUrlRepository
 import com.jaemin.fitzam.model.ExerciseCategory
 import javax.inject.Inject
 
 class ExerciseCategoryRepository @Inject constructor(
     private val exerciseCategoryDao: ExerciseCategoryDao,
+    private val imageUrlRepository: ImageUrlRepository,
 ) {
 
     suspend fun getExerciseCategories(): List<ExerciseCategory> {
@@ -14,7 +15,7 @@ class ExerciseCategoryRepository @Inject constructor(
             ExerciseCategory(
                 id = entity.id,
                 name = entity.name,
-                imageUrl = FirebaseUtil.getImageUrl(entity.imagePath),
+                imageUrl = imageUrlRepository.getImageUrl(entity.imagePath),
                 colorHex = entity.colorHex,
                 colorDarkHex = entity.colorDarkHex,
             )

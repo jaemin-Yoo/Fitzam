@@ -9,7 +9,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
 import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
-import com.jaemin.fitzam.data.source.remote.FirebaseUtil
+import com.jaemin.fitzam.data.repository.ImageUrlRepository
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,6 +29,7 @@ class WorkoutRepository @Inject constructor(
     private val exerciseCategoryDao: ExerciseCategoryDao,
     private val exerciseDao: ExerciseDao,
     private val setDao: WorkoutSetDao,
+    private val imageUrlRepository: ImageUrlRepository,
 ) {
 
     fun getWorkoutsForMonth(yearMonth: YearMonth): Flow<List<Workout>> {
@@ -43,7 +44,7 @@ class WorkoutRepository @Inject constructor(
                 }
                 workout.toModel(
                     exerciseCategories = exerciseCategories.map { category ->
-                        category.toModel(FirebaseUtil.getImageUrl(category.imagePath))
+                        category.toModel(imageUrlRepository.getImageUrl(category.imagePath))
                     },
                 )
             }
@@ -66,11 +67,11 @@ class WorkoutRepository @Inject constructor(
                                 exerciseEntity.categoryId,
                             )
                             val category = categoryEntity.toModel(
-                                FirebaseUtil.getImageUrl(categoryEntity.imagePath),
+                                imageUrlRepository.getImageUrl(categoryEntity.imagePath),
                             )
                             val exercise = exerciseEntity.toModel(
                                 category = category,
-                                imageUrl = FirebaseUtil.getImageUrl(exerciseEntity.imagePath),
+                                imageUrl = imageUrlRepository.getImageUrl(exerciseEntity.imagePath),
                             )
                             workoutExercise.toModel(
                                 exercise = exercise,

@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
+import com.jaemin.fitzam.data.source.local.dao.ImageUrlCacheDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
@@ -11,6 +12,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
 import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.FavoriteExerciseEntity
+import com.jaemin.fitzam.data.source.local.entity.ImageUrlCacheEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
@@ -26,8 +28,9 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
         ExerciseCategoryEntity::class,
         ExerciseEntity::class,
         FavoriteExerciseEntity::class,
+        ImageUrlCacheEntity::class,
     ],
-    version = 1
+    version = 2
 )
 abstract class FitzamDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
@@ -37,4 +40,5 @@ abstract class FitzamDatabase : RoomDatabase() {
     abstract fun exerciseCategoryDao(): ExerciseCategoryDao
     abstract fun exerciseDao(): ExerciseDao
     abstract fun favoriteExerciseDao(): FavoriteExerciseDao
+    abstract fun imageUrlCacheDao(): ImageUrlCacheDao
 }
