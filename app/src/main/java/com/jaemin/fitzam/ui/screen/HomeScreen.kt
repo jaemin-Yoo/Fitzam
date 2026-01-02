@@ -118,8 +118,8 @@ fun HomeScreen(
                         Locale.KOREAN
                     )
                 })",
-                modifier = Modifier.padding(8.dp)
             )
+            Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

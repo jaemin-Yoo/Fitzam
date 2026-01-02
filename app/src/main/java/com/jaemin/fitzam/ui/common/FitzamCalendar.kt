@@ -213,6 +213,7 @@ private fun FitzamCalendarContent(
                         DayOfWeek.SATURDAY -> Color(0xFF2B7FFF)
                         else -> MaterialTheme.colorScheme.onSurface
                     },
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
         }
@@ -289,6 +290,7 @@ private fun FitzamCalendarCell(
                 .fillMaxWidth(),
             color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium,
         )
         if (dayDate != null) {
             CompositionLocalProvider(
