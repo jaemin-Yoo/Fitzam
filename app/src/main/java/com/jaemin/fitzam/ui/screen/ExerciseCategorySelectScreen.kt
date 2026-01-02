@@ -29,12 +29,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.common.DZamButton
@@ -182,7 +185,10 @@ private fun ExerciseCategoryGridItem(
                 .clickable(onClick = onClick),
         ) {
             AsyncImage(
-                model = category.imageUrl,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(category.imageUrl)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .build(),
                 contentDescription = category.name,
                 modifier = Modifier
                     .fillMaxSize()
