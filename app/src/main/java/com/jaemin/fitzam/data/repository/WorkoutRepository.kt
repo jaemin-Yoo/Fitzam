@@ -105,6 +105,11 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
+    suspend fun deleteWorkout(date: LocalDate) {
+        workoutCategoryDao.deleteByDate(date.toString())
+        workoutDao.deleteByDate(date.toString())
+    }
+
     suspend fun getSelectedCategoryIds(date: LocalDate): List<Long> {
         return workoutCategoryDao.getExerciseCategoryIds(date.toString())
     }

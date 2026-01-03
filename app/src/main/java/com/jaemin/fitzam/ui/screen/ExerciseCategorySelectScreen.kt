@@ -87,7 +87,7 @@ fun ExerciseCategorySelectScreen(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "운동 부위 선택",
+                title = "운동 유형 선택",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
@@ -126,7 +126,6 @@ fun ExerciseCategorySelectScreen(
                 text = "완료",
                 onClick = onCompleteClick,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = selectedIds.isNotEmpty(),
             )
             Spacer(Modifier.height(24.dp))
         }

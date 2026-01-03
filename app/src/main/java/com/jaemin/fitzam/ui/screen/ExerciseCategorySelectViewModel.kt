@@ -48,10 +48,14 @@ class ExerciseCategorySelectViewModel @Inject constructor(
 
     fun complete(date: LocalDate) {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.upsertWorkout(
-                date = date,
-                categoryIds = _selectedIds.value.toList(),
-            )
+            if (_selectedIds.value.isEmpty()) {
+                workoutRepository.deleteWorkout(date)
+            } else {
+                workoutRepository.upsertWorkout(
+                    date = date,
+                    categoryIds = _selectedIds.value.toList(),
+                )
+            }
         }
     }
 }
