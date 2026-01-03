@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 private const val MAX_CELL_ITEM_COUNT = 3
+private val CELL_HEIGHT = 80.dp
 
 data class CalendarCellItem(
     val text: String,
@@ -197,11 +199,18 @@ private fun FitzamCalendarContent(
         getCalendarMonthDays(YearMonth.from(selectedDate))
     }
 
+    // 캘린더 날짜 고정 크기 설정
+    val minRowCount = 4
+    val maxRowCount = 6
+    val spacedPadding = 8.dp
+    val minHeight = CELL_HEIGHT * minRowCount + spacedPadding * (minRowCount - 1) + 2.dp
+    val maxHeight = CELL_HEIGHT * maxRowCount + spacedPadding * (maxRowCount - 1) + 2.dp
+
     Column(modifier = modifier) {
         // 요일
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacedPadding),
         ) {
             dayOfWeek.forEach { day ->
                 Text(
@@ -221,10 +230,16 @@ private fun FitzamCalendarContent(
 
         // 날짜
         LazyVerticalGrid(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(
+                    min = minHeight,
+                    max = maxHeight,
+                ),
             columns = GridCells.Fixed(7),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(spacedPadding),
+            horizontalArrangement = Arrangement.spacedBy(spacedPadding),
+            userScrollEnabled = false,
         ) {
             items(monthDays.size) { i ->
                 val dayDate = monthDays[i]
@@ -252,7 +267,7 @@ private fun FitzamCalendarCell(
 ) {
     Column(
         modifier = modifier
-            .height(80.dp)
+            .height(CELL_HEIGHT)
             .clip(RoundedCornerShape(8.dp))
             .then(
                 if (isSelected) {
