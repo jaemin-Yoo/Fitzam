@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -100,7 +101,7 @@ fun FitzamCalendar(
     LaunchedEffect(selectedMonthPage) {
         if (pagerState.currentPage != selectedMonthPage) {
             suppressAutoSelect.value = true
-            pagerState.scrollToPage(selectedMonthPage)
+            pagerState.animateScrollToPage(selectedMonthPage)
         }
     }
 
@@ -288,13 +289,14 @@ private fun FitzamCalendarContent(
             userScrollEnabled = false,
         ) {
             items(monthDays.size) { i ->
-                val dayDate = monthDays[i]
+                val day = monthDays[i]
 
                 FitzamCalendarCell(
-                    dayDate = dayDate,
+                    dayDate = day.date,
+                    isInMonth = day.isInMonth,
                     cellHeight = cellHeight,
-                    isSelected = dayDate == selectedDate,
-                    isToday = dayDate == currentDate,
+                    isSelected = day.date == selectedDate,
+                    isToday = day.date == currentDate,
                     onClick = { onDateSelected(it) },
                     content = { dateContent(it) }
                 )
@@ -305,7 +307,8 @@ private fun FitzamCalendarContent(
 
 @Composable
 private fun FitzamCalendarCell(
-    dayDate: LocalDate?,
+    dayDate: LocalDate,
+    isInMonth: Boolean,
     cellHeight: Dp,
     isSelected: Boolean,
     isToday: Boolean,
@@ -316,6 +319,7 @@ private fun FitzamCalendarCell(
     Column(
         modifier = modifier
             .height(cellHeight)
+            .alpha(if (isInMonth) 1f else 0.2f)
             .clip(RoundedCornerShape(8.dp))
             .then(
                 if (isSelected) {
@@ -328,12 +332,12 @@ private fun FitzamCalendarCell(
                     Modifier
                 }
             )
-            .clickable(enabled = dayDate != null) { dayDate?.let(onClick) },
+            .clickable { onClick(dayDate) },
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = dayDate?.dayOfMonth?.toString() ?: "",
+            text = dayDate.dayOfMonth.toString(),
             modifier = Modifier
                 .padding(
                     start = 2.dp,
@@ -355,13 +359,11 @@ private fun FitzamCalendarCell(
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.labelMedium,
         )
-        if (dayDate != null) {
-            CompositionLocalProvider(
-                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
-            ) {
-                ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                    content(dayDate)
-                }
+        CompositionLocalProvider(
+            LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                content(dayDate)
             }
         }
     }
