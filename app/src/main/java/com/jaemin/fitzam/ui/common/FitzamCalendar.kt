@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -46,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.util.CalendarUtils.dayOfWeek
@@ -58,10 +58,14 @@ import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-private const val MAX_CELL_ITEM_COUNT = 3
-private val CELL_HEIGHT = 80.dp
+private const val MAX_CELL_LIST_ITEM_COUNT = 3
 private const val START_YEAR = 2000
 private const val END_YEAR = 2500
+private const val MIN_WEEK_COUNT = 4
+private const val MAX_WEEK_COUNT = 6
+private val GRID_SPACING = 8.dp
+private val GRID_BORDER_PADDING = 2.dp
+private val CALENDAR_HEIGHT = 400.dp
 
 data class CalendarCellItem(
     val text: String,
@@ -155,7 +159,7 @@ fun FitzamCalendar(
 fun FitzamCalendarCellList(
     itemList: List<CalendarCellItem>,
 ) {
-    if (itemList.size <= MAX_CELL_ITEM_COUNT) {
+    if (itemList.size <= MAX_CELL_LIST_ITEM_COUNT) {
         // 아이템이 3개 이하인 경우, 리스트 형태로 표시
         itemList.forEach { item ->
             Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -248,17 +252,14 @@ private fun FitzamCalendarContent(
     }
 
     // 캘린더 날짜 고정 크기 설정
-    val minRowCount = 4
-    val maxRowCount = 6
-    val spacedPadding = 8.dp
-    val minHeight = CELL_HEIGHT * minRowCount + spacedPadding * (minRowCount - 1) + 2.dp
-    val maxHeight = CELL_HEIGHT * maxRowCount + spacedPadding * (maxRowCount - 1) + 2.dp
+    val rowCount = (monthDays.size / 7).coerceIn(MIN_WEEK_COUNT, MAX_WEEK_COUNT)
+    val cellHeight = (CALENDAR_HEIGHT - GRID_SPACING * (rowCount - 1) - GRID_BORDER_PADDING) / rowCount
 
     Column(modifier = modifier) {
         // 요일
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(spacedPadding),
+            horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
         ) {
             dayOfWeek.forEach { day ->
                 Text(
@@ -280,13 +281,10 @@ private fun FitzamCalendarContent(
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(
-                    min = minHeight,
-                    max = maxHeight,
-                ),
+                .height(CALENDAR_HEIGHT),
             columns = GridCells.Fixed(7),
-            verticalArrangement = Arrangement.spacedBy(spacedPadding),
-            horizontalArrangement = Arrangement.spacedBy(spacedPadding),
+            verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
+            horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
             userScrollEnabled = false,
         ) {
             items(monthDays.size) { i ->
@@ -294,6 +292,7 @@ private fun FitzamCalendarContent(
 
                 FitzamCalendarCell(
                     dayDate = dayDate,
+                    cellHeight = cellHeight,
                     isSelected = dayDate == selectedDate,
                     isToday = dayDate == currentDate,
                     onClick = { onDateSelected(it) },
@@ -307,6 +306,7 @@ private fun FitzamCalendarContent(
 @Composable
 private fun FitzamCalendarCell(
     dayDate: LocalDate?,
+    cellHeight: Dp,
     isSelected: Boolean,
     isToday: Boolean,
     onClick: (LocalDate) -> Unit,
@@ -315,7 +315,7 @@ private fun FitzamCalendarCell(
 ) {
     Column(
         modifier = modifier
-            .height(CELL_HEIGHT)
+            .height(cellHeight)
             .clip(RoundedCornerShape(8.dp))
             .then(
                 if (isSelected) {
