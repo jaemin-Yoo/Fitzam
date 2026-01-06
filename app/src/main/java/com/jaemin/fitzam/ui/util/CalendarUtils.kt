@@ -3,11 +3,19 @@ package com.jaemin.fitzam.ui.util
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 
 object CalendarUtils {
 
+    private const val START_YEAR = 2000
+    private const val END_YEAR = 2500
+
     // 월,화,수,목,금,토,일 -> 일,월,화,수,목,금,토
     val dayOfWeek = listOf(DayOfWeek.entries.last()) + DayOfWeek.entries.dropLast(1)
+
+    val startMonth: YearMonth = YearMonth.of(START_YEAR, 1)
+    val endMonth: YearMonth = YearMonth.of(END_YEAR, 12)
+    val totalMonths: Int = ChronoUnit.MONTHS.between(startMonth, endMonth).toInt() + 1
 
     data class CalendarDay(
         val date: LocalDate,

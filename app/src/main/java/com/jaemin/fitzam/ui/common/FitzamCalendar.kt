@@ -36,7 +36,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -51,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.util.CalendarUtils.dayOfWeek
 import com.jaemin.fitzam.ui.util.CalendarUtils.getCalendarMonthDays
+import com.jaemin.fitzam.ui.util.CalendarUtils.startMonth
+import com.jaemin.fitzam.ui.util.CalendarUtils.totalMonths
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -60,8 +61,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 private const val MAX_CELL_LIST_ITEM_COUNT = 3
-private const val START_YEAR = 2000
-private const val END_YEAR = 2500
 private const val MIN_WEEK_COUNT = 4
 private const val MAX_WEEK_COUNT = 6
 private val GRID_SPACING = 8.dp
@@ -80,48 +79,39 @@ fun FitzamCalendar(
     modifier: Modifier = Modifier,
     dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
-    val currentDate = LocalDate.now()
-    val startMonth = remember { YearMonth.of(START_YEAR, 1) }
-    val endMonth = remember { YearMonth.of(END_YEAR, 12) }
-    val totalMonths = remember { ChronoUnit.MONTHS.between(startMonth, endMonth).toInt() + 1 }
-    val selectedMonth = YearMonth.from(selectedDate)
-    val selectedMonthPage = remember(selectedMonth) {
-        val rawOffset = ChronoUnit.MONTHS.between(startMonth, selectedMonth).toInt()
-        rawOffset.coerceIn(0, totalMonths - 1)
-    }
-    val suppressAutoSelect = remember { mutableStateOf(false) }
+    val selectedYearMonth = YearMonth.from(selectedDate)
+    val selectedPage = remember(selectedYearMonth) { yearMonthToPage(selectedYearMonth) }
     val pagerState = rememberPagerState(
-        initialPage = selectedMonthPage,
+        initialPage = selectedPage,
         pageCount = { totalMonths },
     )
 
-    // 선택된 날짜가 현재 월이 아니면 월 이동
-    LaunchedEffect(selectedMonthPage) {
-        if (pagerState.currentPage != selectedMonthPage) {
-            suppressAutoSelect.value = true
-            pagerState.animateScrollToPage(selectedMonthPage)
-        }
-    }
-
-    // 월 이동 시 해당 월 1일로 선택
+    /**
+     * 캘린더 스와이프 (월 이동)
+     * 날짜 선택으로 스와이프가 된 경우가 아니면 1일 선택
+     */
     LaunchedEffect(pagerState.currentPage) {
-        if (suppressAutoSelect.value) {
-            // 날짜를 선택한 경우 1일 선택 안함
-            suppressAutoSelect.value = false
-            return@LaunchedEffect
+        if (selectedPage != pagerState.currentPage) {
+            val currentYearMonth = pageToYearMonth(pagerState.currentPage)
+            val newSelectedDate = currentYearMonth.atDay(1)
+            onDateSelected(newSelectedDate)
         }
-
-        val pageMonth = startMonth.plusMonths(pagerState.currentPage.toLong())
-        val newSelectedDate = pageMonth.atDay(1)
-        onDateSelected(newSelectedDate)
     }
 
+    /**
+     * 날짜 선택으로 캘린더 스와이프
+     */
+    LaunchedEffect(selectedPage) {
+        if (selectedPage != pagerState.currentPage) {
+            pagerState.animateScrollToPage(selectedPage)
+        }
+    }
+
+    val coroutineScope = rememberCoroutineScope()
     Surface(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
             FitzamCalendarHeader(
-                yearMonth = YearMonth.from(selectedDate),
+                yearMonth = selectedYearMonth,
                 onPreviousMonthClick = {
                     if (pagerState.currentPage > 0) {
                         coroutineScope.launch {
@@ -142,14 +132,12 @@ fun FitzamCalendar(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
-            ) { page ->
-                val month = startMonth.plusMonths(page.toLong())
+            ) {
                 FitzamCalendarContent(
-                    monthDate = month.atDay(1),
+                    yearMonth = selectedYearMonth,
                     selectedDate = selectedDate,
-                    currentDate = currentDate,
                     onDateSelected = onDateSelected,
-                    dateContent = { dateContent(it) }
+                    dateContent = { dateContent(it) },
                 )
             }
         }
@@ -241,21 +229,19 @@ private fun FitzamCalendarHeader(
 
 @Composable
 private fun FitzamCalendarContent(
-    monthDate: LocalDate,
+    yearMonth: YearMonth,
     selectedDate: LocalDate,
-    currentDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
-    val monthDays = remember(monthDate) {
-        getCalendarMonthDays(YearMonth.from(monthDate))
-    }
-
     // 캘린더 날짜 고정 크기 설정
+    val monthDays = remember(yearMonth) { getCalendarMonthDays(yearMonth) }
     val rowCount = (monthDays.size / 7).coerceIn(MIN_WEEK_COUNT, MAX_WEEK_COUNT)
-    val cellHeight = (CALENDAR_HEIGHT - GRID_SPACING * (rowCount - 1) - GRID_BORDER_PADDING) / rowCount
+    val cellHeight =
+        (CALENDAR_HEIGHT - GRID_SPACING * (rowCount - 1) - GRID_BORDER_PADDING) / rowCount
 
+    val currentDate = remember { LocalDate.now() }
     Column(modifier = modifier) {
         // 요일
         Row(
@@ -367,6 +353,16 @@ private fun FitzamCalendarCell(
             }
         }
     }
+}
+
+private fun yearMonthToPage(yearMonth: YearMonth): Int {
+    val rawOffset = ChronoUnit.MONTHS.between(startMonth, yearMonth).toInt()
+    return rawOffset.coerceIn(0, totalMonths - 1)
+}
+
+private fun pageToYearMonth(page: Int): YearMonth {
+    val safePage = page.coerceIn(0, totalMonths - 1)
+    return startMonth.plusMonths(safePage.toLong())
 }
 
 @Preview
