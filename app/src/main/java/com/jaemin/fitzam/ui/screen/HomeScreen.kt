@@ -29,11 +29,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Workout
-import com.jaemin.fitzam.ui.common.CalendarCellItem
+import com.jaemin.fitzam.ui.common.CalendarDayItem
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.common.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.common.FitzamCalendar
-import com.jaemin.fitzam.ui.common.FitzamCalendarCellList
+import com.jaemin.fitzam.ui.common.FitzamCalendarDayList
 import com.jaemin.fitzam.ui.common.FitzamFloatingActionButton
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
@@ -103,9 +103,9 @@ fun HomeScreen(
                 dateContent = { date ->
                     workouts.forEach { workout ->
                         if (date == workout.date) {
-                            FitzamCalendarCellList(
+                            FitzamCalendarDayList(
                                 itemList = workout.exerciseCategories.map { category ->
-                                    CalendarCellItem(
+                                    CalendarDayItem(
                                         text = category.name,
                                         color = Color(category.colorHex),
                                     )

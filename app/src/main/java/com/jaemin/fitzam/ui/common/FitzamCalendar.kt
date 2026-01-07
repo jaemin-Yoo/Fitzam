@@ -67,7 +67,7 @@ private val GRID_SPACING = 8.dp
 private val GRID_BORDER_PADDING = 2.dp
 private val CALENDAR_HEIGHT = 400.dp
 
-data class CalendarCellItem(
+data class CalendarDayItem(
     val text: String,
     val color: Color,
 )
@@ -110,8 +110,8 @@ fun FitzamCalendar(
     val coroutineScope = rememberCoroutineScope()
     Surface(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
-            FitzamCalendarHeader(
-                yearMonth = selectedYearMonth,
+            CalendarHeader(
+                yearMonth = pageToYearMonth(pagerState.currentPage),
                 onPreviousMonthClick = {
                     if (pagerState.currentPage > 0) {
                         coroutineScope.launch {
@@ -129,12 +129,18 @@ fun FitzamCalendar(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(20.dp))
+
+            DaysOfWeekHeader(modifier = Modifier.fillMaxWidth())
+            Spacer(modifier = Modifier.height(16.dp))
+
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                FitzamCalendarContent(
-                    yearMonth = selectedYearMonth,
+                beyondViewportPageCount = 3,
+            ) { page ->
+                val yearMonth = pageToYearMonth(page)
+                CalendarContent(
+                    yearMonth = yearMonth,
                     selectedDate = selectedDate,
                     onDateSelected = onDateSelected,
                     dateContent = { dateContent(it) },
@@ -145,8 +151,8 @@ fun FitzamCalendar(
 }
 
 @Composable
-fun FitzamCalendarCellList(
-    itemList: List<CalendarCellItem>,
+fun FitzamCalendarDayList(
+    itemList: List<CalendarDayItem>,
 ) {
     if (itemList.size <= MAX_CELL_LIST_ITEM_COUNT) {
         // 아이템이 3개 이하인 경우, 리스트 형태로 표시
@@ -195,7 +201,7 @@ fun FitzamCalendarCellList(
 }
 
 @Composable
-private fun FitzamCalendarHeader(
+private fun CalendarHeader(
     yearMonth: YearMonth,
     onPreviousMonthClick: () -> Unit,
     onNextMonthClick: () -> Unit,
@@ -213,10 +219,12 @@ private fun FitzamCalendarHeader(
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
+
         Text(
             text = "${yearMonth.year}년 ${yearMonth.monthValue}월",
             style = MaterialTheme.typography.titleMedium
         )
+
         IconButton(onClick = onNextMonthClick) {
             Icon(
                 imageVector = Icons.AutoMirrored.Default.KeyboardArrowRight,
@@ -228,71 +236,68 @@ private fun FitzamCalendarHeader(
 }
 
 @Composable
-private fun FitzamCalendarContent(
+fun DaysOfWeekHeader(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
+    ) {
+        dayOfWeek.forEach { day ->
+            Text(
+                text = day.getDisplayName(TextStyle.NARROW, Locale.KOREAN),
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                color = when (day) {
+                    DayOfWeek.SUNDAY -> Color(0xFFFB2C36)
+                    DayOfWeek.SATURDAY -> Color(0xFF2B7FFF)
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarContent(
     yearMonth: YearMonth,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
-    // 캘린더 날짜 고정 크기 설정
     val monthDays = remember(yearMonth) { getCalendarMonthDays(yearMonth) }
+
+    // Week 개수에 따라 날짜 셀 크기 조정
     val rowCount = (monthDays.size / 7).coerceIn(MIN_WEEK_COUNT, MAX_WEEK_COUNT)
     val cellHeight =
         (CALENDAR_HEIGHT - GRID_SPACING * (rowCount - 1) - GRID_BORDER_PADDING) / rowCount
 
     val currentDate = remember { LocalDate.now() }
-    Column(modifier = modifier) {
-        // 요일
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
-        ) {
-            dayOfWeek.forEach { day ->
-                Text(
-                    text = day.getDisplayName(TextStyle.NARROW, Locale.KOREAN),
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    color = when (day) {
-                        DayOfWeek.SUNDAY -> Color(0xFFFB2C36)
-                        DayOfWeek.SATURDAY -> Color(0xFF2B7FFF)
-                        else -> MaterialTheme.colorScheme.onSurface
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+    LazyVerticalGrid(
+        modifier = modifier.height(CALENDAR_HEIGHT),
+        columns = GridCells.Fixed(7),
+        verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
+        horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
+        userScrollEnabled = false,
+    ) {
+        items(monthDays.size) { i ->
+            val day = monthDays[i]
 
-        // 날짜
-        LazyVerticalGrid(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(CALENDAR_HEIGHT),
-            columns = GridCells.Fixed(7),
-            verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
-            horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
-            userScrollEnabled = false,
-        ) {
-            items(monthDays.size) { i ->
-                val day = monthDays[i]
-
-                FitzamCalendarCell(
-                    dayDate = day.date,
-                    isInMonth = day.isInMonth,
-                    cellHeight = cellHeight,
-                    isSelected = day.date == selectedDate,
-                    isToday = day.date == currentDate,
-                    onClick = { onDateSelected(it) },
-                    content = { dateContent(it) }
-                )
-            }
+            CalendarDay(
+                dayDate = day.date,
+                isInMonth = day.isInMonth,
+                cellHeight = cellHeight,
+                isSelected = day.date == selectedDate,
+                isToday = day.date == currentDate,
+                onClick = { onDateSelected(it) },
+                content = { dateContent(it) }
+            )
         }
     }
 }
 
 @Composable
-private fun FitzamCalendarCell(
+private fun CalendarDay(
     dayDate: LocalDate,
     isInMonth: Boolean,
     cellHeight: Dp,
@@ -379,38 +384,38 @@ private fun FitzamCalendarPreview() {
                 onDateSelected = {},
                 dateContent = { date ->
                     if (date == LocalDate.now()) {
-                        FitzamCalendarCellList(
+                        FitzamCalendarDayList(
                             itemList = listOf(
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "가슴",
                                     color = Color.Blue,
                                 ),
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "유산소",
                                     color = Color.Green,
                                 ),
                             )
                         )
                     } else if (date == LocalDate.now().plusDays(1)) {
-                        FitzamCalendarCellList(
+                        FitzamCalendarDayList(
                             itemList = listOf(
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "가슴",
                                     color = Color.Blue,
                                 ),
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "유산소",
                                     color = Color.Green,
                                 ),
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "어깨",
                                     color = Color.Black,
                                 ),
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "복근",
                                     color = Color.Red,
                                 ),
-                                CalendarCellItem(
+                                CalendarDayItem(
                                     text = "삼두",
                                     color = Color.Gray,
                                 ),
