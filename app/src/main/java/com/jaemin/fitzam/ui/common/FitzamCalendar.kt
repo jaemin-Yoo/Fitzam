@@ -136,7 +136,6 @@ fun FitzamCalendar(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
-                beyondViewportPageCount = 3,
             ) { page ->
                 val yearMonth = pageToYearMonth(page)
                 CalendarContent(
