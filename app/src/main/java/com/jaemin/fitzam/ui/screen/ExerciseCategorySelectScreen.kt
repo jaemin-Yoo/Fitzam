@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -54,7 +55,7 @@ fun ExerciseCategorySelectScreen(
     onCompleteClick: () -> Unit,
     viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
-    val categories by viewModel.exerciseCategories.collectAsStateWithLifecycle()
+    val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedDate) {
@@ -62,7 +63,7 @@ fun ExerciseCategorySelectScreen(
     }
 
     ExerciseCategorySelectScreen(
-        categories = categories,
+        uiState = uiState,
         selectedIds = selectedIds,
         onBackClick = onBackClick,
         onCategoryClick = { category ->
@@ -78,7 +79,7 @@ fun ExerciseCategorySelectScreen(
 
 @Composable
 fun ExerciseCategorySelectScreen(
-    categories: List<ExerciseCategory>,
+    uiState: ExerciseCategorySelectUiState,
     selectedIds: Set<Long>,
     onBackClick: () -> Unit,
     onCategoryClick: (ExerciseCategory) -> Unit,
@@ -96,38 +97,63 @@ fun ExerciseCategorySelectScreen(
             )
         },
     ) { paddingValues ->
-        Column(
-            modifier = Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                bottom = paddingValues.calculateBottomPadding(),
-                start = 16.dp,
-                end = 16.dp,
-            )
-        ) {
-            ExerciseCategoryGrid(
-                categories = categories,
-                selectedIds = selectedIds,
-                onCategoryClick = { category ->
-                    onCategoryClick(category)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 24.dp),
-            )
-//            DZamOutlinedButton(
-//                text = "세부 운동 추가하기",
-//                onClick = {},
-//                modifier = Modifier.fillMaxWidth(),
-//                enabled = selectedIds.isNotEmpty(),
-//                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-//            )
-//            Spacer(Modifier.height(32.dp))
-            DZamButton(
-                text = "완료",
-                onClick = onCompleteClick,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(24.dp))
+        when (uiState) {
+            ExerciseCategorySelectUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            ExerciseCategorySelectUiState.Failed -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = "로딩에 실패했습니다. 다시 시도해 주세요.")
+                }
+            }
+            is ExerciseCategorySelectUiState.Success -> {
+                val categories = uiState.exerciseCategories
+                Column(
+                    modifier = Modifier.padding(
+                        top = paddingValues.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding(),
+                        start = 16.dp,
+                        end = 16.dp,
+                    )
+                ) {
+                    ExerciseCategoryGrid(
+                        categories = categories,
+                        selectedIds = selectedIds,
+                        onCategoryClick = { category ->
+                            onCategoryClick(category)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 24.dp),
+                    )
+        //            DZamOutlinedButton(
+        //                text = "세부 운동 추가하기",
+        //                onClick = {},
+        //                modifier = Modifier.fillMaxWidth(),
+        //                enabled = selectedIds.isNotEmpty(),
+        //                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
+        //            )
+        //            Spacer(Modifier.height(32.dp))
+                    DZamButton(
+                        text = "완료",
+                        onClick = onCompleteClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(24.dp))
+                }
+            }
         }
     }
 }
@@ -209,7 +235,8 @@ private fun ExerciseCategoryGridItem(
 fun ExerciseCategorySelectScreenPreview() {
     FitzamTheme {
         ExerciseCategorySelectScreen(
-            categories = listOf(
+            uiState = ExerciseCategorySelectUiState.Success(
+                listOf(
                 ExerciseCategory(
                     id = 0,
                     name = "가슴",
@@ -238,7 +265,36 @@ fun ExerciseCategorySelectScreenPreview() {
                     colorHex = 0xFF65A30D,
                     colorDarkHex = 0xFFA3E635
                 ),
+                )
             ),
+            selectedIds = emptySet(),
+            onBackClick = {},
+            onCategoryClick = {},
+            onCompleteClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ExerciseCategorySelectScreenLoadingPreview() {
+    FitzamTheme {
+        ExerciseCategorySelectScreen(
+            uiState = ExerciseCategorySelectUiState.Loading,
+            selectedIds = emptySet(),
+            onBackClick = {},
+            onCategoryClick = {},
+            onCompleteClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ExerciseCategorySelectScreenFailedPreview() {
+    FitzamTheme {
+        ExerciseCategorySelectScreen(
+            uiState = ExerciseCategorySelectUiState.Failed,
             selectedIds = emptySet(),
             onBackClick = {},
             onCategoryClick = {},
