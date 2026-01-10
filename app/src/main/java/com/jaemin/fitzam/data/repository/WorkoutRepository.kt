@@ -9,7 +9,6 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
 import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
-import com.jaemin.fitzam.data.repository.ImageUrlRepository
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,7 +43,7 @@ class WorkoutRepository @Inject constructor(
                 }
                 workout.toModel(
                     exerciseCategories = exerciseCategories.map { category ->
-                        category.toModel(imageUrlRepository.getImageUrl(category.imagePath))
+                        category.toModel()
                     },
                 )
             }
@@ -66,11 +65,8 @@ class WorkoutRepository @Inject constructor(
                             val categoryEntity = exerciseCategoryDao.getExerciseCategoryEntityById(
                                 exerciseEntity.categoryId,
                             )
-                            val category = categoryEntity.toModel(
-                                imageUrlRepository.getImageUrl(categoryEntity.imagePath),
-                            )
                             val exercise = exerciseEntity.toModel(
-                                category = category,
+                                category = categoryEntity.toModel(),
                                 imageUrl = imageUrlRepository.getImageUrl(exerciseEntity.imagePath),
                             )
                             workoutExercise.toModel(

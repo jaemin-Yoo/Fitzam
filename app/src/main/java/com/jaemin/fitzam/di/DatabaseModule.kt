@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ImageUrlCacheDao
@@ -55,49 +56,49 @@ object DatabaseModule {
                             listOf(
                                 ExerciseCategoryEntity(
                                     name = "가슴",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/chest.png",
+                                    imageDrawableRes = R.drawable.img_chest,
                                     colorHex = 0xFF2563EB,
                                     colorDarkHex = 0xFF2563EB,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "등",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/back.png",
+                                    imageDrawableRes = R.drawable.img_back,
                                     colorHex = 0xFF06B6D4,
                                     colorDarkHex = 0xFF06B6D4,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "어깨",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/shoulder.png",
+                                    imageDrawableRes = R.drawable.img_shoulder,
                                     colorHex = 0xFFD81DAF,
                                     colorDarkHex = 0xFFD81DAF,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "삼두",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/triceps.png",
+                                    imageDrawableRes = R.drawable.img_triceps,
                                     colorHex = 0xFF3CAD36,
                                     colorDarkHex = 0xFF3CAD36,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "이두",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/biceps.png",
+                                    imageDrawableRes = R.drawable.img_biceps,
                                     colorHex = 0xFFFACC15,
                                     colorDarkHex = 0xFFFACC15,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "하체",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/lower_body.png",
+                                    imageDrawableRes = R.drawable.img_lower_body,
                                     colorHex = 0xFFF97316,
                                     colorDarkHex = 0xFFF97316,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "복근",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/abs.png",
+                                    imageDrawableRes = R.drawable.img_abs,
                                     colorHex = 0xFF8B5CF6,
                                     colorDarkHex = 0xFF8B5CF6,
                                 ),
                                 ExerciseCategoryEntity(
                                     name = "유산소",
-                                    imagePath = "${EXERCISE_CATEGORY_PATH}/aerobic.png",
+                                    imageDrawableRes = R.drawable.img_aerobic,
                                     colorHex = 0xFF64748B,
                                     colorDarkHex = 0xFF64748B,
                                 ),
