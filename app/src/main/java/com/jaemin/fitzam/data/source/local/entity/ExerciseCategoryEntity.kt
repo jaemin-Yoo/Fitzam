@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.data.source.local.entity
 
+import androidx.annotation.DrawableRes
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -8,7 +9,7 @@ data class ExerciseCategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val imagePath: String,
+    @DrawableRes val imageDrawableRes: Int,
     val colorHex: Long,
     val colorDarkHex: Long,
 )

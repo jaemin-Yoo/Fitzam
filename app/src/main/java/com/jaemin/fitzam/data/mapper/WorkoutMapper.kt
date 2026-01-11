@@ -19,11 +19,11 @@ fun WorkoutEntity.toModel(exerciseCategories: List<ExerciseCategory>): Workout {
     )
 }
 
-fun ExerciseCategoryEntity.toModel(imageUrl: String): ExerciseCategory {
+fun ExerciseCategoryEntity.toModel(): ExerciseCategory {
     return ExerciseCategory(
         id = id,
         name = name,
-        imageUrl = imageUrl,
+        imageDrawableRes = imageDrawableRes,
         colorHex = colorHex,
         colorDarkHex = colorDarkHex,
     )

@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.ui.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,15 +31,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.common.DZamButton
@@ -54,7 +53,7 @@ fun ExerciseCategorySelectScreen(
     onCompleteClick: () -> Unit,
     viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
-    val categories by viewModel.exerciseCategories.collectAsStateWithLifecycle()
+    val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedDate) {
@@ -62,7 +61,7 @@ fun ExerciseCategorySelectScreen(
     }
 
     ExerciseCategorySelectScreen(
-        categories = categories,
+        uiState = uiState,
         selectedIds = selectedIds,
         onBackClick = onBackClick,
         onCategoryClick = { category ->
@@ -78,7 +77,7 @@ fun ExerciseCategorySelectScreen(
 
 @Composable
 fun ExerciseCategorySelectScreen(
-    categories: List<ExerciseCategory>,
+    uiState: ExerciseCategorySelectUiState,
     selectedIds: Set<Long>,
     onBackClick: () -> Unit,
     onCategoryClick: (ExerciseCategory) -> Unit,
@@ -96,38 +95,63 @@ fun ExerciseCategorySelectScreen(
             )
         },
     ) { paddingValues ->
-        Column(
-            modifier = Modifier.padding(
-                top = paddingValues.calculateTopPadding(),
-                bottom = paddingValues.calculateBottomPadding(),
-                start = 16.dp,
-                end = 16.dp,
-            )
-        ) {
-            ExerciseCategoryGrid(
-                categories = categories,
-                selectedIds = selectedIds,
-                onCategoryClick = { category ->
-                    onCategoryClick(category)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 24.dp),
-            )
-//            DZamOutlinedButton(
-//                text = "세부 운동 추가하기",
-//                onClick = {},
-//                modifier = Modifier.fillMaxWidth(),
-//                enabled = selectedIds.isNotEmpty(),
-//                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-//            )
-//            Spacer(Modifier.height(32.dp))
-            DZamButton(
-                text = "완료",
-                onClick = onCompleteClick,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(24.dp))
+        when (uiState) {
+            ExerciseCategorySelectUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            ExerciseCategorySelectUiState.Failed -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = "로딩에 실패했습니다. 다시 시도해 주세요.")
+                }
+            }
+            is ExerciseCategorySelectUiState.Success -> {
+                val categories = uiState.exerciseCategories
+                Column(
+                    modifier = Modifier.padding(
+                        top = paddingValues.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding(),
+                        start = 16.dp,
+                        end = 16.dp,
+                    )
+                ) {
+                    ExerciseCategoryGrid(
+                        categories = categories,
+                        selectedIds = selectedIds,
+                        onCategoryClick = { category ->
+                            onCategoryClick(category)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 24.dp),
+                    )
+        //            DZamOutlinedButton(
+        //                text = "세부 운동 추가하기",
+        //                onClick = {},
+        //                modifier = Modifier.fillMaxWidth(),
+        //                enabled = selectedIds.isNotEmpty(),
+        //                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
+        //            )
+        //            Spacer(Modifier.height(32.dp))
+                    DZamButton(
+                        text = "완료",
+                        onClick = onCompleteClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(24.dp))
+                }
+            }
         }
     }
 }
@@ -183,11 +207,8 @@ private fun ExerciseCategoryGridItem(
                 .background(Color.White)
                 .clickable(onClick = onClick),
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(category.imageUrl)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
+            Image(
+                painter = painterResource(category.imageDrawableRes),
                 contentDescription = category.name,
                 modifier = Modifier
                     .fillMaxSize()
@@ -209,36 +230,66 @@ private fun ExerciseCategoryGridItem(
 fun ExerciseCategorySelectScreenPreview() {
     FitzamTheme {
         ExerciseCategorySelectScreen(
-            categories = listOf(
+            uiState = ExerciseCategorySelectUiState.Success(
+                listOf(
                 ExerciseCategory(
                     id = 0,
                     name = "가슴",
-                    imageUrl = "",
+                    imageDrawableRes = R.drawable.img_chest,
                     colorHex = 0xFF1D4ED8,
                     colorDarkHex = 0xFF2563EB
                 ),
                 ExerciseCategory(
                     id = 1,
                     name = "등",
-                    imageUrl = "",
+                    imageDrawableRes = R.drawable.img_back,
                     colorHex = 0xFF0891B2,
                     colorDarkHex = 0xFF14B8A6
                 ),
                 ExerciseCategory(
                     id = 2,
                     name = "어깨",
-                    imageUrl = "",
+                    imageDrawableRes = R.drawable.img_shoulder,
                     colorHex = 0xFF15803D,
                     colorDarkHex = 0xFF22C55E
                 ),
                 ExerciseCategory(
                     id = 3,
                     name = "삼두",
-                    imageUrl = "",
+                    imageDrawableRes = R.drawable.img_triceps,
                     colorHex = 0xFF65A30D,
                     colorDarkHex = 0xFFA3E635
                 ),
+                )
             ),
+            selectedIds = emptySet(),
+            onBackClick = {},
+            onCategoryClick = {},
+            onCompleteClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ExerciseCategorySelectScreenLoadingPreview() {
+    FitzamTheme {
+        ExerciseCategorySelectScreen(
+            uiState = ExerciseCategorySelectUiState.Loading,
+            selectedIds = emptySet(),
+            onBackClick = {},
+            onCategoryClick = {},
+            onCompleteClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ExerciseCategorySelectScreenFailedPreview() {
+    FitzamTheme {
+        ExerciseCategorySelectScreen(
+            uiState = ExerciseCategorySelectUiState.Failed,
             selectedIds = emptySet(),
             onBackClick = {},
             onCategoryClick = {},
