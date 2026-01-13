@@ -34,7 +34,6 @@ fun FitzamApp() {
                 ExerciseCategorySelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     onBackClick = { backStack.removeLastOrNull() },
-                    onCategoryClick = {},
                     onCompleteClick = { backStack.removeLastOrNull() },
                 )
             }
