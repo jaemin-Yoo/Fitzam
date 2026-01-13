@@ -16,9 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,8 +30,10 @@ import com.jaemin.fitzam.ui.common.CalendarDayItem
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.common.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.common.FitzamCalendar
+import com.jaemin.fitzam.ui.common.FitzamCalendarState
 import com.jaemin.fitzam.ui.common.FitzamCalendarDayList
 import com.jaemin.fitzam.ui.common.FitzamFloatingActionButton
+import com.jaemin.fitzam.ui.common.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -46,16 +45,18 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
-    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+    val calendarState = rememberFitzamCalendarState()
 
-    LaunchedEffect(selectedDate) {
-        viewModel.loadWorkoutsForDate(selectedDate)
+    LaunchedEffect(calendarState.displayedYearMonth) {
+        viewModel.updateDisplayedYearMonth(calendarState.displayedYearMonth)
     }
 
     HomeScreen(
-        selectedDate = selectedDate,
-        onDateSelected = { selectedDate = it },
         workouts = workouts,
+        calendarState = calendarState,
+        selectedDate = selectedDate,
+        onDateSelected = viewModel::updateSelectedDate,
         onAddOrEditWorkout = onAddOrEditWorkout,
     )
 }
@@ -63,9 +64,10 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    workouts: List<Workout>,
+    calendarState: FitzamCalendarState,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
-    workouts: List<Workout>,
     onAddOrEditWorkout: (LocalDate) -> Unit,
 ) {
     Scaffold(
@@ -97,6 +99,7 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             FitzamCalendar(
+                state = calendarState,
                 selectedDate = selectedDate,
                 onDateSelected = onDateSelected,
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -169,8 +172,10 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     FitzamTheme {
+        val calendarState = rememberFitzamCalendarState()
         HomeScreen(
             selectedDate = LocalDate.now(),
+            calendarState = calendarState,
             onDateSelected = {},
             workouts = emptyList(),
             onAddOrEditWorkout = {},

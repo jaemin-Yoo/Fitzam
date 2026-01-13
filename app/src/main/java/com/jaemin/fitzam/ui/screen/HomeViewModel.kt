@@ -22,12 +22,32 @@ class HomeViewModel @Inject constructor(
     val workouts = _workouts.asStateFlow()
     private var workoutsJob: Job? = null
 
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    val selectedDate = _selectedDate.asStateFlow()
+    private var currentYearMonth: YearMonth = YearMonth.from(_selectedDate.value)
+
     init {
-        loadWorkoutsForDate(LocalDate.now())
+        loadWorkoutsForMonth(currentYearMonth)
     }
 
-    fun loadWorkoutsForDate(date: LocalDate) {
-        val yearMonth = YearMonth.from(date)
+    fun updateSelectedDate(date: LocalDate) {
+        if (date == _selectedDate.value) {
+            return
+        }
+
+        _selectedDate.value = date
+    }
+
+    fun updateDisplayedYearMonth(yearMonth: YearMonth) {
+        if (yearMonth == currentYearMonth) {
+            return
+        }
+
+        currentYearMonth = yearMonth
+        loadWorkoutsForMonth(yearMonth)
+    }
+
+    private fun loadWorkoutsForMonth(yearMonth: YearMonth) {
         workoutsJob?.cancel()
         workoutsJob = viewModelScope.launch(Dispatchers.IO) {
             repository.getWorkoutsForMonth(yearMonth).collect { workouts ->

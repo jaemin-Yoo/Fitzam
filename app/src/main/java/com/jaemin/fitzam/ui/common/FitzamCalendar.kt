@@ -36,8 +36,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -72,8 +78,43 @@ data class CalendarDayItem(
     val color: Color,
 )
 
+@Stable
+class FitzamCalendarState internal constructor(
+    initialDisplayedYearMonth: YearMonth = YearMonth.now(),
+) {
+    var displayedYearMonth by mutableStateOf(initialDisplayedYearMonth)
+        internal set
+
+    companion object {
+        val Saver = listSaver<FitzamCalendarState, String>(
+            save = { listOf(it.displayedYearMonth.toString()) },
+            restore = { restored ->
+                val displayedYearMonth = YearMonth.parse(restored[0])
+                FitzamCalendarState(
+                    initialDisplayedYearMonth = displayedYearMonth,
+                )
+            },
+        )
+    }
+}
+
+@Composable
+fun rememberFitzamCalendarState(
+    initialDisplayedYearMonth: YearMonth = YearMonth.now(),
+): FitzamCalendarState {
+    return rememberSaveable(
+        initialDisplayedYearMonth,
+        saver = FitzamCalendarState.Saver,
+    ) {
+        FitzamCalendarState(
+            initialDisplayedYearMonth = initialDisplayedYearMonth,
+        )
+    }
+}
+
 @Composable
 fun FitzamCalendar(
+    state: FitzamCalendarState,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
@@ -94,8 +135,15 @@ fun FitzamCalendar(
         if (selectedPage != pagerState.currentPage) {
             val currentYearMonth = pageToYearMonth(pagerState.currentPage)
             val newSelectedDate = currentYearMonth.atDay(1)
+            state.displayedYearMonth = currentYearMonth
             onDateSelected(newSelectedDate)
+        } else {
+            state.displayedYearMonth = pageToYearMonth(pagerState.currentPage)
         }
+    }
+
+    LaunchedEffect(selectedYearMonth) {
+        state.displayedYearMonth = selectedYearMonth
     }
 
     /**
@@ -111,7 +159,7 @@ fun FitzamCalendar(
     Surface(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
             CalendarHeader(
-                yearMonth = pageToYearMonth(pagerState.currentPage),
+                yearMonth = state.displayedYearMonth,
                 onPreviousMonthClick = {
                     if (pagerState.currentPage > 0) {
                         coroutineScope.launch {
@@ -378,9 +426,11 @@ private fun FitzamCalendarPreview() {
                 .background(Color.White)
                 .padding(16.dp)
         ) {
+            val calendarState = rememberFitzamCalendarState()
             FitzamCalendar(
                 selectedDate = LocalDate.now(),
                 onDateSelected = {},
+                state = calendarState,
                 dateContent = { date ->
                     if (date == LocalDate.now()) {
                         FitzamCalendarDayList(
