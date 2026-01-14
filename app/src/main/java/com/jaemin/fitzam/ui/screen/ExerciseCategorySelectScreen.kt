@@ -49,25 +49,22 @@ import java.time.LocalDate
 fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
     onBackClick: () -> Unit,
-    onCategoryClick: (ExerciseCategory) -> Unit,
     onCompleteClick: () -> Unit,
     viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
-    val selectedIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
+    val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
 
+    // 선택된 운동 유형 로딩
     LaunchedEffect(selectedDate) {
         viewModel.loadSelectedCategories(selectedDate)
     }
 
     ExerciseCategorySelectScreen(
         uiState = uiState,
-        selectedIds = selectedIds,
+        selectedCategoryIds = selectedCategoryIds,
         onBackClick = onBackClick,
-        onCategoryClick = { category ->
-            viewModel.toggleCategory(category.id)
-            onCategoryClick(category)
-        },
+        onCategoryClick = { category -> viewModel.toggleCategory(category.id) },
         onCompleteClick = {
             viewModel.applyWorkoutChanges(selectedDate)
             onCompleteClick()
@@ -78,7 +75,7 @@ fun ExerciseCategorySelectScreen(
 @Composable
 fun ExerciseCategorySelectScreen(
     uiState: ExerciseCategorySelectUiState,
-    selectedIds: Set<Long>,
+    selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
     onCategoryClick: (ExerciseCategory) -> Unit,
     onCompleteClick: () -> Unit,
@@ -128,7 +125,7 @@ fun ExerciseCategorySelectScreen(
                 ) {
                     ExerciseCategoryGrid(
                         categories = categories,
-                        selectedIds = selectedIds,
+                        selectedIds = selectedCategoryIds,
                         onCategoryClick = { category ->
                             onCategoryClick(category)
                         },
@@ -136,14 +133,7 @@ fun ExerciseCategorySelectScreen(
                             .weight(1f)
                             .padding(vertical = 24.dp),
                     )
-        //            DZamOutlinedButton(
-        //                text = "세부 운동 추가하기",
-        //                onClick = {},
-        //                modifier = Modifier.fillMaxWidth(),
-        //                enabled = selectedIds.isNotEmpty(),
-        //                trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-        //            )
-        //            Spacer(Modifier.height(32.dp))
+
                     DZamButton(
                         text = "완료",
                         onClick = onCompleteClick,
@@ -262,7 +252,7 @@ fun ExerciseCategorySelectScreenPreview() {
                 ),
                 )
             ),
-            selectedIds = emptySet(),
+            selectedCategoryIds = emptySet(),
             onBackClick = {},
             onCategoryClick = {},
             onCompleteClick = {},
@@ -276,7 +266,7 @@ fun ExerciseCategorySelectScreenLoadingPreview() {
     FitzamTheme {
         ExerciseCategorySelectScreen(
             uiState = ExerciseCategorySelectUiState.Loading,
-            selectedIds = emptySet(),
+            selectedCategoryIds = emptySet(),
             onBackClick = {},
             onCategoryClick = {},
             onCompleteClick = {},
@@ -290,7 +280,7 @@ fun ExerciseCategorySelectScreenFailedPreview() {
     FitzamTheme {
         ExerciseCategorySelectScreen(
             uiState = ExerciseCategorySelectUiState.Failed,
-            selectedIds = emptySet(),
+            selectedCategoryIds = emptySet(),
             onBackClick = {},
             onCategoryClick = {},
             onCompleteClick = {},

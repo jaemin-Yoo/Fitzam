@@ -5,8 +5,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.jaemin.fitzam.ui.screen.HomeScreen
-import com.jaemin.fitzam.ui.screen.ExerciseCategorySelectScreen
+import com.jaemin.fitzam.ui.screen.home.HomeScreen
+import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectScreen
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
@@ -34,7 +34,6 @@ fun FitzamApp() {
                 ExerciseCategorySelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     onBackClick = { backStack.removeLastOrNull() },
-                    onCategoryClick = {},
                     onCompleteClick = { backStack.removeLastOrNull() },
                 )
             }
