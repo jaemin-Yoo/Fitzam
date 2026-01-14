@@ -54,7 +54,7 @@ fun ExerciseCategorySelectScreen(
     viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
-    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedDate) {
         viewModel.loadSelectedCategories(selectedDate)
@@ -65,7 +65,7 @@ fun ExerciseCategorySelectScreen(
         selectedIds = selectedIds,
         onBackClick = onBackClick,
         onCategoryClick = { category ->
-            viewModel.togglePart(category.id)
+            viewModel.toggleCategory(category.id)
             onCategoryClick(category)
         },
         onCompleteClick = {
