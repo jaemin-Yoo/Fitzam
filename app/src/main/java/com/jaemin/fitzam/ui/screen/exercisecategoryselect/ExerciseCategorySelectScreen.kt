@@ -222,65 +222,37 @@ fun ExerciseCategorySelectScreenPreview() {
         ExerciseCategorySelectScreen(
             uiState = ExerciseCategorySelectUiState.Success(
                 listOf(
-                ExerciseCategory(
-                    id = 0,
-                    name = "가슴",
-                    imageDrawableRes = R.drawable.img_chest,
-                    colorHex = 0xFF1D4ED8,
-                    colorDarkHex = 0xFF2563EB
-                ),
-                ExerciseCategory(
-                    id = 1,
-                    name = "등",
-                    imageDrawableRes = R.drawable.img_back,
-                    colorHex = 0xFF0891B2,
-                    colorDarkHex = 0xFF14B8A6
-                ),
-                ExerciseCategory(
-                    id = 2,
-                    name = "어깨",
-                    imageDrawableRes = R.drawable.img_shoulder,
-                    colorHex = 0xFF15803D,
-                    colorDarkHex = 0xFF22C55E
-                ),
-                ExerciseCategory(
-                    id = 3,
-                    name = "삼두",
-                    imageDrawableRes = R.drawable.img_triceps,
-                    colorHex = 0xFF65A30D,
-                    colorDarkHex = 0xFFA3E635
-                ),
+                    ExerciseCategory(
+                        id = 0,
+                        name = "가슴",
+                        imageDrawableRes = R.drawable.img_chest,
+                        colorHex = 0xFF1D4ED8,
+                        colorDarkHex = 0xFF2563EB
+                    ),
+                    ExerciseCategory(
+                        id = 1,
+                        name = "등",
+                        imageDrawableRes = R.drawable.img_back,
+                        colorHex = 0xFF0891B2,
+                        colorDarkHex = 0xFF14B8A6
+                    ),
+                    ExerciseCategory(
+                        id = 2,
+                        name = "어깨",
+                        imageDrawableRes = R.drawable.img_shoulder,
+                        colorHex = 0xFF15803D,
+                        colorDarkHex = 0xFF22C55E
+                    ),
+                    ExerciseCategory(
+                        id = 3,
+                        name = "삼두",
+                        imageDrawableRes = R.drawable.img_triceps,
+                        colorHex = 0xFF65A30D,
+                        colorDarkHex = 0xFFA3E635
+                    ),
                 )
             ),
-            selectedCategoryIds = emptySet(),
-            onBackClick = {},
-            onCategoryClick = {},
-            onCompleteClick = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-fun ExerciseCategorySelectScreenLoadingPreview() {
-    FitzamTheme {
-        ExerciseCategorySelectScreen(
-            uiState = ExerciseCategorySelectUiState.Loading,
-            selectedCategoryIds = emptySet(),
-            onBackClick = {},
-            onCategoryClick = {},
-            onCompleteClick = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-fun ExerciseCategorySelectScreenFailedPreview() {
-    FitzamTheme {
-        ExerciseCategorySelectScreen(
-            uiState = ExerciseCategorySelectUiState.Failed,
-            selectedCategoryIds = emptySet(),
+            selectedCategoryIds = setOf(1, 2),
             onBackClick = {},
             onCategoryClick = {},
             onCompleteClick = {},
