@@ -69,7 +69,7 @@ fun ExerciseCategorySelectScreen(
             onCategoryClick(category)
         },
         onCompleteClick = {
-            viewModel.complete(selectedDate)
+            viewModel.applyWorkoutChanges(selectedDate)
             onCompleteClick()
         },
     )

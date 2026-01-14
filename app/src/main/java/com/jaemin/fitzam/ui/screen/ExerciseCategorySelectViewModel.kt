@@ -41,7 +41,7 @@ class ExerciseCategorySelectViewModel @Inject constructor(
 
     fun loadSelectedCategories(date: LocalDate) {
         viewModelScope.launch(Dispatchers.IO) {
-            _selectedCategoryIds.value = workoutRepository.getSelectedCategoryIds(date).toSet()
+            _selectedCategoryIds.value = exerciseCategoryRepository.getExerciseCategoryIds(date).toSet()
         }
     }
 
@@ -53,16 +53,12 @@ class ExerciseCategorySelectViewModel @Inject constructor(
         }
     }
 
-    fun complete(date: LocalDate) {
+    fun applyWorkoutChanges(date: LocalDate) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (_selectedCategoryIds.value.isEmpty()) {
-                workoutRepository.deleteWorkout(date)
-            } else {
-                workoutRepository.upsertWorkout(
-                    date = date,
-                    categoryIds = _selectedCategoryIds.value.toList(),
-                )
-            }
+            workoutRepository.applyWorkoutChanges(
+                categoryIds = _selectedCategoryIds.value.toList(),
+                date = date,
+            )
         }
     }
 }

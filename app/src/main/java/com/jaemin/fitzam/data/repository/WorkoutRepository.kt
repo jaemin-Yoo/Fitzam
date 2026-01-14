@@ -80,11 +80,26 @@ class WorkoutRepository @Inject constructor(
             }
     }
 
-    fun getExerciseCategoryIds(date: LocalDate): List<Long> {
-        return workoutCategoryDao.getExerciseCategoryIds(date.toString())
+    suspend fun applyWorkoutChanges(
+        categoryIds: List<Long>,
+        date: LocalDate,
+    ) {
+        if (categoryIds.isEmpty()) {
+            deleteWorkout(date)
+        } else {
+            upsertWorkout(
+                date = date,
+                categoryIds = categoryIds,
+            )
+        }
     }
 
-    suspend fun upsertWorkout(date: LocalDate, categoryIds: List<Long>) {
+    private suspend fun deleteWorkout(date: LocalDate) {
+        workoutCategoryDao.deleteByDate(date.toString())
+        workoutDao.deleteByDate(date.toString())
+    }
+
+    private suspend fun upsertWorkout(date: LocalDate, categoryIds: List<Long>) {
         val workout = WorkoutEntity(
             date = date.toString(),
         )
@@ -100,14 +115,4 @@ class WorkoutRepository @Inject constructor(
             workoutCategoryDao.insert(workoutCategory)
         }
     }
-
-    suspend fun deleteWorkout(date: LocalDate) {
-        workoutCategoryDao.deleteByDate(date.toString())
-        workoutDao.deleteByDate(date.toString())
-    }
-
-    suspend fun getSelectedCategoryIds(date: LocalDate): List<Long> {
-        return workoutCategoryDao.getExerciseCategoryIds(date.toString())
-    }
 }
-
