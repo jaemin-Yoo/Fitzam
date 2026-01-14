@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui.screen
+﻿package com.jaemin.fitzam.ui.screen.exercisecategoryselect
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
