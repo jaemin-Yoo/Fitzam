@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -30,11 +31,13 @@ class ExerciseCategorySelectViewModel @Inject constructor(
                 onFailure = { ExerciseCategorySelectUiState.Failed },
             )
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = ExerciseCategorySelectUiState.Loading,
-    )
+    }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = ExerciseCategorySelectUiState.Loading,
+        )
 
     private val _selectedCategoryIds = MutableStateFlow<Set<Long>>(emptySet())
     val selectedCategoryIds = _selectedCategoryIds.asStateFlow()
