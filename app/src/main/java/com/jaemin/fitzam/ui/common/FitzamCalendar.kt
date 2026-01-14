@@ -115,7 +115,7 @@ class FitzamCalendarState(
 fun FitzamCalendar(
     state: FitzamCalendarState,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(8.dp),
+    shape: Shape = RoundedCornerShape(16.dp),
     dayContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val displayedPage = yearMonthToPage(state.displayedYearMonth)
