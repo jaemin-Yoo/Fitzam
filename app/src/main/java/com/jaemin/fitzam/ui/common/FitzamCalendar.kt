@@ -36,13 +36,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -60,58 +67,96 @@ import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-private const val MAX_CELL_LIST_ITEM_COUNT = 3
-private const val MIN_WEEK_COUNT = 4
-private const val MAX_WEEK_COUNT = 6
-private val GRID_SPACING = 8.dp
-private val GRID_BORDER_PADDING = 2.dp
-private val CALENDAR_HEIGHT = 400.dp
+@Composable
+fun rememberFitzamCalendarState(
+    initialSelectedDate: LocalDate = LocalDate.now(),
+    initialDisplayedYearMonth: YearMonth = YearMonth.now(),
+): FitzamCalendarState {
+    return rememberSaveable(saver = FitzamCalendarState.Saver) {
+        FitzamCalendarState(
+            initialSelectedDate = initialSelectedDate,
+            initialDisplayedYearMonth = initialDisplayedYearMonth,
+        )
+    }
+}
 
-data class CalendarDayItem(
-    val text: String,
-    val color: Color,
-)
+@Stable
+class FitzamCalendarState(
+    initialSelectedDate: LocalDate,
+    initialDisplayedYearMonth: YearMonth,
+) {
+    var selectedDate by mutableStateOf(initialSelectedDate)
+        internal set
+
+    var displayedYearMonth by mutableStateOf(initialDisplayedYearMonth)
+        internal set
+
+    companion object {
+        val Saver = listSaver<FitzamCalendarState, String>(
+            save = {
+                listOf(
+                    it.selectedDate.toString(),
+                    it.displayedYearMonth.toString()
+                )
+            },
+            restore = { restored ->
+                val selectedDate = LocalDate.parse(restored[0])
+                val displayedYearMonth = YearMonth.parse(restored[1])
+                FitzamCalendarState(
+                    initialSelectedDate = selectedDate,
+                    initialDisplayedYearMonth = displayedYearMonth,
+                )
+            },
+        )
+    }
+}
 
 @Composable
 fun FitzamCalendar(
-    selectedDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit,
+    state: FitzamCalendarState,
     modifier: Modifier = Modifier,
-    dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
+    shape: Shape = RoundedCornerShape(8.dp),
+    dayContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
-    val selectedYearMonth = YearMonth.from(selectedDate)
-    val selectedPage = remember(selectedYearMonth) { yearMonthToPage(selectedYearMonth) }
+    val displayedPage = yearMonthToPage(state.displayedYearMonth)
     val pagerState = rememberPagerState(
-        initialPage = selectedPage,
+        initialPage = displayedPage,
         pageCount = { totalMonths },
     )
+
+    /**
+     * 날짜 선택으로 캘린더 스와이프
+     */
+    val selectedYearMonth = YearMonth.from(state.selectedDate)
+    LaunchedEffect(selectedYearMonth) {
+        val selectedPage = yearMonthToPage(selectedYearMonth)
+        if (selectedPage != pagerState.currentPage) {
+            pagerState.animateScrollToPage(selectedPage)
+        }
+    }
 
     /**
      * 캘린더 스와이프 (월 이동)
      * 날짜 선택으로 스와이프가 된 경우가 아니면 1일 선택
      */
     LaunchedEffect(pagerState.currentPage) {
-        if (selectedPage != pagerState.currentPage) {
-            val currentYearMonth = pageToYearMonth(pagerState.currentPage)
-            val newSelectedDate = currentYearMonth.atDay(1)
-            onDateSelected(newSelectedDate)
-        }
-    }
+        val currentYearMonth = pageToYearMonth(pagerState.currentPage)
+        state.displayedYearMonth = currentYearMonth
 
-    /**
-     * 날짜 선택으로 캘린더 스와이프
-     */
-    LaunchedEffect(selectedPage) {
-        if (selectedPage != pagerState.currentPage) {
-            pagerState.animateScrollToPage(selectedPage)
+        if (selectedYearMonth != currentYearMonth) {
+            val newSelectedDate = currentYearMonth.atDay(1)
+            state.selectedDate = newSelectedDate
         }
     }
 
     val coroutineScope = rememberCoroutineScope()
-    Surface(modifier = modifier) {
+    Surface(
+        modifier = modifier,
+        shape = shape,
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             CalendarHeader(
-                yearMonth = pageToYearMonth(pagerState.currentPage),
+                yearMonth = state.displayedYearMonth,
                 onPreviousMonthClick = {
                     if (pagerState.currentPage > 0) {
                         coroutineScope.launch {
@@ -140,59 +185,9 @@ fun FitzamCalendar(
                 val yearMonth = pageToYearMonth(page)
                 CalendarContent(
                     yearMonth = yearMonth,
-                    selectedDate = selectedDate,
-                    onDateSelected = onDateSelected,
-                    dateContent = { dateContent(it) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun FitzamCalendarDayList(
-    itemList: List<CalendarDayItem>,
-) {
-    if (itemList.size <= MAX_CELL_LIST_ITEM_COUNT) {
-        // 아이템이 3개 이하인 경우, 리스트 형태로 표시
-        itemList.forEach { item ->
-            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .padding(vertical = 2.dp)
-                        .fillMaxHeight()
-                        .background(
-                            color = item.color,
-                            shape = RoundedCornerShape(16.dp),
-                        ),
-                )
-                Spacer(Modifier.width(2.dp))
-                Text(
-                    text = item.text,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-    } else {
-        // "아이템이 4개 이상인 경우, 원 형태로 표시"
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            contentPadding = PaddingValues(2.dp),
-        ) {
-            items(
-                count = itemList.size,
-                key = { index -> itemList[index].text }
-            ) { index ->
-                val item = itemList[index]
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(CircleShape)
-                        .background(item.color),
+                    selectedDate = state.selectedDate,
+                    onDateSelected = { state.selectedDate = it },
+                    dayContent = dayContent,
                 )
             }
         }
@@ -262,7 +257,7 @@ private fun CalendarContent(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    dateContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
+    dayContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val monthDays = remember(yearMonth) { getCalendarMonthDays(yearMonth) }
 
@@ -289,7 +284,7 @@ private fun CalendarContent(
                 isSelected = day.date == selectedDate,
                 isToday = day.date == currentDate,
                 onClick = { onDateSelected(it) },
-                content = { dateContent(it) }
+                content = { dayContent(it) }
             )
         }
     }
@@ -369,6 +364,56 @@ private fun pageToYearMonth(page: Int): YearMonth {
     return startMonth.plusMonths(safePage.toLong())
 }
 
+@Composable
+fun FitzamCalendarDayList(
+    itemList: List<CalendarDayItem>,
+) {
+    if (itemList.size <= MAX_CELL_LIST_ITEM_COUNT) {
+        // 아이템이 3개 이하인 경우, 리스트 형태로 표시
+        itemList.forEach { item ->
+            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .padding(vertical = 2.dp)
+                        .fillMaxHeight()
+                        .background(
+                            color = item.color,
+                            shape = RoundedCornerShape(16.dp),
+                        ),
+                )
+                Spacer(Modifier.width(2.dp))
+                Text(
+                    text = item.text,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    } else {
+        // "아이템이 4개 이상인 경우, 원 형태로 표시"
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(2.dp),
+        ) {
+            items(
+                count = itemList.size,
+                key = { index -> itemList[index].text }
+            ) { index ->
+                val item = itemList[index]
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(CircleShape)
+                        .background(item.color),
+                )
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun FitzamCalendarPreview() {
@@ -378,10 +423,10 @@ private fun FitzamCalendarPreview() {
                 .background(Color.White)
                 .padding(16.dp)
         ) {
+            val calendarState = rememberFitzamCalendarState()
             FitzamCalendar(
-                selectedDate = LocalDate.now(),
-                onDateSelected = {},
-                dateContent = { date ->
+                state = calendarState,
+                dayContent = { date ->
                     if (date == LocalDate.now()) {
                         FitzamCalendarDayList(
                             itemList = listOf(
@@ -426,3 +471,15 @@ private fun FitzamCalendarPreview() {
         }
     }
 }
+
+private const val MAX_CELL_LIST_ITEM_COUNT = 3
+private const val MIN_WEEK_COUNT = 4
+private const val MAX_WEEK_COUNT = 6
+private val GRID_SPACING = 8.dp
+private val GRID_BORDER_PADDING = 2.dp
+private val CALENDAR_HEIGHT = 400.dp
+
+data class CalendarDayItem(
+    val text: String,
+    val color: Color,
+)

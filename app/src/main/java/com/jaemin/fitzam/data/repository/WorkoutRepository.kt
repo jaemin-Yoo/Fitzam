@@ -31,7 +31,7 @@ class WorkoutRepository @Inject constructor(
     private val imageUrlRepository: ImageUrlRepository,
 ) {
 
-    fun getWorkoutsForMonth(yearMonth: YearMonth): Flow<List<Workout>> {
+    fun getWorkoutsForYearMonth(yearMonth: YearMonth): Flow<List<Workout>> {
         val startDate = yearMonth.atDay(1).toString()
         val endDate = yearMonth.atEndOfMonth().toString()
 

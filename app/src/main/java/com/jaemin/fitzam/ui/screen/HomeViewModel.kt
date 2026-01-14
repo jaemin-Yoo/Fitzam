@@ -10,7 +10,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -22,15 +21,10 @@ class HomeViewModel @Inject constructor(
     val workouts = _workouts.asStateFlow()
     private var workoutsJob: Job? = null
 
-    init {
-        loadWorkoutsForDate(LocalDate.now())
-    }
-
-    fun loadWorkoutsForDate(date: LocalDate) {
-        val yearMonth = YearMonth.from(date)
+    fun loadWorkoutsForYearMonth(yearMonth: YearMonth) {
         workoutsJob?.cancel()
         workoutsJob = viewModelScope.launch(Dispatchers.IO) {
-            repository.getWorkoutsForMonth(yearMonth).collect { workouts ->
+            repository.getWorkoutsForYearMonth(yearMonth).collect { workouts ->
                 _workouts.value = workouts
             }
         }

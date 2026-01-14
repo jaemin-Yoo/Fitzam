@@ -16,9 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,7 +31,9 @@ import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.common.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.common.FitzamCalendar
 import com.jaemin.fitzam.ui.common.FitzamCalendarDayList
+import com.jaemin.fitzam.ui.common.FitzamCalendarState
 import com.jaemin.fitzam.ui.common.FitzamFloatingActionButton
+import com.jaemin.fitzam.ui.common.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -46,16 +45,16 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
-    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
+    val calendarState = rememberFitzamCalendarState()
 
-    LaunchedEffect(selectedDate) {
-        viewModel.loadWorkoutsForDate(selectedDate)
+    // 캘린더 월 이동 시 운동 기록 가져오기
+    LaunchedEffect(calendarState.displayedYearMonth) {
+        viewModel.loadWorkoutsForYearMonth(calendarState.displayedYearMonth)
     }
 
     HomeScreen(
-        selectedDate = selectedDate,
-        onDateSelected = { selectedDate = it },
         workouts = workouts,
+        calendarState = calendarState,
         onAddOrEditWorkout = onAddOrEditWorkout,
     )
 }
@@ -63,9 +62,8 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    selectedDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit,
     workouts: List<Workout>,
+    calendarState: FitzamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
 ) {
     Scaffold(
@@ -76,12 +74,12 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FitzamFloatingActionButton(
-                icon = if (workouts.any { it.date == selectedDate }) {
+                icon = if (workouts.any { it.date == calendarState.selectedDate }) {
                     ImageVector.vectorResource(R.drawable.ic_edit)
                 } else {
                     ImageVector.vectorResource(R.drawable.ic_plus)
                 },
-                onClick = { onAddOrEditWorkout(selectedDate) },
+                onClick = { onAddOrEditWorkout(calendarState.selectedDate) },
             )
         }
     ) { paddingValues ->
@@ -97,10 +95,9 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             FitzamCalendar(
-                selectedDate = selectedDate,
-                onDateSelected = onDateSelected,
+                state = calendarState,
                 modifier = Modifier.padding(vertical = 8.dp),
-                dateContent = { date ->
+                dayContent = { date ->
                     workouts.forEach { workout ->
                         if (date == workout.date) {
                             FitzamCalendarDayList(
@@ -118,8 +115,8 @@ fun HomeScreen(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${
-                    selectedDate.dayOfWeek.getDisplayName(
+                text = "${calendarState.selectedDate.monthValue}월 ${calendarState.selectedDate.dayOfMonth}일 (${
+                    calendarState.selectedDate.dayOfWeek.getDisplayName(
                         TextStyle.NARROW,
                         Locale.KOREAN
                     )
@@ -132,7 +129,8 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val workoutOfSelectedDate = workouts.firstOrNull { it.date == selectedDate }
+                val workoutOfSelectedDate =
+                    workouts.firstOrNull { it.date == calendarState.selectedDate }
                 workoutOfSelectedDate?.exerciseCategories?.forEach { category ->
                     ExerciseCategoryTag(
                         name = category.name,
@@ -141,26 +139,6 @@ fun HomeScreen(
                 }
             }
             Spacer(Modifier.height(88.dp))
-
-//            Card(
-//                modifier = Modifier.padding(
-//                    vertical = 16.dp,
-//                    horizontal = 16.dp,
-//                ),
-//                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-//            ) {
-//                Column(modifier = Modifier.padding(16.dp)) {
-//                    Text(
-//                        text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 (${
-//                            selectedDate.dayOfWeek.getDisplayName(
-//                                TextStyle.NARROW,
-//                                Locale.KOREAN
-//                            )
-//                        })",
-//                        modifier = Modifier.padding(8.dp),
-//                    )
-//                }
-//            }
         }
     }
 }
@@ -169,9 +147,9 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     FitzamTheme {
+        val calendarState = rememberFitzamCalendarState()
         HomeScreen(
-            selectedDate = LocalDate.now(),
-            onDateSelected = {},
+            calendarState = calendarState,
             workouts = emptyList(),
             onAddOrEditWorkout = {},
         )
