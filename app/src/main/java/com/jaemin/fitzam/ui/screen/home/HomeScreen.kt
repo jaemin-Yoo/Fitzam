@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
+import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.ui.common.CalendarDayItem
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
@@ -36,6 +37,7 @@ import com.jaemin.fitzam.ui.common.FitzamFloatingActionButton
 import com.jaemin.fitzam.ui.common.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -146,11 +148,91 @@ fun HomeScreen(
 @Preview
 @Composable
 fun HomeScreenPreview() {
+    val previewDate = LocalDate.now()
+    val workouts = listOf(
+        Workout(
+            date = previewDate.minusDays(2),
+            exerciseCategories = listOf(
+                ExerciseCategory(
+                    id = 1,
+                    name = "등",
+                    imageDrawableRes = R.drawable.img_back,
+                    colorHex = 0xFF0891B2,
+                    colorDarkHex = 0xFF14B8A6,
+                ),
+                ExerciseCategory(
+                    id = 2,
+                    name = "어깨",
+                    imageDrawableRes = R.drawable.img_shoulder,
+                    colorHex = 0xFF15803D,
+                    colorDarkHex = 0xFF22C55E,
+                ),
+            ),
+        ),
+        Workout(
+            date = previewDate,
+            exerciseCategories = listOf(
+                ExerciseCategory(
+                    id = 0,
+                    name = "가슴",
+                    imageDrawableRes = R.drawable.img_chest,
+                    colorHex = 0xFF1D4ED8,
+                    colorDarkHex = 0xFF2563EB,
+                ),
+                ExerciseCategory(
+                    id = 1,
+                    name = "등",
+                    imageDrawableRes = R.drawable.img_back,
+                    colorHex = 0xFF0891B2,
+                    colorDarkHex = 0xFF14B8A6,
+                ),
+                ExerciseCategory(
+                    id = 3,
+                    name = "삼두",
+                    imageDrawableRes = R.drawable.img_triceps,
+                    colorHex = 0xFF65A30D,
+                    colorDarkHex = 0xFFA3E635,
+                ),
+            ),
+        ),
+        Workout(
+            date = previewDate.plusDays(3),
+            exerciseCategories = listOf(
+                ExerciseCategory(
+                    id = 0,
+                    name = "가슴",
+                    imageDrawableRes = R.drawable.img_chest,
+                    colorHex = 0xFF1D4ED8,
+                    colorDarkHex = 0xFF2563EB,
+                ),
+                ExerciseCategory(
+                    id = 1,
+                    name = "등",
+                    imageDrawableRes = R.drawable.img_back,
+                    colorHex = 0xFF0891B2,
+                    colorDarkHex = 0xFF14B8A6,
+                ),
+                ExerciseCategory(
+                    id = 2,
+                    name = "어깨",
+                    imageDrawableRes = R.drawable.img_shoulder,
+                    colorHex = 0xFF15803D,
+                    colorDarkHex = 0xFF22C55E,
+                ),
+                ExerciseCategory(
+                    id = 3,
+                    name = "삼두",
+                    imageDrawableRes = R.drawable.img_triceps,
+                    colorHex = 0xFF65A30D,
+                    colorDarkHex = 0xFFA3E635,
+                ),
+            ),
+        ),
+    )
     FitzamTheme {
-        val calendarState = rememberFitzamCalendarState()
         HomeScreen(
-            calendarState = calendarState,
-            workouts = emptyList(),
+            workouts = workouts,
+            calendarState = rememberFitzamCalendarState(),
             onAddOrEditWorkout = {},
         )
     }
