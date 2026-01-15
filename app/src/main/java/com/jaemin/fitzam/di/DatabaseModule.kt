@@ -13,15 +13,11 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
-import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -42,66 +38,19 @@ object DatabaseModule {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
 
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val database = Room.databaseBuilder(
-                            context,
-                            FitzamDatabase::class.java,
-                            "fitzam.db"
-                        ).build()
-
-                        database.exerciseCategoryDao().insertAll(
-                            listOf(
-                                ExerciseCategoryEntity(
-                                    name = "가슴",
-                                    imageName = "img_chest",
-                                    colorHex = 0xFF2563EB,
-                                    colorDarkHex = 0xFF2563EB,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "등",
-                                    imageName = "img_back",
-                                    colorHex = 0xFF06B6D4,
-                                    colorDarkHex = 0xFF06B6D4,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "어깨",
-                                    imageName = "img_shoulder",
-                                    colorHex = 0xFFD81DAF,
-                                    colorDarkHex = 0xFFD81DAF,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "삼두",
-                                    imageName = "img_triceps",
-                                    colorHex = 0xFF3CAD36,
-                                    colorDarkHex = 0xFF3CAD36,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "이두",
-                                    imageName = "img_biceps",
-                                    colorHex = 0xFFFACC15,
-                                    colorDarkHex = 0xFFFACC15,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "하체",
-                                    imageName = "img_lower_body",
-                                    colorHex = 0xFFF97316,
-                                    colorDarkHex = 0xFFF97316,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "복근",
-                                    imageName = "img_abs",
-                                    colorHex = 0xFF8B5CF6,
-                                    colorDarkHex = 0xFF8B5CF6,
-                                ),
-                                ExerciseCategoryEntity(
-                                    name = "유산소",
-                                    imageName = "img_aerobic",
-                                    colorHex = 0xFF64748B,
-                                    colorDarkHex = 0xFF64748B,
-                                ),
-                            )
-                        )
-                    }
+                    db.execSQL(
+                        """
+                        INSERT INTO exercise_category (name, imageName, colorHex, colorDarkHex) VALUES
+                        ('가슴', 'img_chest', 0xFF2563EB, 0xFF2563EB),
+                        ('등', 'img_back', 0xFF06B6D4, 0xFF06B6D4),
+                        ('어깨', 'img_shoulder', 0xFFD81DAF, 0xFFD81DAF),
+                        ('삼두', 'img_triceps', 0xFF3CAD36, 0xFF3CAD36),
+                        ('이두', 'img_biceps', 0xFFFACC15, 0xFFFACC15),
+                        ('하체', 'img_lower_body', 0xFFF97316, 0xFFF97316),
+                        ('복근', 'img_abs', 0xFF8B5CF6, 0xFF8B5CF6),
+                        ('유산소', 'img_aerobic', 0xFF64748B, 0xFF64748B)
+                        """.trimIndent()
+                    )
                 }
 
                 override fun onOpen(db: SupportSQLiteDatabase) {
