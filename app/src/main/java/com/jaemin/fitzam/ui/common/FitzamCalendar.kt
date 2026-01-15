@@ -50,8 +50,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jaemin.fitzam.ui.theme.FitzamTheme
@@ -347,11 +349,19 @@ private fun CalendarDay(
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.labelMedium,
         )
-        CompositionLocalProvider(
-            LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+        Box(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .fillMaxWidth()
         ) {
-            ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                content(dayDate)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                CompositionLocalProvider(
+                    LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                        content(dayDate)
+                    }
+                }
             }
         }
     }
@@ -371,47 +381,71 @@ private fun pageToYearMonth(page: Int): YearMonth {
 fun FitzamCalendarDayList(
     itemList: List<CalendarDayItem>,
 ) {
-    if (itemList.size <= MAX_CELL_LIST_ITEM_COUNT) {
-        // 아이템이 3개 이하인 경우, 리스트 형태로 표시
-        itemList.forEach { item ->
-            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .padding(vertical = 2.dp)
-                        .fillMaxHeight()
-                        .background(
-                            color = item.color,
-                            shape = RoundedCornerShape(16.dp),
-                        ),
-                )
-                Spacer(Modifier.width(2.dp))
-                Text(
-                    text = item.text,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+    // Day Content 안에 높이를 측정하여 리스트 or 원 형태로 표시
+    SubcomposeLayout { constraints ->
+        val looseConstraints = constraints.copy(
+            minHeight = 0,
+            maxHeight = Constraints.Infinity,
+        )
+        val listPlaceable = subcompose("list") {
+            Column {
+                itemList.forEach { item ->
+                    Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                        Box(
+                            modifier = Modifier
+                                .width(4.dp)
+                                .padding(vertical = 2.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    color = item.color,
+                                    shape = RoundedCornerShape(16.dp),
+                                ),
+                        )
+                        Spacer(Modifier.width(2.dp))
+                        Text(
+                            text = item.text,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
             }
-        }
-    } else {
-        // "아이템이 4개 이상인 경우, 원 형태로 표시"
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            contentPadding = PaddingValues(2.dp),
-        ) {
-            items(
-                count = itemList.size,
-                key = { index -> itemList[index].text }
-            ) { index ->
-                val item = itemList[index]
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(CircleShape)
-                        .background(item.color),
-                )
+        }.firstOrNull()?.measure(looseConstraints)
+
+        if (listPlaceable != null && listPlaceable.height <= constraints.maxHeight) {
+            layout(listPlaceable.width, listPlaceable.height) {
+                listPlaceable.place(0, 0)
+            }
+        } else {
+            val dotsPlaceable = subcompose("dots") {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    contentPadding = PaddingValues(2.dp),
+                ) {
+                    items(
+                        count = itemList.size,
+                        key = { index -> itemList[index].text }
+                    ) { index ->
+                        val item = itemList[index]
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .clip(CircleShape)
+                                .background(item.color),
+                        )
+                    }
+                }
+            }.firstOrNull()
+                ?.measure(constraints)
+
+            if (dotsPlaceable == null) {
+                layout(constraints.minWidth, constraints.minHeight) {}
+            } else {
+                layout(dotsPlaceable.width, dotsPlaceable.height) {
+                    dotsPlaceable.place(0, 0)
+                }
             }
         }
     }
@@ -475,7 +509,6 @@ private fun FitzamCalendarPreview() {
     }
 }
 
-private const val MAX_CELL_LIST_ITEM_COUNT = 3
 private const val MIN_WEEK_COUNT = 4
 private const val MAX_WEEK_COUNT = 6
 private val GRID_SPACING = 8.dp
