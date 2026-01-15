@@ -11,7 +11,7 @@ class ExerciseCategoryRepository @Inject constructor(
     private val exerciseCategoryDao: ExerciseCategoryDao,
 ) {
 
-    fun getExerciseCategories(): List<ExerciseCategory> {
+    suspend fun getExerciseCategories(): List<ExerciseCategory> {
         return exerciseCategoryDao.getExerciseCategoryEntities().map { entity ->
             ExerciseCategory(
                 id = entity.id,
@@ -23,7 +23,7 @@ class ExerciseCategoryRepository @Inject constructor(
         }
     }
 
-    fun getExerciseCategoryIds(date: LocalDate): List<Long> {
+    suspend fun getExerciseCategoryIds(date: LocalDate): List<Long> {
         return workoutCategoryDao.getExerciseCategoryIds(date.toString())
     }
 }

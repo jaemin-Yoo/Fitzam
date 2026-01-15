@@ -10,7 +10,7 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
 interface WorkoutCategoryDao {
 
     @Query("SELECT exerciseCategoryId FROM workout_category WHERE workoutDate = :date")
-    fun getExerciseCategoryIds(date: String): List<Long>
+    suspend fun getExerciseCategoryIds(date: String): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.NONE)
     suspend fun insert(workoutCategory: WorkoutCategoryEntity)
