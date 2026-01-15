@@ -116,6 +116,7 @@ fun FitzamCalendar(
     state: FitzamCalendarState,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(16.dp),
+    calendarHeight: Dp = 400.dp,
     dayContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
     val displayedPage = yearMonthToPage(state.displayedYearMonth)
@@ -184,6 +185,7 @@ fun FitzamCalendar(
             ) { page ->
                 val yearMonth = pageToYearMonth(page)
                 CalendarContent(
+                    calendarHeight = calendarHeight,
                     yearMonth = yearMonth,
                     selectedDate = state.selectedDate,
                     onDateSelected = { state.selectedDate = it },
@@ -253,6 +255,7 @@ fun DaysOfWeekHeader(modifier: Modifier = Modifier) {
 
 @Composable
 private fun CalendarContent(
+    calendarHeight: Dp,
     yearMonth: YearMonth,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
@@ -264,11 +267,11 @@ private fun CalendarContent(
     // Week 개수에 따라 날짜 셀 크기 조정
     val rowCount = (monthDays.size / 7).coerceIn(MIN_WEEK_COUNT, MAX_WEEK_COUNT)
     val cellHeight =
-        (CALENDAR_HEIGHT - GRID_SPACING * (rowCount - 1) - GRID_BORDER_PADDING) / rowCount
+        (calendarHeight - GRID_SPACING * (rowCount - 1) - GRID_BORDER_WIDTH + 1.dp) / rowCount
 
     val currentDate = remember { LocalDate.now() }
     LazyVerticalGrid(
-        modifier = modifier.height(CALENDAR_HEIGHT),
+        modifier = modifier.height(calendarHeight),
         columns = GridCells.Fixed(7),
         verticalArrangement = Arrangement.spacedBy(GRID_SPACING),
         horizontalArrangement = Arrangement.spacedBy(GRID_SPACING),
@@ -278,9 +281,9 @@ private fun CalendarContent(
             val day = monthDays[i]
 
             CalendarDay(
+                cellHeight = cellHeight,
                 dayDate = day.date,
                 isInMonth = day.isInMonth,
-                cellHeight = cellHeight,
                 isSelected = day.date == selectedDate,
                 isToday = day.date == currentDate,
                 onClick = { onDateSelected(it) },
@@ -292,9 +295,9 @@ private fun CalendarContent(
 
 @Composable
 private fun CalendarDay(
+    cellHeight: Dp,
     dayDate: LocalDate,
     isInMonth: Boolean,
-    cellHeight: Dp,
     isSelected: Boolean,
     isToday: Boolean,
     onClick: (LocalDate) -> Unit,
@@ -309,7 +312,7 @@ private fun CalendarDay(
             .then(
                 if (isSelected) {
                     Modifier.border(
-                        width = 1.dp,
+                        width = GRID_BORDER_WIDTH,
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(8.dp)
                     )
@@ -476,8 +479,7 @@ private const val MAX_CELL_LIST_ITEM_COUNT = 3
 private const val MIN_WEEK_COUNT = 4
 private const val MAX_WEEK_COUNT = 6
 private val GRID_SPACING = 8.dp
-private val GRID_BORDER_PADDING = 2.dp
-private val CALENDAR_HEIGHT = 400.dp
+private val GRID_BORDER_WIDTH = 1.dp
 
 data class CalendarDayItem(
     val text: String,
