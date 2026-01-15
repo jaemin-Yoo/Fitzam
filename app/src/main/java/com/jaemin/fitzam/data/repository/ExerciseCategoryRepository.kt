@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.data.repository
 
+import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
 import com.jaemin.fitzam.model.ExerciseCategory
@@ -13,13 +14,7 @@ class ExerciseCategoryRepository @Inject constructor(
 
     suspend fun getExerciseCategories(): List<ExerciseCategory> {
         return exerciseCategoryDao.getExerciseCategoryEntities().map { entity ->
-            ExerciseCategory(
-                id = entity.id,
-                name = entity.name,
-                imageName = entity.imageName,
-                colorHex = entity.colorHex,
-                colorDarkHex = entity.colorDarkHex,
-            )
+            entity.toModel()
         }
     }
 
