@@ -186,11 +186,13 @@ fun FitzamCalendar(
                 modifier = Modifier.fillMaxWidth(),
             ) { page ->
                 val yearMonth = pageToYearMonth(page)
+                val isCurrentPage = page == pagerState.currentPage
                 CalendarContent(
                     calendarHeight = calendarHeight,
                     yearMonth = yearMonth,
                     selectedDate = state.selectedDate,
                     onDateSelected = { state.selectedDate = it },
+                    isCurrentPage = isCurrentPage,
                     dayContent = dayContent,
                 )
             }
@@ -261,6 +263,7 @@ private fun CalendarContent(
     yearMonth: YearMonth,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
+    isCurrentPage: Boolean,
     modifier: Modifier = Modifier,
     dayContent: @Composable ColumnScope.(LocalDate) -> Unit = {},
 ) {
@@ -269,7 +272,7 @@ private fun CalendarContent(
     // Week 개수에 따라 날짜 셀 크기 조정
     val rowCount = (monthDays.size / 7).coerceIn(MIN_WEEK_COUNT, MAX_WEEK_COUNT)
     val cellHeight =
-        (calendarHeight - GRID_SPACING * (rowCount - 1) - GRID_BORDER_WIDTH + 1.dp) / rowCount
+        (calendarHeight - GRID_SPACING * (rowCount - 1) - (GRID_BORDER_WIDTH + 1.dp)) / rowCount
 
     val currentDate = remember { LocalDate.now() }
     LazyVerticalGrid(
@@ -281,13 +284,13 @@ private fun CalendarContent(
     ) {
         items(monthDays.size) { i ->
             val day = monthDays[i]
-
             CalendarDay(
                 cellHeight = cellHeight,
                 dayDate = day.date,
                 isInMonth = day.isInMonth,
                 isSelected = day.date == selectedDate,
                 isToday = day.date == currentDate,
+                isCurrentPage = isCurrentPage,
                 onClick = { onDateSelected(it) },
                 content = { dayContent(it) }
             )
@@ -302,6 +305,7 @@ private fun CalendarDay(
     isInMonth: Boolean,
     isSelected: Boolean,
     isToday: Boolean,
+    isCurrentPage: Boolean,
     onClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.(LocalDate) -> Unit = {},
@@ -309,10 +313,10 @@ private fun CalendarDay(
     Column(
         modifier = modifier
             .height(cellHeight)
-            .alpha(if (isInMonth) 1f else 0.2f)
+            .alpha(if (isInMonth || !isCurrentPage) 1f else 0.2f)
             .clip(RoundedCornerShape(8.dp))
             .then(
-                if (isSelected) {
+                if (isSelected && isInMonth) {
                     Modifier.border(
                         width = GRID_BORDER_WIDTH,
                         color = MaterialTheme.colorScheme.primary,
