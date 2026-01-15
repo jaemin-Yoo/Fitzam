@@ -37,9 +37,7 @@ class WorkoutRepository @Inject constructor(
         return workoutDao.getWorkoutEntities(startDate, endDate).map { entities ->
             entities.map { workout ->
                 val exerciseCategoryIds = workoutCategoryDao.getExerciseCategoryIds(workout.date)
-                val exerciseCategories = exerciseCategoryIds.map { id ->
-                    exerciseCategoryDao.getExerciseCategoryEntityById(id)
-                }
+                val exerciseCategories = exerciseCategoryDao.getExerciseCategoryEntitiesByIds(exerciseCategoryIds)
                 workout.toModel(
                     exerciseCategories = exerciseCategories.map { category ->
                         category.toModel()

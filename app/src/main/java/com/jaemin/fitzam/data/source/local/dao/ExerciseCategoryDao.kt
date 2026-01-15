@@ -15,6 +15,9 @@ interface ExerciseCategoryDao {
     @Query("SELECT * FROM exercise_category WHERE id = :id")
     fun getExerciseCategoryEntityById(id: Long): ExerciseCategoryEntity
 
+    @Query("SELECT * FROM exercise_category WHERE id IN (:ids)")
+    fun getExerciseCategoryEntitiesByIds(ids: List<Long>): List<ExerciseCategoryEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(parts: List<ExerciseCategoryEntity>)
 }
