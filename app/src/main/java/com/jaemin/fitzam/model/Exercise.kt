@@ -4,5 +4,5 @@ data class Exercise(
     val id: Long,
     val name: String,
     val category: ExerciseCategory,
-    val imageUrl: String,
+    val imageName: String,
 )

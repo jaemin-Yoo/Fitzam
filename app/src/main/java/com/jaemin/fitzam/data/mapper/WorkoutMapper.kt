@@ -23,18 +23,18 @@ fun ExerciseCategoryEntity.toModel(): ExerciseCategory {
     return ExerciseCategory(
         id = id,
         name = name,
-        imageDrawableRes = imageDrawableRes,
+        imageName = imageName,
         colorHex = colorHex,
         colorDarkHex = colorDarkHex,
     )
 }
 
-fun ExerciseEntity.toModel(category: ExerciseCategory, imageUrl: String): Exercise {
+fun ExerciseEntity.toModel(category: ExerciseCategory, imageName: String): Exercise {
     return Exercise(
         id = id,
         name = name,
         category = category,
-        imageUrl = imageUrl,
+        imageName = imageName,
     )
 }
 

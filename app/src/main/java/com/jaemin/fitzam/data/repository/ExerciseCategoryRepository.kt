@@ -16,7 +16,7 @@ class ExerciseCategoryRepository @Inject constructor(
             ExerciseCategory(
                 id = entity.id,
                 name = entity.name,
-                imageDrawableRes = entity.imageDrawableRes,
+                imageName = entity.imageName,
                 colorHex = entity.colorHex,
                 colorDarkHex = entity.colorDarkHex,
             )

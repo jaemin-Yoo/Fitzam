@@ -30,7 +30,7 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
         FavoriteExerciseEntity::class,
         ImageUrlCacheEntity::class,
     ],
-    version = 2
+    version = 1
 )
 abstract class FitzamDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao

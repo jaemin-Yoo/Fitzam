@@ -9,5 +9,5 @@ data class ExerciseEntity(
     val id: Long = 0,
     val name: String,
     val categoryId: Long,
-    val imagePath: String,
+    val imageName: String,
 )

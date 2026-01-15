@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
+import com.jaemin.fitzam.ui.util.drawableResIdByName
 import com.jaemin.fitzam.ui.common.DZamButton
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
@@ -198,7 +199,7 @@ private fun ExerciseCategoryGridItem(
                 .clickable(onClick = onClick),
         ) {
             Image(
-                painter = painterResource(category.imageDrawableRes),
+                painter = painterResource(drawableResIdByName(category.imageName)),
                 contentDescription = category.name,
                 modifier = Modifier
                     .fillMaxSize()
@@ -225,28 +226,28 @@ fun ExerciseCategorySelectScreenPreview() {
                     ExerciseCategory(
                         id = 0,
                         name = "가슴",
-                        imageDrawableRes = R.drawable.img_chest,
+                        imageName = "img_chest",
                         colorHex = 0xFF1D4ED8,
                         colorDarkHex = 0xFF2563EB
                     ),
                     ExerciseCategory(
                         id = 1,
                         name = "등",
-                        imageDrawableRes = R.drawable.img_back,
+                        imageName = "img_back",
                         colorHex = 0xFF0891B2,
                         colorDarkHex = 0xFF14B8A6
                     ),
                     ExerciseCategory(
                         id = 2,
                         name = "어깨",
-                        imageDrawableRes = R.drawable.img_shoulder,
+                        imageName = "img_shoulder",
                         colorHex = 0xFF15803D,
                         colorDarkHex = 0xFF22C55E
                     ),
                     ExerciseCategory(
                         id = 3,
                         name = "삼두",
-                        imageDrawableRes = R.drawable.img_triceps,
+                        imageName = "img_triceps",
                         colorHex = 0xFF65A30D,
                         colorDarkHex = 0xFFA3E635
                     ),

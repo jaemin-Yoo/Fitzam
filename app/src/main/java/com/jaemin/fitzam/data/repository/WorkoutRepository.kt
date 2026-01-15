@@ -28,7 +28,6 @@ class WorkoutRepository @Inject constructor(
     private val exerciseCategoryDao: ExerciseCategoryDao,
     private val exerciseDao: ExerciseDao,
     private val setDao: WorkoutSetDao,
-    private val imageUrlRepository: ImageUrlRepository,
 ) {
 
     fun getWorkoutsForYearMonth(yearMonth: YearMonth): Flow<List<Workout>> {
@@ -67,7 +66,7 @@ class WorkoutRepository @Inject constructor(
                             )
                             val exercise = exerciseEntity.toModel(
                                 category = categoryEntity.toModel(),
-                                imageUrl = imageUrlRepository.getImageUrl(exerciseEntity.imagePath),
+                                imageName = exerciseEntity.imageName,
                             )
                             workoutExercise.toModel(
                                 exercise = exercise,
