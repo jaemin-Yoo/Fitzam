@@ -66,7 +66,6 @@ class WorkoutRepository @Inject constructor(
                             )
                             val exercise = exerciseEntity.toModel(
                                 category = categoryEntity.toModel(),
-                                imageName = exerciseEntity.imageName,
                             )
                             workoutExercise.toModel(
                                 exercise = exercise,

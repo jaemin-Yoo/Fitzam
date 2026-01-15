@@ -29,7 +29,7 @@ fun ExerciseCategoryEntity.toModel(): ExerciseCategory {
     )
 }
 
-fun ExerciseEntity.toModel(category: ExerciseCategory, imageName: String): Exercise {
+fun ExerciseEntity.toModel(category: ExerciseCategory): Exercise {
     return Exercise(
         id = id,
         name = name,
