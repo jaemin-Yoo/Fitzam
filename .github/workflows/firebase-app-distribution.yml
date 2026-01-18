@@ -1,0 +1,43 @@
+name: Android CI + Firebase App Distribution
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-distribute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: Decode keystore
+        shell: bash
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore
+
+      - name: Build release AAB
+        run: ./gradlew bundleRelease
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          file: app/build/outputs/bundle/release/app-release.aab

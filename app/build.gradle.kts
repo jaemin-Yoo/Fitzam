@@ -11,6 +11,11 @@ android {
     namespace = "com.jaemin.fitzam"
     compileSdk = 36
 
+    val keystorePath = System.getenv("KEYSTORE_PATH")
+    val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+    val keystoreAlias = System.getenv("KEY_ALIAS")
+    val keystoreKeyPassword = System.getenv("KEY_PASSWORD")
+
     defaultConfig {
         applicationId = "com.jaemin.fitzam"
         minSdk = 24
@@ -28,6 +33,19 @@ android {
         }
         release {
             isMinifyEnabled = true
+            if (
+                !keystorePath.isNullOrBlank() &&
+                !keystorePassword.isNullOrBlank() &&
+                !keystoreAlias.isNullOrBlank() &&
+                !keystoreKeyPassword.isNullOrBlank()
+            ) {
+                signingConfig = signingConfigs.create("release") {
+                    storeFile = file(keystorePath)
+                    storePassword = keystorePassword
+                    keyAlias = keystoreAlias
+                    keyPassword = keystoreKeyPassword
+                }
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
