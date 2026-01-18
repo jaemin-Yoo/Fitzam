@@ -140,15 +140,19 @@ fun FitzamCalendar(
 
     /**
      * 캘린더 스와이프 (월 이동)
-     * 날짜 선택으로 스와이프가 된 경우가 아니면 1일 선택
+     * 날짜 선택으로 스와이프가 된 경우가 아니면 1일 선택, 오늘 연월이면 오늘 날짜 선택
      */
+    val todayYearMonth = YearMonth.now()
     LaunchedEffect(pagerState.currentPage) {
         val currentYearMonth = pageToYearMonth(pagerState.currentPage)
         state.displayedYearMonth = currentYearMonth
 
         if (selectedYearMonth != currentYearMonth) {
-            val newSelectedDate = currentYearMonth.atDay(1)
-            state.selectedDate = newSelectedDate
+            if (todayYearMonth == currentYearMonth) {
+                state.selectedDate = LocalDate.now()
+            } else {
+                state.selectedDate = currentYearMonth.atDay(1)
+            }
         }
     }
 
