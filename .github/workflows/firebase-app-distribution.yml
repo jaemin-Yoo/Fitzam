@@ -44,3 +44,4 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           file: app/build/outputs/apk/release/app-release.apk
+          testers: ${{ secrets.FIREBASE_TESTERS }} # 쉼표로 구분 (예: a@x.com,b@y.com)
