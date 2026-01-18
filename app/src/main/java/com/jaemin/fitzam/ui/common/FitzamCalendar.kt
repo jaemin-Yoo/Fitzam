@@ -178,23 +178,25 @@ fun FitzamCalendar(
             )
             Spacer(modifier = Modifier.height(20.dp))
 
-            DaysOfWeekHeader(modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(16.dp))
-
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
             ) { page ->
-                val yearMonth = pageToYearMonth(page)
-                val isCurrentPage = page == pagerState.currentPage
-                CalendarContent(
-                    calendarHeight = calendarHeight,
-                    yearMonth = yearMonth,
-                    selectedDate = state.selectedDate,
-                    onDateSelected = { state.selectedDate = it },
-                    isCurrentPage = isCurrentPage,
-                    dayContent = dayContent,
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    DaysOfWeekHeader(modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val yearMonth = pageToYearMonth(page)
+                    val isCurrentPage = page == pagerState.currentPage
+                    CalendarContent(
+                        calendarHeight = calendarHeight,
+                        yearMonth = yearMonth,
+                        selectedDate = state.selectedDate,
+                        onDateSelected = { state.selectedDate = it },
+                        isCurrentPage = isCurrentPage,
+                        dayContent = dayContent,
+                    )
+                }
             }
         }
     }
