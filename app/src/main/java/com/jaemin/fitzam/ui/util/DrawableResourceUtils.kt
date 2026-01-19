@@ -11,12 +11,15 @@ fun drawableResIdByName(
     val normalizedName = imageName.substringAfterLast("/")
         .substringBeforeLast(".")
 
-    val resolved = try {
-        val field = R.drawable::class.java.getDeclaredField(normalizedName)
-        field.getInt(null)
-    } catch (e: Exception) {
-        0
+    return when (normalizedName) {
+        "img_chest" -> R.drawable.img_chest
+        "img_back" -> R.drawable.img_back
+        "img_shoulder" -> R.drawable.img_shoulder
+        "img_triceps" -> R.drawable.img_triceps
+        "img_biceps" -> R.drawable.img_biceps
+        "img_lower_body" -> R.drawable.img_lower_body
+        "img_abs" -> R.drawable.img_abs
+        "img_aerobic" -> R.drawable.img_aerobic
+        else -> fallbackResId
     }
-
-    return if (resolved != 0) resolved else fallbackResId
 }
