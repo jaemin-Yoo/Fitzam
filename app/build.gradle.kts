@@ -20,17 +20,33 @@ android {
         applicationId = "com.jaemin.fitzam"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        debug {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "핏잼(개발)")
         }
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "핏잼(테스트)")
+        }
+        create("prod") {
+            dimension = "environment"
+            resValue("string", "app_name", "핏잼")
+        }
+    }
+
+    buildTypes {
         release {
             isMinifyEnabled = true
             if (
