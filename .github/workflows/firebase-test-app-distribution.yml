@@ -73,22 +73,10 @@ jobs:
           KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
-      - name: Locate APK
-        id: apk
-        shell: bash
-        run: |
-          apk=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
-          if [ -z "$apk" ]; then
-            echo "No APK found under app/build/outputs/apk"
-            exit 1
-          fi
-          echo "apk=$apk" >> "$GITHUB_OUTPUT"
-          echo "apk path: $apk"
-
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
-          appId: ${{ secrets.FIREBASE_APP_ID }}
+          appId: ${{ secrets.STAGING_FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           file: ${{ steps.apk.outputs.apk }}
           testers: ${{ secrets.FIREBASE_TESTERS }} # 쉼표로 구분 (예: a@x.com,b@y.com)
