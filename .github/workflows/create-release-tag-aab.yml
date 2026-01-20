@@ -1,4 +1,4 @@
-name: Create Release Tag on Main Push
+name: Release tag 생성 및 GitHub Artifacts AAB 파일 업로드
 
 on:
   push:
