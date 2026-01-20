@@ -13,6 +13,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug checkout context
+        shell: bash
+        run: |
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "HEAD:"
+          git rev-parse --abbrev-ref HEAD
+          git rev-parse HEAD
+          echo "Files at repo root:"
+          ls -la
+          echo "Show app/build.gradle.kts (first 80 lines):"
+          sed -n '1,80p' app/build.gradle.kts
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
