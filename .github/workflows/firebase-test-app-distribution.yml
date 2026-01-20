@@ -13,19 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug checkout context
-        shell: bash
-        run: |
-          echo "GITHUB_SHA=$GITHUB_SHA"
-          echo "GITHUB_REF=$GITHUB_REF"
-          echo "HEAD:"
-          git rev-parse --abbrev-ref HEAD
-          git rev-parse HEAD
-          echo "Files at repo root:"
-          ls -la
-          echo "Show app/build.gradle.kts (first 80 lines):"
-          sed -n '1,80p' app/build.gradle.kts
-
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -42,7 +29,7 @@ jobs:
           current_version=$(python - <<'PY'
           import re
           text = open("app/build.gradle.kts", encoding="utf-8").read()
-          m = re.search(r'versionName\\s*=\\s*"(.*?)"', text)
+          m = re.search(r'versionName\s*=\s*"(.*?)"', text)
           if not m:
               raise SystemExit("versionName not found in current branch")
           print(m.group(1))
@@ -54,7 +41,7 @@ jobs:
               ["git", "show", "origin/main:app/build.gradle.kts"],
               text=True
           )
-          m = re.search(r'versionName\\s*=\\s*"(.*?)"', text)
+          m = re.search(r'versionName\s*=\s*"(.*?)"', text)
           if not m:
               raise SystemExit("versionName not found in main branch")
           print(m.group(1))
