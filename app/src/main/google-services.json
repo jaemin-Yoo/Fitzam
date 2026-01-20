@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "308928668584",
+    "project_id": "u-zam-e4cf7",
+    "storage_bucket": "u-zam-e4cf7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308928668584:android:08d3d56b26a1a08d47739d",
+        "android_client_info": {
+          "package_name": "com.jaemin.fitzam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2FNbLu3vvdI4dJ43YEEKM0WwK55z2ae4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308928668584:android:d7daed29c6a05c4d47739d",
+        "android_client_info": {
+          "package_name": "com.jaemin.fitzam.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2FNbLu3vvdI4dJ43YEEKM0WwK55z2ae4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
