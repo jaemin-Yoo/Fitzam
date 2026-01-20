@@ -1,0 +1,101 @@
+name: Firebase 테스트 앱 배포
+
+on:
+  push:
+    branches:
+      - "hotfix/*"
+      - "release/*"
+
+jobs:
+  build-and-distribute-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: Fetch main branch for version comparison
+        run: git fetch origin main --depth=1
+
+      - name: Fail if version matches main
+        shell: bash
+        run: |
+          current_version=$(python - <<'PY'
+          import re
+          text = open("app/build.gradle.kts", encoding="utf-8").read()
+          m = re.search(r'versionName\s*=\s*"(.*?)"', text)
+          if not m:
+              raise SystemExit("versionName not found in current branch")
+          print(m.group(1))
+          PY
+          )
+          main_version=$(python - <<'PY'
+          import re, subprocess
+          text = subprocess.check_output(
+              ["git", "show", "origin/main:app/build.gradle.kts"],
+              text=True
+          )
+          m = re.search(r'versionName\s*=\s*"(.*?)"', text)
+          if not m:
+              raise SystemExit("versionName not found in main branch")
+          print(m.group(1))
+          PY
+          )
+          echo "current version: $current_version"
+          echo "main version:    $main_version"
+          if [ "$current_version" = "$main_version" ]; then
+            echo "versionName matches main; failing."
+            exit 1
+          fi
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x ./gradlew
+
+      - name: Decode release keystore
+        shell: bash
+        run: |
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RELEASE_KEYSTORE_PATH"
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PATH: ${{ runner.temp }}/release-keystore
+
+      - name: Build staging release APK
+        run: ./gradlew assembleStagingRelease
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release-keystore
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Locate APK
+        id: apk
+        shell: bash
+        run: |
+          apk=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+          if [ -z "$apk" ]; then
+            echo "No APK found under app/build/outputs/apk"
+            exit 1
+          fi
+          echo "apk=$apk" >> "$GITHUB_OUTPUT"
+          echo "apk path: $apk"
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          echo "apk: ${{ steps.apk.outputs.apk }}"
+          ls -la "${{ steps.apk.outputs.apk }}"
+          file "${{ steps.apk.outputs.apk }}"
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.STAGING_FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          file: ${{ github.workspace }}/${{ steps.apk.outputs.apk }}
+          testers: ${{ secrets.FIREBASE_TESTERS }} # 쉼표로 구분 (예: a@x.com,b@y.com)
