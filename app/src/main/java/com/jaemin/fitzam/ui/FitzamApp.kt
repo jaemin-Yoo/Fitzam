@@ -41,7 +41,9 @@ fun FitzamApp() {
                 )
             }
             entry<Screen.Settings> {
-                SettingsScreen()
+                SettingsScreen(
+                    onBackClick = { backStack.removeLastOrNull() },
+                )
             }
         },
     )
