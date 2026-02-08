@@ -23,10 +23,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -48,6 +52,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var isAutoSyncEnabled by rememberSaveable { mutableStateOf(true) }
+    var isWifiOnlyEnabled by rememberSaveable { mutableStateOf(true) }
     val activity = LocalContext.current.findActivity()
     val authorizationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -96,22 +102,27 @@ fun SettingsScreen(
             SectionTitle(text = "동기화")
             Spacer(Modifier.height(8.dp))
 
-            DZamButton(
-                text = if (uiState.isSigningIn) "연결 중..." else "계정 연결",
-                onClick = {
-                    if (activity != null) {
-                        viewModel.onSignInClick(activity)
-                    }
-                },
-                enabled = activity != null && !uiState.isSigningIn,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (uiState.accountEmail != null) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "연결된 계정: ${uiState.accountEmail}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            val accountEmail = uiState.accountEmail
+            if (accountEmail == null) {
+                DZamButton(
+                    text = if (uiState.isSigningIn) "연결 중..." else "계정 연결",
+                    onClick = {
+                        if (activity != null) {
+                            viewModel.onSignInClick(activity)
+                        }
+                    },
+                    enabled = activity != null && !uiState.isSigningIn,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                SyncConnectedCard(
+                    accountEmail = accountEmail,
+                    isAutoSyncEnabled = isAutoSyncEnabled,
+                    onAutoSyncChange = { isAutoSyncEnabled = it },
+                    isWifiOnlyEnabled = isWifiOnlyEnabled,
+                    onWifiOnlyChange = { isWifiOnlyEnabled = it },
+                    onSyncNowClick = {},
+                    lastSyncText = "마지막 동기화: -",
                 )
             }
             Spacer(Modifier.height(24.dp))
@@ -146,6 +157,87 @@ private fun SectionTitle(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 8.dp)
     )
+}
+
+@Composable
+private fun SyncConnectedCard(
+    accountEmail: String,
+    isAutoSyncEnabled: Boolean,
+    onAutoSyncChange: (Boolean) -> Unit,
+    isWifiOnlyEnabled: Boolean,
+    onWifiOnlyChange: (Boolean) -> Unit,
+    onSyncNowClick: () -> Unit,
+    lastSyncText: String,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SyncRow(
+                title = "연결된 계정",
+                trailingText = accountEmail,
+            )
+            Spacer(Modifier.height(12.dp))
+            SyncRow(
+                title = "자동 동기화",
+                trailingContent = {
+                    Switch(
+                        checked = isAutoSyncEnabled,
+                        onCheckedChange = onAutoSyncChange,
+                    )
+                },
+            )
+            Spacer(Modifier.height(12.dp))
+            SyncRow(
+                title = "Wi-Fi에서만 동기화",
+                trailingContent = {
+                    Switch(
+                        checked = isWifiOnlyEnabled,
+                        onCheckedChange = onWifiOnlyChange,
+                    )
+                },
+            )
+            Spacer(Modifier.height(12.dp))
+            DZamButton(
+                text = "지금 동기화 하기",
+                onClick = onSyncNowClick,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = lastSyncText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SyncRow(
+    title: String,
+    trailingText: String? = null,
+    trailingContent: @Composable (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = title)
+        when {
+            trailingContent != null -> trailingContent()
+            trailingText != null -> {
+                Text(
+                    text = trailingText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -196,4 +288,3 @@ private fun Context.findActivity(): Activity? {
     }
     return null
 }
-
