@@ -124,7 +124,6 @@ private fun SettingRow(
                 trailingText != null -> {
                     Text(
                         text = trailingText,
-                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
