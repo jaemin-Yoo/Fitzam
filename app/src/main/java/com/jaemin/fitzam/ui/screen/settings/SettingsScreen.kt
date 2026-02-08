@@ -1,5 +1,8 @@
-package com.jaemin.fitzam.ui.screen.settings
+﻿package com.jaemin.fitzam.ui.screen.settings
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.ui.common.DZamButton
@@ -33,9 +37,15 @@ import com.jaemin.fitzam.ui.common.TopAppBarItem
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
-    onAccountConnectClick: () -> Unit = {},
     onTermsClick: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel(),
 ) {
+    val signInLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onSignInResult(result.data, result.resultCode)
+    }
+
     Scaffold(
         topBar = {
             FitzamTopAppBar(
@@ -64,7 +74,7 @@ fun SettingsScreen(
 
             DZamButton(
                 text = "계정 연결",
-                onClick = onAccountConnectClick,
+                onClick = { signInLauncher.launch(viewModel.requestSignInIntent()) },
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(24.dp))

@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -81,6 +81,11 @@ android {
         compose = true
         buildConfig = true
     }
+    packaging {
+        resources {
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
 }
 
 dependencies {
@@ -125,4 +130,10 @@ dependencies {
     // Firebase
     implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.storage)
+
+    // Google Sign-In / Drive
+    implementation(libs.google.play.services.auth)
+    implementation(libs.google.api.client.android)
+    implementation(libs.google.api.services.drive)
+    implementation(libs.google.http.client.gson)
 }
