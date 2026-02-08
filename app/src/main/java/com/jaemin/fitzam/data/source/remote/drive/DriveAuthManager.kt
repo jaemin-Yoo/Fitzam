@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.accounts.Account
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -23,6 +24,7 @@ import javax.inject.Singleton
 class DriveAuthManager @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
+    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val authorizationClient = Identity.getAuthorizationClient(context)
     private val requestedScopes = listOf(
         Scope(DriveScopes.DRIVE_APPDATA),
@@ -31,8 +33,11 @@ class DriveAuthManager @Inject constructor(
         Scope("profile"),
     )
 
-    suspend fun authorizeDrive(activity: Activity): Result<DriveAuthorizationOutcome> = runCatching {
-        authorizeInternal()
+    suspend fun authorizeDrive(
+        activity: Activity,
+        accountName: String? = null,
+    ): Result<DriveAuthorizationOutcome> = runCatching {
+        authorizeInternal(accountName = accountName)
     }
 
     suspend fun restoreAuthorization(activity: Activity): DriveAuthSession? {
@@ -40,6 +45,14 @@ class DriveAuthManager @Inject constructor(
             is DriveAuthorizationOutcome.Authorized -> outcome.session
             is DriveAuthorizationOutcome.Resolution -> null
         }
+    }
+
+    fun isUserSignedOut(): Boolean {
+        return prefs.getBoolean(KEY_SIGNED_OUT, false)
+    }
+
+    fun setUserSignedOut(isSignedOut: Boolean) {
+        prefs.edit().putBoolean(KEY_SIGNED_OUT, isSignedOut).apply()
     }
 
     suspend fun handleAuthorizationResult(
@@ -56,10 +69,14 @@ class DriveAuthManager @Inject constructor(
 
     private suspend fun authorizeInternal(
         allowResolution: Boolean = true,
+        accountName: String? = null,
     ): DriveAuthorizationOutcome {
-        val request = AuthorizationRequest.builder()
+        val builder = AuthorizationRequest.builder()
             .setRequestedScopes(requestedScopes)
-            .build()
+        if (!accountName.isNullOrBlank()) {
+            builder.setAccount(Account(accountName, "com.google"))
+        }
+        val request = builder.build()
 
         val result = awaitAuthorizationResult(request)
         if (result.hasResolution()) {
@@ -137,4 +154,8 @@ sealed class DriveAuthorizationOutcome {
     data class Authorized(val session: DriveAuthSession) : DriveAuthorizationOutcome()
     data class Resolution(val pendingIntent: PendingIntent?) : DriveAuthorizationOutcome()
 }
+
+private const val PREFS_NAME = "drive_auth_prefs"
+private const val KEY_SIGNED_OUT = "signed_out_by_user"
+
 

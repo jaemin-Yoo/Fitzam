@@ -1,6 +1,7 @@
 ﻿package com.jaemin.fitzam.ui.screen.settings
 
 import android.app.Activity
+import android.accounts.AccountManager
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -60,6 +61,20 @@ fun SettingsScreen(
     ) { result ->
         viewModel.onAuthorizationResult(result.data, result.resultCode)
     }
+    val accountPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (activity == null) {
+            return@rememberLauncherForActivityResult
+        }
+        if (result.resultCode != Activity.RESULT_OK) {
+            return@rememberLauncherForActivityResult
+        }
+        val accountName = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+        if (!accountName.isNullOrBlank()) {
+            viewModel.onSignInClick(activity, accountName)
+        }
+    }
 
     LaunchedEffect(activity) {
         if (activity != null) {
@@ -107,9 +122,18 @@ fun SettingsScreen(
                 DZamButton(
                     text = if (uiState.isSigningIn) "연결 중..." else "계정 연결",
                     onClick = {
-                        if (activity != null) {
-                            viewModel.onSignInClick(activity)
-                        }
+                        val currentActivity = activity ?: return@DZamButton
+                        val intent = AccountManager.newChooseAccountIntent(
+                            null,
+                            null,
+                            arrayOf("com.google"),
+                            false,
+                            null,
+                            null,
+                            null,
+                            null,
+                        )
+                        accountPickerLauncher.launch(intent)
                     },
                     enabled = activity != null && !uiState.isSigningIn,
                     modifier = Modifier.fillMaxWidth(),
@@ -123,6 +147,7 @@ fun SettingsScreen(
                     onWifiOnlyChange = { isWifiOnlyEnabled = it },
                     onSyncNowClick = {},
                     lastSyncText = "마지막 동기화: -",
+                    onAccountClick = { viewModel.onSignOutClick() },
                 )
             }
             Spacer(Modifier.height(24.dp))
@@ -147,6 +172,7 @@ fun SettingsScreen(
             }
         }
     }
+
 }
 
 @Composable
@@ -168,6 +194,7 @@ private fun SyncConnectedCard(
     onWifiOnlyChange: (Boolean) -> Unit,
     onSyncNowClick: () -> Unit,
     lastSyncText: String,
+    onAccountClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -178,6 +205,7 @@ private fun SyncConnectedCard(
             SyncRow(
                 title = "연결된 계정",
                 trailingText = accountEmail,
+                onClick = onAccountClick,
             )
             Spacer(Modifier.height(12.dp))
             SyncRow(
@@ -220,9 +248,17 @@ private fun SyncRow(
     title: String,
     trailingText: String? = null,
     trailingContent: @Composable (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
 ) {
+    val rowModifier = if (onClick != null) {
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    } else {
+        Modifier.fillMaxWidth()
+    }
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = rowModifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -288,3 +324,5 @@ private fun Context.findActivity(): Activity? {
     }
     return null
 }
+
+

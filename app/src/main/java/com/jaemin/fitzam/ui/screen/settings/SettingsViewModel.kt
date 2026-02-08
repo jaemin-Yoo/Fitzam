@@ -23,22 +23,42 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState = _uiState.asStateFlow()
 
+    init {
+        _uiState.value = _uiState.value.copy(
+            isSignedOutByUser = driveAuthManager.isUserSignedOut(),
+        )
+    }
+
     fun restoreSignInIfPossible(activity: Activity) {
+        if (driveAuthManager.isUserSignedOut()) {
+            return
+        }
         viewModelScope.launch {
             val session = driveAuthManager.restoreAuthorization(activity)
             updateSignedInSession(session)
         }
     }
 
-    fun onSignInClick(activity: Activity) {
+    fun onSignInClick(
+        activity: Activity,
+        accountName: String? = null,
+    ) {
         if (_uiState.value.isSigningIn) {
             return
         }
 
-        _uiState.value = _uiState.value.copy(isSigningIn = true, errorMessage = null)
+        _uiState.value = _uiState.value.copy(
+            isSigningIn = true,
+            errorMessage = null,
+            isSignedOutByUser = false,
+        )
+        driveAuthManager.setUserSignedOut(false)
 
         viewModelScope.launch {
-            val result = driveAuthManager.authorizeDrive(activity)
+            val result = driveAuthManager.authorizeDrive(
+                activity = activity,
+                accountName = accountName,
+            )
             result
                 .onSuccess { outcome ->
                     when (outcome) {
@@ -75,9 +95,21 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onPendingIntentLaunched() {
-        if (_uiState.value.pendingIntent != null) {
-            _uiState.value = _uiState.value.copy(pendingIntent = null)
-        }
+            if (_uiState.value.pendingIntent != null) {
+                _uiState.value = _uiState.value.copy(pendingIntent = null)
+            }
+    }
+
+    fun onSignOutClick() {
+        driveAuthManager.setUserSignedOut(true)
+        _uiState.value = _uiState.value.copy(
+            isSignedIn = false,
+            accountEmail = null,
+            isSigningIn = false,
+            pendingIntent = null,
+            errorMessage = null,
+            isSignedOutByUser = true,
+        )
     }
 
     private fun updateSignedInSession(session: DriveAuthSession?) {
@@ -86,12 +118,21 @@ class SettingsViewModel @Inject constructor(
         } else {
             Log.i(TAG, "No Google account connected")
         }
+        val signedOutByUser = if (session != null) {
+            false
+        } else {
+            _uiState.value.isSignedOutByUser
+        }
+        if (session != null) {
+            driveAuthManager.setUserSignedOut(false)
+        }
         _uiState.value = _uiState.value.copy(
             isSignedIn = session != null,
             accountEmail = session?.email,
             isSigningIn = false,
             pendingIntent = null,
             errorMessage = null,
+            isSignedOutByUser = signedOutByUser,
         )
     }
 
@@ -106,5 +147,8 @@ data class SettingsUiState(
     val isSigningIn: Boolean = false,
     val pendingIntent: PendingIntent? = null,
     val errorMessage: String? = null,
+    val isSignedOutByUser: Boolean = false,
 )
+
+
 
