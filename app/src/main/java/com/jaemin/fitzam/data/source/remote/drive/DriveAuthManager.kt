@@ -47,6 +47,13 @@ class DriveAuthManager @Inject constructor(
         }
     }
 
+    suspend fun tryRestoreAuthorization(): DriveAuthSession? {
+        return when (val outcome = authorizeInternal(allowResolution = false)) {
+            is DriveAuthorizationOutcome.Authorized -> outcome.session
+            is DriveAuthorizationOutcome.Resolution -> null
+        }
+    }
+
     fun isUserSignedOut(): Boolean {
         return prefs.getBoolean(KEY_SIGNED_OUT, false)
     }

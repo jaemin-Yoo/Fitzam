@@ -6,6 +6,9 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jaemin.fitzam.data.sync.SyncManager
+import com.jaemin.fitzam.data.sync.SyncScheduler
+import com.jaemin.fitzam.data.sync.SyncSettingsRepository
 import com.jaemin.fitzam.data.source.remote.drive.DriveAuthManager
 import com.jaemin.fitzam.data.source.remote.drive.DriveAuthSession
 import com.jaemin.fitzam.data.source.remote.drive.DriveAuthorizationOutcome
@@ -18,6 +21,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val driveAuthManager: DriveAuthManager,
+    private val syncSettingsRepository: SyncSettingsRepository,
+    private val syncScheduler: SyncScheduler,
+    private val syncManager: SyncManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -27,6 +33,21 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(
             isSignedOutByUser = driveAuthManager.isUserSignedOut(),
         )
+
+        viewModelScope.launch {
+            syncSettingsRepository.settings.collect { settings ->
+                _uiState.value = _uiState.value.copy(
+                    isAutoSyncEnabled = settings.isAutoSyncEnabled,
+                    isWifiOnlyEnabled = settings.isWifiOnlyEnabled,
+                    lastSyncEpochMillis = settings.lastSyncEpochMillis,
+                    syncErrorMessage = settings.lastSyncErrorMessage,
+                )
+                syncScheduler.schedulePeriodic(
+                    autoEnabled = settings.isAutoSyncEnabled,
+                    wifiOnly = settings.isWifiOnlyEnabled,
+                )
+            }
+        }
     }
 
     fun restoreSignInIfPossible(activity: Activity) {
@@ -102,6 +123,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onSignOutClick() {
         driveAuthManager.setUserSignedOut(true)
+        syncScheduler.cancelPeriodic()
         _uiState.value = _uiState.value.copy(
             isSignedIn = false,
             accountEmail = null,
@@ -110,6 +132,48 @@ class SettingsViewModel @Inject constructor(
             errorMessage = null,
             isSignedOutByUser = true,
         )
+    }
+
+    fun onAutoSyncChange(enabled: Boolean) {
+        syncSettingsRepository.setAutoSyncEnabled(enabled)
+        syncScheduler.schedulePeriodic(
+            autoEnabled = enabled,
+            wifiOnly = _uiState.value.isWifiOnlyEnabled,
+        )
+    }
+
+    fun onWifiOnlyChange(enabled: Boolean) {
+        syncSettingsRepository.setWifiOnlyEnabled(enabled)
+        syncScheduler.schedulePeriodic(
+            autoEnabled = _uiState.value.isAutoSyncEnabled,
+            wifiOnly = enabled,
+        )
+    }
+
+    fun onSyncNowClick() {
+        if (_uiState.value.isSyncing) {
+            return
+        }
+        syncSettingsRepository.setLastSyncErrorMessage(null)
+        _uiState.value = _uiState.value.copy(
+            isSyncing = true,
+            syncErrorMessage = null,
+        )
+        viewModelScope.launch {
+            val result = syncManager.syncNow()
+            val error = result.exceptionOrNull()
+            _uiState.value = _uiState.value.copy(
+                isSyncing = false,
+                lastSyncEpochMillis = result.getOrNull() ?: _uiState.value.lastSyncEpochMillis,
+                syncErrorMessage = if (result.isSuccess) {
+                    null
+                } else {
+                    error?.message?.takeIf { it.isNotBlank() }
+                        ?: error?.javaClass?.simpleName
+                        ?: "알 수 없는 오류"
+                },
+            )
+        }
     }
 
     private fun updateSignedInSession(session: DriveAuthSession?) {
@@ -148,6 +212,11 @@ data class SettingsUiState(
     val pendingIntent: PendingIntent? = null,
     val errorMessage: String? = null,
     val isSignedOutByUser: Boolean = false,
+    val isAutoSyncEnabled: Boolean = true,
+    val isWifiOnlyEnabled: Boolean = true,
+    val isSyncing: Boolean = false,
+    val lastSyncEpochMillis: Long? = null,
+    val syncErrorMessage: String? = null,
 )
 
 

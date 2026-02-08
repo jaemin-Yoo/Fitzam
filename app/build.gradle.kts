@@ -126,6 +126,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     // Firebase
     implementation(platform(libs.google.firebase.bom))
@@ -136,4 +138,7 @@ dependencies {
     implementation(libs.google.api.client.android)
     implementation(libs.google.api.services.drive)
     implementation(libs.google.http.client.gson)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 }

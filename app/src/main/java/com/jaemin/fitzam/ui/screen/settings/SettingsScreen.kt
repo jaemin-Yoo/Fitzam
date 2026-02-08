@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,14 +20,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,16 +41,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
+import com.jaemin.fitzam.data.sync.NetworkStatus
 import com.jaemin.fitzam.ui.common.DZamButton
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun SettingsScreen(
@@ -59,9 +62,9 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var isAutoSyncEnabled by rememberSaveable { mutableStateOf(true) }
-    var isWifiOnlyEnabled by rememberSaveable { mutableStateOf(true) }
     val activity = LocalContext.current.findActivity()
+    val context = LocalContext.current
+    var showCellularConfirm by rememberSaveable { mutableStateOf(false) }
     val authorizationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -145,14 +148,25 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {
+                val lastSyncText = formatLastSyncText(uiState.lastSyncEpochMillis)
                 SyncConnectedCard(
                     accountEmail = accountEmail,
-                    isAutoSyncEnabled = isAutoSyncEnabled,
-                    onAutoSyncChange = { isAutoSyncEnabled = it },
-                    isWifiOnlyEnabled = isWifiOnlyEnabled,
-                    onWifiOnlyChange = { isWifiOnlyEnabled = it },
-                    onSyncNowClick = {},
-                    lastSyncText = "마지막 동기화: -",
+                    isAutoSyncEnabled = uiState.isAutoSyncEnabled,
+                    onAutoSyncChange = viewModel::onAutoSyncChange,
+                    isWifiOnlyEnabled = uiState.isWifiOnlyEnabled,
+                    onWifiOnlyChange = viewModel::onWifiOnlyChange,
+                    onSyncNowClick = {
+                        val wifiOnly = uiState.isWifiOnlyEnabled
+                        val isUnmetered = NetworkStatus.isUnmetered(context)
+                        if (wifiOnly && !isUnmetered) {
+                            showCellularConfirm = true
+                        } else {
+                            viewModel.onSyncNowClick()
+                        }
+                    },
+                    isSyncing = uiState.isSyncing,
+                    lastSyncText = lastSyncText,
+                    syncErrorMessage = uiState.syncErrorMessage,
                     onAccountClick = { viewModel.onSignOutClick() },
                 )
             }
@@ -179,6 +193,28 @@ fun SettingsScreen(
         }
     }
 
+    if (showCellularConfirm) {
+        AlertDialog(
+            onDismissRequest = { showCellularConfirm = false },
+            title = { Text(text = "모바일 데이터 사용") },
+            text = { Text(text = "Wi-Fi가 아닙니다. 그래도 동기화를 진행할까요?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showCellularConfirm = false
+                        viewModel.onSyncNowClick()
+                    }
+                ) {
+                    Text("진행")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCellularConfirm = false }) {
+                    Text("취소")
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -199,7 +235,9 @@ private fun SyncConnectedCard(
     isWifiOnlyEnabled: Boolean,
     onWifiOnlyChange: (Boolean) -> Unit,
     onSyncNowClick: () -> Unit,
+    isSyncing: Boolean,
     lastSyncText: String,
+    syncErrorMessage: String?,
     onAccountClick: () -> Unit,
 ) {
     Card(
@@ -234,8 +272,9 @@ private fun SyncConnectedCard(
             Spacer(Modifier.height(12.dp))
 
             DZamButton(
-                text = "지금 동기화 하기",
+                text = if (isSyncing) "동기화 중..." else "지금 동기화 하기",
                 onClick = onSyncNowClick,
+                enabled = !isSyncing,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -250,6 +289,16 @@ private fun SyncConnectedCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (!syncErrorMessage.isNullOrBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "동기화 실패: $syncErrorMessage",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -308,6 +357,17 @@ private fun Context.findActivity(): Activity? {
         current = current.baseContext
     }
     return null
+}
+
+private fun formatLastSyncText(lastSyncEpochMillis: Long?): String {
+    if (lastSyncEpochMillis == null) {
+        return "마지막 동기화: -"
+    }
+    val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+    val dateTime = Instant.ofEpochMilli(lastSyncEpochMillis)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDateTime()
+    return "마지막 동기화: ${dateTime.format(formatter)}"
 }
 
 
