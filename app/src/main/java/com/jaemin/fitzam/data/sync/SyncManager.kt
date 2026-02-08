@@ -38,6 +38,32 @@ class SyncManager @Inject constructor(
                 settingsRepository.setLastSyncErrorMessage(message)
             }
     }
+
+    suspend fun restoreFromDriveAndMerge(): Result<Unit> {
+        if (authManager.isUserSignedOut()) {
+            return Result.failure(IllegalStateException("계정 연결이 필요합니다."))
+        }
+        val session = authManager.tryRestoreAuthorization()
+            ?: return Result.failure(IllegalStateException("계정 연결이 필요합니다."))
+
+        settingsRepository.setLastSyncErrorMessage(null)
+        val result = withContext(Dispatchers.IO) {
+            driveSyncRepository.downloadDbBackup(session)
+                .mapCatching { backupFile ->
+                    if (backupFile == null) {
+                        return@mapCatching
+                    }
+                    driveSyncRepository.mergeBackupIntoLocal(backupFile).getOrThrow()
+                }
+        }
+
+        return result.onFailure { error ->
+            Log.e(TAG, "Drive restore failed", error)
+            val message = error.message?.takeIf { it.isNotBlank() }
+                ?: error.javaClass.simpleName
+            settingsRepository.setLastSyncErrorMessage(message)
+        }
+    }
 }
 
 private const val TAG = "SyncManager"

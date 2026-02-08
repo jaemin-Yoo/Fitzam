@@ -56,7 +56,7 @@ class SettingsViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val session = driveAuthManager.restoreAuthorization(activity)
-            updateSignedInSession(session)
+            handleSignedInSession(session, shouldRestoreFromDrive = false)
         }
     }
 
@@ -84,7 +84,7 @@ class SettingsViewModel @Inject constructor(
                 .onSuccess { outcome ->
                     when (outcome) {
                         is DriveAuthorizationOutcome.Authorized -> {
-                            updateSignedInSession(outcome.session)
+                            handleSignedInSession(outcome.session, shouldRestoreFromDrive = true)
                             _uiState.value = _uiState.value.copy(isSigningIn = false)
                         }
                         is DriveAuthorizationOutcome.Resolution -> {
@@ -106,7 +106,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val result = driveAuthManager.handleAuthorizationResult(data, resultCode)
             result
-                .onSuccess { session -> updateSignedInSession(session) }
+                .onSuccess { session ->
+                    handleSignedInSession(session, shouldRestoreFromDrive = true)
+                }
                 .onFailure { error ->
                     Log.w(TAG, "Google sign-in failed", error)
                     _uiState.value = _uiState.value.copy(errorMessage = error.message)
@@ -198,6 +200,40 @@ class SettingsViewModel @Inject constructor(
             errorMessage = null,
             isSignedOutByUser = signedOutByUser,
         )
+    }
+
+    private fun handleSignedInSession(
+        session: DriveAuthSession?,
+        shouldRestoreFromDrive: Boolean,
+    ) {
+        updateSignedInSession(session)
+        if (session != null && shouldRestoreFromDrive) {
+            restoreFromDrive()
+        }
+    }
+
+    private fun restoreFromDrive() {
+        if (_uiState.value.isSyncing) {
+            return
+        }
+        _uiState.value = _uiState.value.copy(
+            isSyncing = true,
+            syncErrorMessage = null,
+        )
+        viewModelScope.launch {
+            val result = syncManager.restoreFromDriveAndMerge()
+            val error = result.exceptionOrNull()
+            _uiState.value = _uiState.value.copy(
+                isSyncing = false,
+                syncErrorMessage = if (result.isSuccess) {
+                    null
+                } else {
+                    error?.message?.takeIf { it.isNotBlank() }
+                        ?: error?.javaClass?.simpleName
+                        ?: "알 수 없는 오류"
+                },
+            )
+        }
     }
 
     private companion object {
