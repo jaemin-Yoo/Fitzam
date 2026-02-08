@@ -1,7 +1,7 @@
 ﻿package com.jaemin.fitzam.ui.screen.settings
 
-import android.app.Activity
 import android.accounts.AccountManager
+import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -10,11 +10,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -34,9 +37,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -201,14 +207,13 @@ private fun SyncConnectedCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            SyncRow(
+        Column {
+            SettingRow(
                 title = "연결된 계정",
                 trailingText = accountEmail,
                 onClick = onAccountClick,
             )
-            Spacer(Modifier.height(12.dp))
-            SyncRow(
+            SettingRow(
                 title = "자동 동기화",
                 trailingContent = {
                     Switch(
@@ -217,8 +222,7 @@ private fun SyncConnectedCard(
                     )
                 },
             )
-            Spacer(Modifier.height(12.dp))
-            SyncRow(
+            SettingRow(
                 title = "Wi-Fi에서만 동기화",
                 trailingContent = {
                     Switch(
@@ -228,50 +232,25 @@ private fun SyncConnectedCard(
                 },
             )
             Spacer(Modifier.height(12.dp))
+
             DZamButton(
                 text = "지금 동기화 하기",
                 onClick = onSyncNowClick,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                ,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
+
             Text(
                 text = lastSyncText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
-        }
-    }
-}
-
-@Composable
-private fun SyncRow(
-    title: String,
-    trailingText: String? = null,
-    trailingContent: @Composable (() -> Unit)? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    val rowModifier = if (onClick != null) {
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    } else {
-        Modifier.fillMaxWidth()
-    }
-    Row(
-        modifier = rowModifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = title)
-        when {
-            trailingContent != null -> trailingContent()
-            trailingText != null -> {
-                Text(
-                    text = trailingText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
@@ -281,34 +260,40 @@ private fun SettingRow(
     title: String,
     trailingText: String? = null,
     trailingIcon: Int? = null,
-    onClick: () -> Unit = {},
+    trailingContent: @Composable (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    trailingTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {
-    Column(
-        modifier = Modifier
+    val rowModifier = if (onClick != null) {
+        Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+    } else {
+        Modifier
+            .fillMaxWidth()
+    }
+    Row(
+        modifier = rowModifier
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(text = title)
-            when {
-                trailingText != null -> {
-                    Text(
-                        text = trailingText,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                trailingIcon != null -> {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(trailingIcon),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+        Text(text = title)
+        when {
+            trailingContent != null -> trailingContent()
+            trailingText != null -> {
+                Text(
+                    text = trailingText,
+                    color = trailingTextColor,
+                )
+            }
+            trailingIcon != null -> {
+                Icon(
+                    imageVector = ImageVector.vectorResource(trailingIcon),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -324,5 +309,10 @@ private fun Context.findActivity(): Activity? {
     }
     return null
 }
+
+
+
+
+
 
 
