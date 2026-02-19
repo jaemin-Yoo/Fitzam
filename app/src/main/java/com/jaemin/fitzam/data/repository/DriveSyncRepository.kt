@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.data.repository
+package com.jaemin.fitzam.data.repository
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
@@ -7,6 +7,7 @@ import com.google.api.client.http.FileContent
 import com.google.api.services.drive.model.File
 import com.jaemin.fitzam.data.source.remote.drive.DriveAuthSession
 import com.jaemin.fitzam.data.source.remote.drive.DriveServiceFactory
+import com.jaemin.fitzam.data.source.local.DatabaseConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -90,14 +91,15 @@ class DriveSyncRepository @Inject constructor(
             "Drive upload: walSize= bytes shmSize= bytes",
         )
 
-        val tempFile = JavaFile(context.cacheDir, "fitzam_backup.db")
+        val tempFile = JavaFile(context.cacheDir, DatabaseConfig.tempBackupFileName())
         sourceFile.copyTo(tempFile, overwrite = true)
         Log.i(TAG, "Drive upload: temp backup created size= bytes")
 
         val drive = driveServiceFactory.createDriveService(session)
+        val driveFileName = DatabaseConfig.driveDbFileName()
         val fileList = drive.files().list()
             .setSpaces("appDataFolder")
-            .setQ("name='fitzam.db' and trashed=false")
+            .setQ("name='$driveFileName' and trashed=false")
             .setFields("files(id, name)")
             .execute()
 
@@ -105,16 +107,14 @@ class DriveSyncRepository @Inject constructor(
         val mediaContent = FileContent("application/octet-stream", tempFile)
 
         if (existingFileId != null) {
-            val metadata = File().apply {
-                name = "fitzam.db"
-            }
+            val metadata = File().apply { name = driveFileName }
             drive.files()
                 .update(existingFileId, metadata, mediaContent)
                 .setFields("id")
                 .execute()
         } else {
             val metadata = File().apply {
-                name = "fitzam.db"
+                name = driveFileName
                 parents = listOf("appDataFolder")
             }
             drive.files()
@@ -126,14 +126,15 @@ class DriveSyncRepository @Inject constructor(
 
     suspend fun downloadDbBackup(session: DriveAuthSession): Result<JavaFile?> = runCatching {
         val drive = driveServiceFactory.createDriveService(session)
+        val driveFileName = DatabaseConfig.driveDbFileName()
         val fileList = drive.files().list()
             .setSpaces("appDataFolder")
-            .setQ("name='fitzam.db' and trashed=false")
+            .setQ("name='$driveFileName' and trashed=false")
             .setFields("files(id, name)")
             .execute()
 
         val fileId = fileList.files?.firstOrNull()?.id ?: return@runCatching null
-        val tempFile = JavaFile(context.cacheDir, "fitzam_restore.db")
+        val tempFile = JavaFile(context.cacheDir, DatabaseConfig.tempRestoreFileName())
         FileOutputStream(tempFile).use { output ->
             drive.files().get(fileId).executeMediaAndDownloadTo(output)
         }
@@ -177,7 +178,7 @@ class DriveSyncRepository @Inject constructor(
     }
 
     fun getLocalDatabasePath(): String =
-        context.getDatabasePath("fitzam.db").absolutePath
+        context.getDatabasePath(DatabaseConfig.localDbFileName()).absolutePath
 
     private fun checkpointWalIfPossible(dbPath: String) {
         val db = runCatching {

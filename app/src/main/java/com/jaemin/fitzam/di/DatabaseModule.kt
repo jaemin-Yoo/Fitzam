@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.jaemin.fitzam.data.source.local.DatabaseConfig
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ImageUrlCacheDao
@@ -32,7 +33,7 @@ object DatabaseModule {
         Room.databaseBuilder(
             context,
             FitzamDatabase::class.java,
-            "fitzam.db"
+            DatabaseConfig.localDbFileName()
         )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
