@@ -83,17 +83,17 @@ class DriveSyncRepository @Inject constructor(
         if (!sourceFile.exists()) {
             throw IllegalStateException("로컬 DB 파일이 없습니다.")
         }
-        val walFile = JavaFile("-wal")
-        val shmFile = JavaFile("-shm")
-        Log.i(TAG, "Drive upload: dbPath= size= bytes")
+        val walFile = JavaFile("$dbPath-wal")
+        val shmFile = JavaFile("$dbPath-shm")
+        Log.i(TAG, "Drive upload: dbPath=$dbPath size=${sourceFile.length()} bytes")
         Log.i(
             TAG,
-            "Drive upload: walSize= bytes shmSize= bytes",
+            "Drive upload: walSize=${walFile.length()} bytes shmSize=${shmFile.length()} bytes",
         )
 
         val tempFile = JavaFile(context.cacheDir, DatabaseConfig.tempBackupFileName())
         sourceFile.copyTo(tempFile, overwrite = true)
-        Log.i(TAG, "Drive upload: temp backup created size= bytes")
+        Log.i(TAG, "Drive upload: temp backup created size=${tempFile.length()} bytes")
 
         val drive = driveServiceFactory.createDriveService(session)
         val driveFileName = DatabaseConfig.driveDbFileName()
@@ -148,7 +148,7 @@ class DriveSyncRepository @Inject constructor(
         val dbPath = getLocalDatabasePath()
         checkpointWalIfPossible(dbPath)
 
-        Log.i(TAG, "Drive restore: start merge, backup=")
+        Log.i(TAG, "Drive restore: start merge, backup=${backupFile.absolutePath}")
         val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE)
         try {
             db.execSQL("ATTACH DATABASE ? AS backup", arrayOf(backupFile.absolutePath))
@@ -194,7 +194,7 @@ class DriveSyncRepository @Inject constructor(
                     val checkpointed = cur.getInt(2)
                     Log.i(
                         TAG,
-                        "Drive upload: wal_checkpoint(TRUNCATE) busy= log= checkpointed=",
+                        "Drive upload: wal_checkpoint(TRUNCATE) busy=$busy log=$log checkpointed=$checkpointed",
                     )
                 }
             }
@@ -209,7 +209,7 @@ class DriveSyncRepository @Inject constructor(
 
         try {
             val tables = listTables(db)
-            Log.i(TAG, "Drive upload: local tables=")
+            Log.i(TAG, "Drive upload: local tables=$tables")
             val requiredTables = listOf(
                 "exercise_category",
                 "exercise",
@@ -222,7 +222,7 @@ class DriveSyncRepository @Inject constructor(
             )
             val missing = requiredTables.filterNot { tables.contains(it) }
             if (missing.isNotEmpty()) {
-                throw IllegalStateException("로컬 DB 테이블이 없습니다: ")
+                throw IllegalStateException("로컬 DB 테이블이 없습니다: $missing")
             }
         } finally {
             db.close()
@@ -248,13 +248,13 @@ class DriveSyncRepository @Inject constructor(
         tableName: String,
     ) {
         if (!hasTable(db, "backup", tableName)) {
-            Log.w(TAG, "Drive restore: missing table in backup: ")
+            Log.w(TAG, "Drive restore: missing table in backup: $tableName")
             return
         }
         val before = queryCount(db, tableName)
-        db.execSQL("INSERT OR IGNORE INTO  SELECT * FROM backup.")
+        db.execSQL("INSERT OR IGNORE INTO $tableName SELECT * FROM backup.$tableName")
         val after = queryCount(db, tableName)
-        Log.i(TAG, "Drive restore:  merged, inserted=")
+        Log.i(TAG, "Drive restore: $tableName merged, inserted=${after - before}")
     }
 
     private fun hasTable(
@@ -263,7 +263,7 @@ class DriveSyncRepository @Inject constructor(
         tableName: String,
     ): Boolean {
         val cursor = db.rawQuery(
-            "SELECT 1 FROM .sqlite_master WHERE type='table' AND name=? LIMIT 1",
+            "SELECT 1 FROM $schemaName.sqlite_master WHERE type='table' AND name=? LIMIT 1",
             arrayOf(tableName),
         )
         return cursor.use { it.moveToFirst() }
@@ -273,7 +273,7 @@ class DriveSyncRepository @Inject constructor(
         db: SQLiteDatabase,
         tableName: String,
     ): Long {
-        val cursor = db.rawQuery("SELECT COUNT(*) FROM ", null)
+        val cursor = db.rawQuery("SELECT COUNT(*) FROM $tableName", null)
         return cursor.use { cur ->
             if (cur.moveToFirst()) cur.getLong(0) else 0L
         }
