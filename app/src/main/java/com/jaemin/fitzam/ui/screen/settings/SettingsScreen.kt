@@ -49,6 +49,7 @@ import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.sync.NetworkStatus
 import com.jaemin.fitzam.ui.common.DZamButton
+import com.jaemin.fitzam.ui.common.DZamModalDialog
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
 import java.time.Instant
@@ -65,6 +66,7 @@ fun SettingsScreen(
     val activity = LocalContext.current.findActivity()
     val context = LocalContext.current
     var showCellularConfirm by rememberSaveable { mutableStateOf(false) }
+    var showLogoutConfirm by rememberSaveable { mutableStateOf(false) }
     val authorizationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -167,7 +169,7 @@ fun SettingsScreen(
                     isSyncing = uiState.isSyncing,
                     lastSyncText = lastSyncText,
                     syncErrorMessage = uiState.syncErrorMessage,
-                    onAccountClick = { viewModel.onSignOutClick() },
+                    onAccountClick = { showLogoutConfirm = true },
                 )
             }
             Spacer(Modifier.height(24.dp))
@@ -213,6 +215,18 @@ fun SettingsScreen(
                     Text("취소")
                 }
             },
+        )
+    }
+
+    if (showLogoutConfirm) {
+        DZamModalDialog(
+            title = "로그아웃",
+            text = "로그아웃 하시겠습니까?",
+            onConfirm = {
+                showLogoutConfirm = false
+                viewModel.onSignOutClick()
+            },
+            onCancel = { showLogoutConfirm = false },
         )
     }
 }
