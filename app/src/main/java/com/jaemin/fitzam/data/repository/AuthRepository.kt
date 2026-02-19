@@ -135,7 +135,7 @@ class AuthRepository @Inject constructor(
         val url = URL("https://www.googleapis.com/oauth2/v1/userinfo?alt=json")
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
-        connection.setRequestProperty("Authorization", "Bearer ")
+        connection.setRequestProperty("Authorization", "Bearer $accessToken")
         connection.setRequestProperty("Accept", "application/json")
 
         try {
@@ -147,7 +147,7 @@ class AuthRepository @Inject constructor(
             }
             val body = stream.bufferedReader().use { it.readText() }
             if (responseCode !in 200..299) {
-                throw IllegalStateException("사용자 정보 조회 실패: HTTP ")
+                throw IllegalStateException("사용자 정보 조회 실패: HTTP $responseCode")
             }
             val json = JSONObject(body)
             json.optString("email").takeIf { it.isNotBlank() }
