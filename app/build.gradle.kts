@@ -83,7 +83,8 @@ android {
     }
     packaging {
         resources {
-            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/INDEX.LIST"
         }
     }
 }
@@ -135,6 +136,7 @@ dependencies {
 
     // Google Sign-In / Drive
     implementation(libs.google.play.services.auth)
+    implementation(libs.google.auth.library.oauth2.http)
     implementation(libs.google.api.client.android)
     implementation(libs.google.api.services.drive)
     implementation(libs.google.http.client.gson)
@@ -142,3 +144,6 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 }
+
+
+
