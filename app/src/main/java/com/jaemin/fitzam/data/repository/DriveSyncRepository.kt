@@ -63,6 +63,10 @@ class DriveSyncRepository @Inject constructor(
                         return@mapCatching
                     }
                     mergeBackupIntoLocal(backupFile).getOrThrow()
+                    uploadDbBackup(session).getOrThrow()
+                    val syncedAt = System.currentTimeMillis()
+                    settingsRepository.setLastSyncEpochMillis(syncedAt)
+                    settingsRepository.setLastSyncErrorMessage(null)
                 }
         }
 
