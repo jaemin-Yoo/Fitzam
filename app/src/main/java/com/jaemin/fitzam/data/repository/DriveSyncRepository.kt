@@ -1,21 +1,78 @@
-﻿package com.jaemin.fitzam.data.source.remote.drive
+﻿package com.jaemin.fitzam.data.repository
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.google.api.client.http.FileContent
 import com.google.api.services.drive.model.File
+import com.jaemin.fitzam.data.source.remote.drive.DriveAuthSession
+import com.jaemin.fitzam.data.source.remote.drive.DriveServiceFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 import java.io.File as JavaFile
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class DriveSyncRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val driveServiceFactory: DriveServiceFactory,
+    private val authRepository: AuthRepository,
+    private val settingsRepository: SettingsRepository,
 ) {
+    suspend fun syncNow(): Result<Long> {
+        if (authRepository.isUserSignedOut()) {
+            return Result.failure(IllegalStateException("계정 연결이 필요합니다."))
+        }
+        val session = authRepository.tryRestoreAuthorization()
+            ?: return Result.failure(IllegalStateException("계정 연결이 필요합니다."))
+
+        val result = withContext(Dispatchers.IO) {
+            uploadDbBackup(session)
+        }
+        return result
+            .map {
+                val syncedAt = System.currentTimeMillis()
+                settingsRepository.setLastSyncEpochMillis(syncedAt)
+                settingsRepository.setLastSyncErrorMessage(null)
+                syncedAt
+            }
+            .onFailure { error ->
+                Log.e(TAG, "Drive sync failed", error)
+                val message = error.message?.takeIf { it.isNotBlank() }
+                    ?: error.javaClass.simpleName
+                settingsRepository.setLastSyncErrorMessage(message)
+            }
+    }
+
+    suspend fun restoreFromDriveAndMerge(): Result<Unit> {
+        if (authRepository.isUserSignedOut()) {
+            return Result.failure(IllegalStateException("계정 연결이 필요합니다."))
+        }
+        val session = authRepository.tryRestoreAuthorization()
+            ?: return Result.failure(IllegalStateException("계정 연결이 필요합니다."))
+
+        settingsRepository.setLastSyncErrorMessage(null)
+        val result = withContext(Dispatchers.IO) {
+            downloadDbBackup(session)
+                .mapCatching { backupFile ->
+                    if (backupFile == null) {
+                        return@mapCatching
+                    }
+                    mergeBackupIntoLocal(backupFile).getOrThrow()
+                }
+        }
+
+        return result.onFailure { error ->
+            Log.e(TAG, "Drive restore failed", error)
+            val message = error.message?.takeIf { it.isNotBlank() }
+                ?: error.javaClass.simpleName
+            settingsRepository.setLastSyncErrorMessage(message)
+        }
+    }
+
     suspend fun uploadDbBackup(session: DriveAuthSession): Result<Unit> = runCatching {
         val dbPath = getLocalDatabasePath()
         checkpointWalIfPossible(dbPath)
@@ -25,17 +82,17 @@ class DriveSyncRepository @Inject constructor(
         if (!sourceFile.exists()) {
             throw IllegalStateException("로컬 DB 파일이 없습니다.")
         }
-        val walFile = JavaFile("$dbPath-wal")
-        val shmFile = JavaFile("$dbPath-shm")
-        Log.i(TAG, "Drive upload: dbPath=$dbPath size=${sourceFile.length()} bytes")
+        val walFile = JavaFile("-wal")
+        val shmFile = JavaFile("-shm")
+        Log.i(TAG, "Drive upload: dbPath= size= bytes")
         Log.i(
             TAG,
-            "Drive upload: walSize=${walFile.length()} bytes shmSize=${shmFile.length()} bytes",
+            "Drive upload: walSize= bytes shmSize= bytes",
         )
 
         val tempFile = JavaFile(context.cacheDir, "fitzam_backup.db")
         sourceFile.copyTo(tempFile, overwrite = true)
-        Log.i(TAG, "Drive upload: temp backup created size=${tempFile.length()} bytes")
+        Log.i(TAG, "Drive upload: temp backup created size= bytes")
 
         val drive = driveServiceFactory.createDriveService(session)
         val fileList = drive.files().list()
@@ -90,7 +147,7 @@ class DriveSyncRepository @Inject constructor(
         val dbPath = getLocalDatabasePath()
         checkpointWalIfPossible(dbPath)
 
-        Log.i(TAG, "Drive restore: start merge, backup=${backupFile.absolutePath}")
+        Log.i(TAG, "Drive restore: start merge, backup=")
         val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE)
         try {
             db.execSQL("ATTACH DATABASE ? AS backup", arrayOf(backupFile.absolutePath))
@@ -136,7 +193,7 @@ class DriveSyncRepository @Inject constructor(
                     val checkpointed = cur.getInt(2)
                     Log.i(
                         TAG,
-                        "Drive upload: wal_checkpoint(TRUNCATE) busy=$busy log=$log checkpointed=$checkpointed",
+                        "Drive upload: wal_checkpoint(TRUNCATE) busy= log= checkpointed=",
                     )
                 }
             }
@@ -151,7 +208,7 @@ class DriveSyncRepository @Inject constructor(
 
         try {
             val tables = listTables(db)
-            Log.i(TAG, "Drive upload: local tables=${tables.joinToString(",")}")
+            Log.i(TAG, "Drive upload: local tables=")
             val requiredTables = listOf(
                 "exercise_category",
                 "exercise",
@@ -164,7 +221,7 @@ class DriveSyncRepository @Inject constructor(
             )
             val missing = requiredTables.filterNot { tables.contains(it) }
             if (missing.isNotEmpty()) {
-                throw IllegalStateException("로컬 DB 테이블이 없습니다: ${missing.joinToString(", ")}")
+                throw IllegalStateException("로컬 DB 테이블이 없습니다: ")
             }
         } finally {
             db.close()
@@ -190,13 +247,13 @@ class DriveSyncRepository @Inject constructor(
         tableName: String,
     ) {
         if (!hasTable(db, "backup", tableName)) {
-            Log.w(TAG, "Drive restore: missing table in backup: $tableName")
+            Log.w(TAG, "Drive restore: missing table in backup: ")
             return
         }
         val before = queryCount(db, tableName)
-        db.execSQL("INSERT OR IGNORE INTO $tableName SELECT * FROM backup.$tableName")
+        db.execSQL("INSERT OR IGNORE INTO  SELECT * FROM backup.")
         val after = queryCount(db, tableName)
-        Log.i(TAG, "Drive restore: $tableName merged, inserted=${after - before}")
+        Log.i(TAG, "Drive restore:  merged, inserted=")
     }
 
     private fun hasTable(
@@ -205,7 +262,7 @@ class DriveSyncRepository @Inject constructor(
         tableName: String,
     ): Boolean {
         val cursor = db.rawQuery(
-            "SELECT 1 FROM $schemaName.sqlite_master WHERE type='table' AND name=? LIMIT 1",
+            "SELECT 1 FROM .sqlite_master WHERE type='table' AND name=? LIMIT 1",
             arrayOf(tableName),
         )
         return cursor.use { it.moveToFirst() }
@@ -215,7 +272,7 @@ class DriveSyncRepository @Inject constructor(
         db: SQLiteDatabase,
         tableName: String,
     ): Long {
-        val cursor = db.rawQuery("SELECT COUNT(*) FROM $tableName", null)
+        val cursor = db.rawQuery("SELECT COUNT(*) FROM ", null)
         return cursor.use { cur ->
             if (cur.moveToFirst()) cur.getLong(0) else 0L
         }

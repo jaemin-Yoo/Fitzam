@@ -6,12 +6,11 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jaemin.fitzam.data.sync.SyncManager
-import com.jaemin.fitzam.data.sync.SyncScheduler
-import com.jaemin.fitzam.data.sync.SyncSettingsRepository
-import com.jaemin.fitzam.data.source.remote.drive.DriveAuthManager
+import com.jaemin.fitzam.data.repository.AuthRepository
+import com.jaemin.fitzam.data.repository.DriveAuthorizationOutcome
+import com.jaemin.fitzam.data.repository.DriveSyncRepository
+import com.jaemin.fitzam.data.repository.SettingsRepository
 import com.jaemin.fitzam.data.source.remote.drive.DriveAuthSession
-import com.jaemin.fitzam.data.source.remote.drive.DriveAuthorizationOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,10 +19,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val driveAuthManager: DriveAuthManager,
-    private val syncSettingsRepository: SyncSettingsRepository,
-    private val syncScheduler: SyncScheduler,
-    private val syncManager: SyncManager,
+    private val authRepository: AuthRepository,
+    private val settingsRepository: SettingsRepository,
+    private val driveSyncRepository: DriveSyncRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -31,31 +29,27 @@ class SettingsViewModel @Inject constructor(
 
     init {
         _uiState.value = _uiState.value.copy(
-            isSignedOutByUser = driveAuthManager.isUserSignedOut(),
+            isSignedOutByUser = authRepository.isUserSignedOut(),
         )
 
         viewModelScope.launch {
-            syncSettingsRepository.settings.collect { settings ->
+            settingsRepository.settings.collect { settings ->
                 _uiState.value = _uiState.value.copy(
                     isAutoSyncEnabled = settings.isAutoSyncEnabled,
                     isWifiOnlyEnabled = settings.isWifiOnlyEnabled,
                     lastSyncEpochMillis = settings.lastSyncEpochMillis,
                     syncErrorMessage = settings.lastSyncErrorMessage,
                 )
-                syncScheduler.schedulePeriodic(
-                    autoEnabled = settings.isAutoSyncEnabled,
-                    wifiOnly = settings.isWifiOnlyEnabled,
-                )
             }
         }
     }
 
     fun restoreSignInIfPossible(activity: Activity) {
-        if (driveAuthManager.isUserSignedOut()) {
+        if (authRepository.isUserSignedOut()) {
             return
         }
         viewModelScope.launch {
-            val session = driveAuthManager.restoreAuthorization(activity)
+            val session = authRepository.restoreAuthorization(activity)
             handleSignedInSession(session, shouldRestoreFromDrive = false)
         }
     }
@@ -73,10 +67,10 @@ class SettingsViewModel @Inject constructor(
             errorMessage = null,
             isSignedOutByUser = false,
         )
-        driveAuthManager.setUserSignedOut(false)
+        authRepository.setUserSignedOut(false)
 
         viewModelScope.launch {
-            val result = driveAuthManager.authorizeDrive(
+            val result = authRepository.authorizeDrive(
                 activity = activity,
                 accountName = accountName,
             )
@@ -104,7 +98,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onAuthorizationResult(data: Intent?, resultCode: Int) {
         viewModelScope.launch {
-            val result = driveAuthManager.handleAuthorizationResult(data, resultCode)
+            val result = authRepository.handleAuthorizationResult(data, resultCode)
             result
                 .onSuccess { session ->
                     handleSignedInSession(session, shouldRestoreFromDrive = true)
@@ -118,14 +112,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onPendingIntentLaunched() {
-            if (_uiState.value.pendingIntent != null) {
-                _uiState.value = _uiState.value.copy(pendingIntent = null)
-            }
+        if (_uiState.value.pendingIntent != null) {
+            _uiState.value = _uiState.value.copy(pendingIntent = null)
+        }
     }
 
     fun onSignOutClick() {
-        driveAuthManager.setUserSignedOut(true)
-        syncScheduler.cancelPeriodic()
+        authRepository.setUserSignedOut(true)
+        settingsRepository.cancelAutoSync()
         _uiState.value = _uiState.value.copy(
             isSignedIn = false,
             accountEmail = null,
@@ -137,32 +131,24 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onAutoSyncChange(enabled: Boolean) {
-        syncSettingsRepository.setAutoSyncEnabled(enabled)
-        syncScheduler.schedulePeriodic(
-            autoEnabled = enabled,
-            wifiOnly = _uiState.value.isWifiOnlyEnabled,
-        )
+        settingsRepository.setAutoSyncEnabled(enabled)
     }
 
     fun onWifiOnlyChange(enabled: Boolean) {
-        syncSettingsRepository.setWifiOnlyEnabled(enabled)
-        syncScheduler.schedulePeriodic(
-            autoEnabled = _uiState.value.isAutoSyncEnabled,
-            wifiOnly = enabled,
-        )
+        settingsRepository.setWifiOnlyEnabled(enabled)
     }
 
     fun onSyncNowClick() {
         if (_uiState.value.isSyncing) {
             return
         }
-        syncSettingsRepository.setLastSyncErrorMessage(null)
+        settingsRepository.setLastSyncErrorMessage(null)
         _uiState.value = _uiState.value.copy(
             isSyncing = true,
             syncErrorMessage = null,
         )
         viewModelScope.launch {
-            val result = syncManager.syncNow()
+            val result = driveSyncRepository.syncNow()
             val error = result.exceptionOrNull()
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,
@@ -190,7 +176,7 @@ class SettingsViewModel @Inject constructor(
             _uiState.value.isSignedOutByUser
         }
         if (session != null) {
-            driveAuthManager.setUserSignedOut(false)
+            authRepository.setUserSignedOut(false)
         }
         _uiState.value = _uiState.value.copy(
             isSignedIn = session != null,
@@ -221,7 +207,7 @@ class SettingsViewModel @Inject constructor(
             syncErrorMessage = null,
         )
         viewModelScope.launch {
-            val result = syncManager.restoreFromDriveAndMerge()
+            val result = driveSyncRepository.restoreFromDriveAndMerge()
             val error = result.exceptionOrNull()
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,

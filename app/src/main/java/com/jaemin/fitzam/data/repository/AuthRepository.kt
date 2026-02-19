@@ -1,16 +1,17 @@
-﻿package com.jaemin.fitzam.data.source.remote.drive
+﻿package com.jaemin.fitzam.data.repository
 
+import android.accounts.Account
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.accounts.Account
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.Tasks
 import com.google.api.services.drive.DriveScopes
+import com.jaemin.fitzam.data.source.remote.drive.DriveAuthSession
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,7 +22,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class DriveAuthManager @Inject constructor(
+class AuthRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -134,7 +135,7 @@ class DriveAuthManager @Inject constructor(
         val url = URL("https://www.googleapis.com/oauth2/v1/userinfo?alt=json")
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
-        connection.setRequestProperty("Authorization", "Bearer $accessToken")
+        connection.setRequestProperty("Authorization", "Bearer ")
         connection.setRequestProperty("Accept", "application/json")
 
         try {
@@ -146,7 +147,7 @@ class DriveAuthManager @Inject constructor(
             }
             val body = stream.bufferedReader().use { it.readText() }
             if (responseCode !in 200..299) {
-                throw IllegalStateException("사용자 정보 조회 실패: HTTP $responseCode")
+                throw IllegalStateException("사용자 정보 조회 실패: HTTP ")
             }
             val json = JSONObject(body)
             json.optString("email").takeIf { it.isNotBlank() }
@@ -164,5 +165,3 @@ sealed class DriveAuthorizationOutcome {
 
 private const val PREFS_NAME = "drive_auth_prefs"
 private const val KEY_SIGNED_OUT = "signed_out_by_user"
-
-

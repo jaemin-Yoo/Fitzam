@@ -1,6 +1,8 @@
-﻿package com.jaemin.fitzam.data.sync
+﻿package com.jaemin.fitzam.data.repository
 
 import android.content.Context
+import com.jaemin.fitzam.data.sync.SyncScheduler
+import com.jaemin.fitzam.data.sync.SyncSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,21 +10,39 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SyncSettingsRepository @Inject constructor(
+class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val syncScheduler: SyncScheduler,
 ) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val _settings = MutableStateFlow(loadSettings())
     val settings = _settings.asStateFlow()
 
+    init {
+        syncScheduler.schedulePeriodic(
+            autoEnabled = _settings.value.isAutoSyncEnabled,
+            wifiOnly = _settings.value.isWifiOnlyEnabled,
+        )
+    }
+
     fun setAutoSyncEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
         _settings.value = loadSettings()
+
+        syncScheduler.schedulePeriodic(
+            autoEnabled = enabled,
+            wifiOnly = _settings.value.isWifiOnlyEnabled,
+        )
     }
 
     fun setWifiOnlyEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_WIFI_ONLY, enabled).apply()
         _settings.value = loadSettings()
+
+        syncScheduler.schedulePeriodic(
+            autoEnabled = _settings.value.isAutoSyncEnabled,
+            wifiOnly = enabled,
+        )
     }
 
     fun setLastSyncEpochMillis(epochMillis: Long) {
@@ -39,6 +59,10 @@ class SyncSettingsRepository @Inject constructor(
         }
         editor.apply()
         _settings.value = loadSettings()
+    }
+
+    fun cancelAutoSync() {
+        syncScheduler.cancelPeriodic()
     }
 
     private fun loadSettings(): SyncSettings {
