@@ -228,9 +228,15 @@ private fun AccountConnectButton(
     DZamButton(
         text = buttonText,
         onClick = {
-            val intent = Intent(Settings.ACTION_ADD_ACCOUNT).apply {
-                putExtra(Settings.EXTRA_ACCOUNT_TYPES, arrayOf("com.google"))
-            }
+            val intent = AccountManager.newChooseAccountIntent(
+                null,
+                null,
+                arrayOf("com.google"),
+                null,
+                null,
+                null,
+                null,
+            )
             accountPickerLauncher.launch(intent)
         },
         enabled = !isSigningIn && !isCheckingAccount,
