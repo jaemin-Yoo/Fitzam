@@ -34,14 +34,11 @@ class AuthRepository @Inject constructor(
         Scope("profile"),
     )
 
-    suspend fun authorizeDrive(
-        activity: Activity,
-        accountName: String? = null,
-    ): Result<DriveAuthorizationOutcome> = runCatching {
+    suspend fun authorizeDrive(accountName: String? = null): Result<DriveAuthorizationOutcome> = runCatching {
         authorizeInternal(accountName = accountName)
     }
 
-    suspend fun restoreAuthorization(activity: Activity): DriveAuthSession? {
+    suspend fun restoreAuthorization(): DriveAuthSession? {
         return when (val outcome = authorizeInternal(allowResolution = false)) {
             is DriveAuthorizationOutcome.Authorized -> outcome.session
             is DriveAuthorizationOutcome.Resolution -> null

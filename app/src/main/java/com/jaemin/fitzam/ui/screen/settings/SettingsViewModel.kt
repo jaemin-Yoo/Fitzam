@@ -38,26 +38,25 @@ class SettingsViewModel @Inject constructor(
                     isAutoSyncEnabled = settings.isAutoSyncEnabled,
                     isWifiOnlyEnabled = settings.isWifiOnlyEnabled,
                     lastSyncEpochMillis = settings.lastSyncEpochMillis,
-                    syncErrorMessage = settings.lastSyncErrorMessage,
+                    hasSyncError = settings.lastSyncErrorMessage != null,
                 )
             }
         }
     }
 
-    fun restoreSignInIfPossible(activity: Activity) {
+    fun restoreSignInIfPossible() {
         if (authRepository.isUserSignedOut()) {
             return
         }
+        _uiState.value = _uiState.value.copy(isCheckingAccount = true)
         viewModelScope.launch {
-            val session = authRepository.restoreAuthorization(activity)
+            val session = authRepository.restoreAuthorization()
             handleSignedInSession(session, shouldRestoreFromDrive = false)
+            _uiState.value = _uiState.value.copy(isCheckingAccount = false)
         }
     }
 
-    fun onSignInClick(
-        activity: Activity,
-        accountName: String? = null,
-    ) {
+    fun onSignInClick(accountName: String? = null) {
         if (_uiState.value.isSigningIn) {
             return
         }
@@ -70,10 +69,7 @@ class SettingsViewModel @Inject constructor(
         authRepository.setUserSignedOut(false)
 
         viewModelScope.launch {
-            val result = authRepository.authorizeDrive(
-                activity = activity,
-                accountName = accountName,
-            )
+            val result = authRepository.authorizeDrive(accountName = accountName)
             result
                 .onSuccess { outcome ->
                     when (outcome) {
@@ -145,21 +141,21 @@ class SettingsViewModel @Inject constructor(
         settingsRepository.setLastSyncErrorMessage(null)
         _uiState.value = _uiState.value.copy(
             isSyncing = true,
-            syncErrorMessage = null,
+            hasSyncError = false,
         )
         viewModelScope.launch {
             val result = driveSyncRepository.syncNow()
-            val error = result.exceptionOrNull()
+            result
+                .onSuccess { timestamp ->
+                    Log.i(TAG, "Sync completed successfully at $timestamp")
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Sync failed", error)
+                }
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,
                 lastSyncEpochMillis = result.getOrNull() ?: _uiState.value.lastSyncEpochMillis,
-                syncErrorMessage = if (result.isSuccess) {
-                    null
-                } else {
-                    error?.message?.takeIf { it.isNotBlank() }
-                        ?: error?.javaClass?.simpleName
-                        ?: "알 수 없는 오류"
-                },
+                hasSyncError = result.isFailure,
             )
         }
     }
@@ -204,22 +200,26 @@ class SettingsViewModel @Inject constructor(
         }
         _uiState.value = _uiState.value.copy(
             isSyncing = true,
-            syncErrorMessage = null,
+            hasSyncError = false,
         )
         viewModelScope.launch {
             val result = driveSyncRepository.restoreFromDriveAndMerge()
-            val error = result.exceptionOrNull()
+            result
+                .onSuccess {
+                    Log.i(TAG, "Restore from Drive completed successfully")
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Restore from Drive failed", error)
+                }
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,
-                syncErrorMessage = if (result.isSuccess) {
-                    null
-                } else {
-                    error?.message?.takeIf { it.isNotBlank() }
-                        ?: error?.javaClass?.simpleName
-                        ?: "알 수 없는 오류"
-                },
+                hasSyncError = result.isFailure,
             )
         }
+    }
+
+    fun onSyncErrorShown() {
+        _uiState.value = _uiState.value.copy(hasSyncError = false)
     }
 
     private companion object {
@@ -231,6 +231,7 @@ data class SettingsUiState(
     val isSignedIn: Boolean = false,
     val accountEmail: String? = null,
     val isSigningIn: Boolean = false,
+    val isCheckingAccount: Boolean = false,
     val pendingIntent: PendingIntent? = null,
     val errorMessage: String? = null,
     val isSignedOutByUser: Boolean = false,
@@ -238,8 +239,5 @@ data class SettingsUiState(
     val isWifiOnlyEnabled: Boolean = true,
     val isSyncing: Boolean = false,
     val lastSyncEpochMillis: Long? = null,
-    val syncErrorMessage: String? = null,
+    val hasSyncError: Boolean = false,
 )
-
-
-

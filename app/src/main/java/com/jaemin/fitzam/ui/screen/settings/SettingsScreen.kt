@@ -4,7 +4,11 @@ import android.accounts.AccountManager
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -20,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,7 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.sync.NetworkStatus
 import com.jaemin.fitzam.ui.common.DZamAlertDialog
@@ -63,7 +64,6 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val activity = LocalContext.current.findActivity()
     val context = LocalContext.current
     var showCellularConfirm by rememberSaveable { mutableStateOf(false) }
     var showLogoutConfirm by rememberSaveable { mutableStateOf(false) }
@@ -75,22 +75,17 @@ fun SettingsScreen(
     val accountPickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (activity == null) {
-            return@rememberLauncherForActivityResult
-        }
         if (result.resultCode != Activity.RESULT_OK) {
             return@rememberLauncherForActivityResult
         }
         val accountName = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
         if (!accountName.isNullOrBlank()) {
-            viewModel.onSignInClick(activity, accountName)
+            viewModel.onSignInClick(accountName)
         }
     }
 
-    LaunchedEffect(activity) {
-        if (activity != null) {
-            viewModel.restoreSignInIfPossible(activity)
-        }
+    LaunchedEffect(Unit) {
+        viewModel.restoreSignInIfPossible()
     }
 
     LaunchedEffect(uiState.pendingIntent) {
@@ -99,6 +94,13 @@ fun SettingsScreen(
             val request = IntentSenderRequest.Builder(pendingIntent).build()
             authorizationLauncher.launch(request)
             viewModel.onPendingIntentLaunched()
+        }
+    }
+
+    LaunchedEffect(uiState.hasSyncError) {
+        if (uiState.hasSyncError) {
+            Toast.makeText(context, "동기화에 실패했어요.", Toast.LENGTH_SHORT).show()
+            viewModel.onSyncErrorShown()
         }
     }
 
@@ -125,96 +127,31 @@ fun SettingsScreen(
                 )
                 .verticalScroll(rememberScrollState()),
         ) {
-            SectionTitle(text = "동기화")
-            Spacer(Modifier.height(8.dp))
-
-            val accountEmail = uiState.accountEmail
-            if (accountEmail == null) {
-                DZamButton(
-                    text = if (uiState.isSigningIn) "연결 중..." else "계정 연결",
-                    onClick = {
-                        val currentActivity = activity ?: return@DZamButton
-                        val intent = AccountManager.newChooseAccountIntent(
-                            null,
-                            null,
-                            arrayOf("com.google"),
-                            false,
-                            null,
-                            null,
-                            null,
-                            null,
-                        )
-                        accountPickerLauncher.launch(intent)
-                    },
-                    enabled = activity != null && !uiState.isSigningIn,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            } else {
-                val lastSyncText = formatLastSyncText(uiState.lastSyncEpochMillis)
-                SyncConnectedCard(
-                    accountEmail = accountEmail,
-                    isAutoSyncEnabled = uiState.isAutoSyncEnabled,
-                    onAutoSyncChange = viewModel::onAutoSyncChange,
-                    isWifiOnlyEnabled = uiState.isWifiOnlyEnabled,
-                    onWifiOnlyChange = viewModel::onWifiOnlyChange,
-                    onSyncNowClick = {
-                        val wifiOnly = uiState.isWifiOnlyEnabled
-                        val isUnmetered = NetworkStatus.isUnmetered(context)
-                        if (wifiOnly && !isUnmetered) {
-                            showCellularConfirm = true
-                        } else {
-                            viewModel.onSyncNowClick()
-                        }
-                    },
-                    isSyncing = uiState.isSyncing,
-                    lastSyncText = lastSyncText,
-                    syncErrorMessage = uiState.syncErrorMessage,
-                    onAccountClick = { showLogoutConfirm = true },
-                )
-            }
+            SyncSection(
+                uiState = uiState,
+                context = context,
+                accountPickerLauncher = accountPickerLauncher,
+                viewModel = viewModel,
+                onShowCellularConfirm = { showCellularConfirm = true },
+                onShowLogoutConfirm = { showLogoutConfirm = true },
+            )
             Spacer(Modifier.height(24.dp))
 
-            SectionTitle(text = "정보")
-            Spacer(Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
-                SettingRow(
-                    title = "앱 버전",
-                    trailingText = "v ${BuildConfig.VERSION_NAME}",
-                )
-                SettingRow(
-                    title = "약관 및 정책",
-                    trailingIcon = R.drawable.ic_right_arrow,
-                    onClick = onTermsClick,
-                )
-            }
+            InfoSection(onTermsClick = onTermsClick)
         }
     }
 
     if (showCellularConfirm) {
-        AlertDialog(
-            onDismissRequest = { showCellularConfirm = false },
-            title = { Text(text = "모바일 데이터 사용") },
-            text = { Text(text = "Wi-Fi가 아닙니다. 그래도 동기화를 진행할까요?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showCellularConfirm = false
-                        viewModel.onSyncNowClick()
-                    }
-                ) {
-                    Text("진행")
-                }
+        DZamAlertDialog(
+            title = "모바일 데이터 사용",
+            text = "Wi-Fi가 아닙니다. 그래도 동기화를 진행할까요?",
+            onConfirm = {
+                showCellularConfirm = false
+                viewModel.onSyncNowClick()
             },
-            dismissButton = {
-                TextButton(onClick = { showCellularConfirm = false }) {
-                    Text("취소")
-                }
-            },
+            onCancel = { showCellularConfirm = false },
+            confirmText = "진행",
+            cancelText = "취소",
         )
     }
 
@@ -227,17 +164,77 @@ fun SettingsScreen(
                 viewModel.onSignOutClick()
             },
             onCancel = { showLogoutConfirm = false },
+            confirmText = "확인",
+            cancelText = "취소",
         )
     }
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 8.dp)
+private fun SyncSection(
+    uiState: SettingsUiState,
+    context: Context,
+    accountPickerLauncher: ActivityResultLauncher<Intent>,
+    viewModel: SettingsViewModel,
+    onShowCellularConfirm: () -> Unit,
+    onShowLogoutConfirm: () -> Unit,
+) {
+    SectionTitle(text = "동기화")
+    Spacer(Modifier.height(8.dp))
+
+    val accountEmail = uiState.accountEmail
+    if (accountEmail == null) {
+        AccountConnectButton(
+            isSigningIn = uiState.isSigningIn,
+            isCheckingAccount = uiState.isCheckingAccount,
+            accountPickerLauncher = accountPickerLauncher,
+        )
+    } else {
+        val lastSyncText = formatLastSyncText(uiState.lastSyncEpochMillis)
+        SyncConnectedCard(
+            accountEmail = accountEmail,
+            isAutoSyncEnabled = uiState.isAutoSyncEnabled,
+            onAutoSyncChange = viewModel::onAutoSyncChange,
+            isWifiOnlyEnabled = uiState.isWifiOnlyEnabled,
+            onWifiOnlyChange = viewModel::onWifiOnlyChange,
+            onSyncNowClick = {
+                val wifiOnly = uiState.isWifiOnlyEnabled
+                val isUnmetered = NetworkStatus.isUnmetered(context)
+                if (wifiOnly && !isUnmetered) {
+                    onShowCellularConfirm()
+                } else {
+                    viewModel.onSyncNowClick()
+                }
+            },
+            isSyncing = uiState.isSyncing,
+            lastSyncText = lastSyncText,
+            onAccountClick = onShowLogoutConfirm,
+        )
+    }
+}
+
+@Composable
+private fun AccountConnectButton(
+    isSigningIn: Boolean,
+    isCheckingAccount: Boolean,
+    accountPickerLauncher: ActivityResultLauncher<Intent>,
+) {
+    val buttonText = when {
+        isCheckingAccount -> "계정 확인 중..."
+        isSigningIn -> "연결 중..."
+        else -> "계정 연결"
+    }
+
+    DZamButton(
+        text = buttonText,
+        onClick = {
+            val intent = Intent(Settings.ACTION_ADD_ACCOUNT).apply {
+                putExtra(Settings.EXTRA_ACCOUNT_TYPES, arrayOf("com.google"))
+            }
+            accountPickerLauncher.launch(intent)
+        },
+        enabled = !isSigningIn && !isCheckingAccount,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
@@ -251,7 +248,6 @@ private fun SyncConnectedCard(
     onSyncNowClick: () -> Unit,
     isSyncing: Boolean,
     lastSyncText: String,
-    syncErrorMessage: String?,
     onAccountClick: () -> Unit,
 ) {
     Card(
@@ -303,19 +299,41 @@ private fun SyncConnectedCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (!syncErrorMessage.isNullOrBlank()) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "동기화 실패: $syncErrorMessage",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+@Composable
+private fun InfoSection(onTermsClick: () -> Unit) {
+    SectionTitle(text = "정보")
+    Spacer(Modifier.height(8.dp))
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        SettingRow(
+            title = "앱 버전",
+            trailingText = "v 1.0.0",
+        )
+        SettingRow(
+            title = "약관 및 정책",
+            trailingIcon = R.drawable.ic_right_arrow,
+            onClick = onTermsClick,
+        )
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    )
 }
 
 @Composable
@@ -362,31 +380,13 @@ private fun SettingRow(
     }
 }
 
-private fun Context.findActivity(): Activity? {
-    var current: Context = this
-    while (current is ContextWrapper) {
-        if (current is Activity) {
-            return current
-        }
-        current = current.baseContext
-    }
-    return null
-}
-
 private fun formatLastSyncText(lastSyncEpochMillis: Long?): String {
     if (lastSyncEpochMillis == null) {
         return "마지막 동기화: -"
     }
-    val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     val dateTime = Instant.ofEpochMilli(lastSyncEpochMillis)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
     return "마지막 동기화: ${dateTime.format(formatter)}"
 }
-
-
-
-
-
-
-
