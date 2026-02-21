@@ -20,10 +20,15 @@ sealed interface Screen {
 @Composable
 fun FitzamApp() {
     val backStack = rememberNavBackStack(Screen.Home)
+    val popBackStack: () -> Unit = {
+        if (backStack.size > 1) {
+            backStack.removeLastOrNull()
+        }
+    }
 
     NavDisplay(
         backStack = backStack,
-        onBack = { backStack.removeLastOrNull() },
+        onBack = popBackStack,
         entryProvider = entryProvider {
             entry<Screen.Home> {
                 HomeScreen(
@@ -36,13 +41,13 @@ fun FitzamApp() {
             entry<Screen.ExerciseCategorySelect> { screen ->
                 ExerciseCategorySelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
-                    onBackClick = { backStack.removeLastOrNull() },
-                    onCompleteClick = { backStack.removeLastOrNull() },
+                    onBackClick = popBackStack,
+                    onCompleteClick = popBackStack,
                 )
             }
             entry<Screen.Settings> {
                 SettingsScreen(
-                    onBackClick = { backStack.removeLastOrNull() },
+                    onBackClick = popBackStack,
                 )
             }
         },
