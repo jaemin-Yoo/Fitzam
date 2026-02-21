@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -64,7 +66,6 @@ fun DZamAlertDialog(
 
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
@@ -84,7 +85,10 @@ fun DZamAlertDialog(
                             contentColor = Color.White,
                         )
                     ) {
-                        Text(text = cancelText)
+                        Text(
+                            text = cancelText,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
                     }
 
                     Button(
@@ -98,7 +102,10 @@ fun DZamAlertDialog(
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                         )
                     ) {
-                        Text(text = confirmText)
+                        Text(
+                            text = confirmText,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
                     }
                 }
             }
