@@ -17,16 +17,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 
 /**
- * 커스텀 모달 다이얼로그
+ * DZam 다이얼로그
+ * Material 3 [Dialog] 래핑
  *
- * @param title 다이얼로그 타이틀 텍스트
+ * @param title 다이얼로그 제목 텍스트
  * @param text 다이얼로그 본문 텍스트
  * @param onConfirm 확인 버튼 클릭 시 호출되는 콜백
  * @param onCancel 취소 버튼 클릭 또는 다이얼로그 닫기 시 호출되는 콜백
@@ -36,7 +36,7 @@ import com.jaemin.fitzam.ui.theme.FitzamTheme
  * @param onDismissRequest 다이얼로그 외부 클릭/뒤로가기 시 호출되는 콜백
  */
 @Composable
-fun DZamModalDialog(
+fun DZamAlertDialog(
     title: String,
     text: String,
     onConfirm: () -> Unit,
@@ -52,7 +52,6 @@ fun DZamModalDialog(
                 .widthIn(min = 280.dp, max = 360.dp)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            tonalElevation = 6.dp,
         ) {
             Column(
                 modifier = Modifier.padding(24.dp)
@@ -60,16 +59,16 @@ fun DZamModalDialog(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.height(10.dp))
+
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -81,12 +80,13 @@ fun DZamModalDialog(
                             .height(48.dp),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8E8E8E),
+                            containerColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             contentColor = Color.White,
                         )
                     ) {
                         Text(text = cancelText)
                     }
+
                     Button(
                         onClick = onConfirm,
                         modifier = Modifier
@@ -110,9 +110,9 @@ fun DZamModalDialog(
 @Composable
 fun DZamModalDialogPreview() {
     FitzamTheme {
-        DZamModalDialog(
-            title = "Title",
-            text = "Text",
+        DZamAlertDialog(
+            title = "제목",
+            text = "내용",
             onConfirm = {},
             onCancel = {},
         )

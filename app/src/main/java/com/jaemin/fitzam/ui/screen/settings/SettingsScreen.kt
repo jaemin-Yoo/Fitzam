@@ -48,8 +48,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.sync.NetworkStatus
+import com.jaemin.fitzam.ui.common.DZamAlertDialog
 import com.jaemin.fitzam.ui.common.DZamButton
-import com.jaemin.fitzam.ui.common.DZamModalDialog
 import com.jaemin.fitzam.ui.common.FitzamTopAppBar
 import com.jaemin.fitzam.ui.common.TopAppBarItem
 import java.time.Instant
@@ -219,7 +219,7 @@ fun SettingsScreen(
     }
 
     if (showLogoutConfirm) {
-        DZamModalDialog(
+        DZamAlertDialog(
             title = "로그아웃",
             text = "로그아웃 하시겠습니까?",
             onConfirm = {
