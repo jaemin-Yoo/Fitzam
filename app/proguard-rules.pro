@@ -19,3 +19,18 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Google Drive API client (JSON reflection)
+-keepclassmembers class * {
+    @com.google.api.client.util.Key <fields>;
+}
+-keepclassmembers class * extends com.google.api.client.json.GenericJson {
+    <fields>;
+    <methods>;
+}
+-keep class com.google.api.client.** { *; }
+-keep class com.google.api.services.drive.** { *; }
+-keep class com.google.api.client.util.** { *; }
+
+# Gson (if used via reflection)
+-keep class com.google.gson.** { *; }
