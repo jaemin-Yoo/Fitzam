@@ -5,6 +5,7 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -46,9 +47,13 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun tryRestoreAuthorization(): DriveAuthSession? {
-        return when (val outcome = authorizeInternal(allowResolution = false)) {
-            is DriveAuthorizationOutcome.Authorized -> outcome.session
-            is DriveAuthorizationOutcome.Resolution -> null
+        return try {
+            when (val outcome = authorizeInternal(allowResolution = false)) {
+                is DriveAuthorizationOutcome.Authorized -> outcome.session
+                is DriveAuthorizationOutcome.Resolution -> null
+            }
+        } catch (_: AuthTokenInvalidException) {
+            null
         }
     }
 
@@ -93,7 +98,12 @@ class AuthRepository @Inject constructor(
             return DriveAuthorizationOutcome.Resolution(pendingIntent)
         }
 
-        return DriveAuthorizationOutcome.Authorized(createSessionFromResult(result))
+        return DriveAuthorizationOutcome.Authorized(
+            createSessionFromResult(
+                result = result,
+                fallbackEmail = accountName,
+            ),
+        )
     }
 
     private suspend fun awaitAuthorizationResult(
@@ -102,10 +112,19 @@ class AuthRepository @Inject constructor(
         Tasks.await(authorizationClient.authorize(request))
     }
 
-    private suspend fun createSessionFromResult(result: AuthorizationResult): DriveAuthSession {
+    private suspend fun createSessionFromResult(
+        result: AuthorizationResult,
+        fallbackEmail: String? = null,
+    ): DriveAuthSession {
         val accessToken = result.accessToken
             ?: throw IllegalStateException("액세스 토큰이 없습니다.")
-        val email = fetchUserEmail(accessToken)
+        val email = try {
+            fetchUserEmail(accessToken)
+        } catch (error: AuthTokenInvalidException) {
+            throw error
+        } catch (_: Exception) {
+            fallbackEmail?.takeIf { candidate -> candidate.isNotBlank() } ?: "알 수 없음"
+        }
         val grantedScopes = result.grantedScopes
             ?.let { scopes ->
                 val mapped = mutableListOf<String>()
@@ -143,6 +162,10 @@ class AuthRepository @Inject constructor(
                 connection.errorStream
             }
             val body = stream.bufferedReader().use { it.readText() }
+            if (responseCode == 401) {
+                runCatching { GoogleAuthUtil.clearToken(context, accessToken) }
+                throw AuthTokenInvalidException("사용자 정보 조회 실패: HTTP $responseCode")
+            }
             if (responseCode !in 200..299) {
                 throw IllegalStateException("사용자 정보 조회 실패: HTTP $responseCode")
             }
@@ -159,6 +182,8 @@ sealed class DriveAuthorizationOutcome {
     data class Authorized(val session: DriveAuthSession) : DriveAuthorizationOutcome()
     data class Resolution(val pendingIntent: PendingIntent?) : DriveAuthorizationOutcome()
 }
+
+class AuthTokenInvalidException(message: String) : IllegalStateException(message)
 
 private const val PREFS_NAME = "drive_auth_prefs"
 private const val KEY_SIGNED_OUT = "signed_out_by_user"

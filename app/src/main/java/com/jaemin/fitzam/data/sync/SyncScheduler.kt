@@ -20,7 +20,11 @@ class SyncScheduler @Inject constructor(
 ) {
     private val workManager = WorkManager.getInstance(context)
 
-    fun schedulePeriodic(autoEnabled: Boolean, wifiOnly: Boolean) {
+    fun schedulePeriodic(
+        autoEnabled: Boolean,
+        wifiOnly: Boolean,
+        forceReschedule: Boolean = false,
+    ) {
         if (!autoEnabled) {
             cancelPeriodic()
             return
@@ -40,9 +44,14 @@ class SyncScheduler @Inject constructor(
             .setConstraints(constraints)
             .build()
 
+        val policy = if (forceReschedule) {
+            ExistingPeriodicWorkPolicy.UPDATE
+        } else {
+            ExistingPeriodicWorkPolicy.KEEP
+        }
         workManager.enqueueUniquePeriodicWork(
             WORK_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
+            policy,
             request,
         )
     }

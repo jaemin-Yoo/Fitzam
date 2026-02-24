@@ -81,6 +81,8 @@ fun SettingsScreen(
         val accountName = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
         if (!accountName.isNullOrBlank()) {
             viewModel.onSignInClick(accountName)
+        } else {
+            Toast.makeText(context, "계정 항목을 선택해야 연결할 수 있어요.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -101,6 +103,14 @@ fun SettingsScreen(
         if (uiState.hasSyncError) {
             Toast.makeText(context, "동기화에 실패했어요.", Toast.LENGTH_SHORT).show()
             viewModel.onSyncErrorShown()
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        val message = uiState.errorMessage
+        if (!message.isNullOrBlank()) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.onAuthErrorShown()
         }
     }
 
@@ -336,7 +346,7 @@ private fun InfoSection(onTermsClick: () -> Unit) {
 private fun SectionTitle(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 8.dp)
     )

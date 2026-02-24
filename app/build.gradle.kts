@@ -20,8 +20,8 @@ android {
         applicationId = "com.jaemin.fitzam"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -83,10 +83,16 @@ android {
     }
     packaging {
         resources {
-            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/DEPENDENCIES"
+
             excludes += "META-INF/INDEX.LIST"
         }
     }
+}
+
+configurations.configureEach {
+    exclude(group = "org.apache.httpcomponents", module = "httpclient")
+    exclude(group = "org.apache.httpcomponents", module = "httpcore")
 }
 
 dependencies {
@@ -137,8 +143,12 @@ dependencies {
     // Google Sign-In / Drive
     implementation(libs.google.play.services.auth)
     implementation(libs.google.auth.library.oauth2.http)
-    implementation(libs.google.api.client.android)
-    implementation(libs.google.api.services.drive)
+    implementation(libs.google.api.client.android) {
+        exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
+    }
+    implementation(libs.google.api.services.drive) {
+        exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
+    }
     implementation(libs.google.http.client.gson)
 
     // WorkManager

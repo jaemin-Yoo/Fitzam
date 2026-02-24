@@ -22,6 +22,7 @@ class SettingsRepository @Inject constructor(
         syncScheduler.schedulePeriodic(
             autoEnabled = _settings.value.isAutoSyncEnabled,
             wifiOnly = _settings.value.isWifiOnlyEnabled,
+            forceReschedule = false,
         )
     }
 
@@ -32,6 +33,7 @@ class SettingsRepository @Inject constructor(
         syncScheduler.schedulePeriodic(
             autoEnabled = enabled,
             wifiOnly = _settings.value.isWifiOnlyEnabled,
+            forceReschedule = true,
         )
     }
 
@@ -42,6 +44,7 @@ class SettingsRepository @Inject constructor(
         syncScheduler.schedulePeriodic(
             autoEnabled = _settings.value.isAutoSyncEnabled,
             wifiOnly = enabled,
+            forceReschedule = true,
         )
     }
 

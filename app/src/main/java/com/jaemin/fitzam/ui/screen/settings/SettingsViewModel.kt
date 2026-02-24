@@ -7,10 +7,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.AuthRepository
+import com.jaemin.fitzam.data.repository.AuthTokenInvalidException
 import com.jaemin.fitzam.data.repository.DriveAuthorizationOutcome
 import com.jaemin.fitzam.data.repository.DriveSyncRepository
 import com.jaemin.fitzam.data.repository.SettingsRepository
 import com.jaemin.fitzam.data.source.remote.drive.DriveAuthSession
+import com.google.api.services.drive.DriveScopes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,8 +52,15 @@ class SettingsViewModel @Inject constructor(
         }
         _uiState.value = _uiState.value.copy(isCheckingAccount = true)
         viewModelScope.launch {
-            val session = authRepository.restoreAuthorization()
-            handleSignedInSession(session, shouldRestoreFromDrive = false)
+            try {
+                val session = authRepository.restoreAuthorization()
+                handleSignedInSession(session, shouldRestoreFromDrive = false)
+            } catch (error: AuthTokenInvalidException) {
+                Log.w(TAG, "Authorization invalid. Re-auth required.", error)
+                _uiState.value = _uiState.value.copy(isCheckingAccount = false)
+                onSignInClick()
+                return@launch
+            }
             _uiState.value = _uiState.value.copy(isCheckingAccount = false)
         }
     }
@@ -73,17 +82,24 @@ class SettingsViewModel @Inject constructor(
             result
                 .onSuccess { outcome ->
                     when (outcome) {
-                        is DriveAuthorizationOutcome.Authorized -> {
-                            handleSignedInSession(outcome.session, shouldRestoreFromDrive = true)
-                            _uiState.value = _uiState.value.copy(isSigningIn = false)
-                        }
-                        is DriveAuthorizationOutcome.Resolution -> {
-                            _uiState.value = _uiState.value.copy(pendingIntent = outcome.pendingIntent)
-                        }
+                is DriveAuthorizationOutcome.Authorized -> {
+                    if (!requireDriveScope(outcome.session)) {
+                        return@onSuccess
                     }
+                    handleSignedInSession(outcome.session, shouldRestoreFromDrive = true)
+                    _uiState.value = _uiState.value.copy(isSigningIn = false)
+                }
+                is DriveAuthorizationOutcome.Resolution -> {
+                    _uiState.value = _uiState.value.copy(pendingIntent = outcome.pendingIntent)
+                }
+            }
                 }
                 .onFailure { error ->
                     Log.w(TAG, "Google sign-in failed", error)
+                    if (error is AuthTokenInvalidException) {
+                        requestReauthorization(accountName)
+                        return@launch
+                    }
                     _uiState.value = _uiState.value.copy(
                         isSigningIn = false,
                         errorMessage = error.message,
@@ -97,14 +113,51 @@ class SettingsViewModel @Inject constructor(
             val result = authRepository.handleAuthorizationResult(data, resultCode)
             result
                 .onSuccess { session ->
+                    if (!requireDriveScope(session)) {
+                        return@onSuccess
+                    }
                     handleSignedInSession(session, shouldRestoreFromDrive = true)
                 }
                 .onFailure { error ->
                     Log.w(TAG, "Google sign-in failed", error)
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                    val isCanceled = error.message == "사용자가 인증을 취소했습니다."
+                    if (!isCanceled) {
+                        _uiState.value = _uiState.value.copy(
+                            errorMessage = "Google Drive 액세스 권한이 필요합니다.",
+                        )
+                    }
                 }
             _uiState.value = _uiState.value.copy(isSigningIn = false)
         }
+    }
+
+    private suspend fun requestReauthorization(accountName: String?) {
+        val reauthResult = authRepository.authorizeDrive(accountName = accountName)
+        reauthResult
+            .onSuccess { outcome ->
+                when (outcome) {
+                    is DriveAuthorizationOutcome.Authorized -> {
+                        if (!requireDriveScope(outcome.session)) {
+                            return@onSuccess
+                        }
+                        handleSignedInSession(outcome.session, shouldRestoreFromDrive = true)
+                        _uiState.value = _uiState.value.copy(isSigningIn = false)
+                    }
+                    is DriveAuthorizationOutcome.Resolution -> {
+                        _uiState.value = _uiState.value.copy(
+                            pendingIntent = outcome.pendingIntent,
+                            isSigningIn = false,
+                        )
+                    }
+                }
+            }
+            .onFailure { error ->
+                Log.w(TAG, "Google reauth failed", error)
+                _uiState.value = _uiState.value.copy(
+                    isSigningIn = false,
+                    errorMessage = error.message,
+                )
+            }
     }
 
     fun onPendingIntentLaunched() {
@@ -220,6 +273,27 @@ class SettingsViewModel @Inject constructor(
 
     fun onSyncErrorShown() {
         _uiState.value = _uiState.value.copy(hasSyncError = false)
+    }
+
+    fun onAuthErrorShown() {
+        if (_uiState.value.errorMessage != null) {
+            _uiState.value = _uiState.value.copy(errorMessage = null)
+        }
+    }
+
+    private fun requireDriveScope(session: DriveAuthSession): Boolean {
+        val hasScope = session.grantedScopes.contains(DriveScopes.DRIVE_APPDATA)
+        if (!hasScope) {
+            _uiState.value = _uiState.value.copy(
+                isSignedIn = false,
+                accountEmail = null,
+                isSigningIn = false,
+                pendingIntent = null,
+                errorMessage = "Google Drive 액세스 권한이 필요합니다.",
+                isSignedOutByUser = false,
+            )
+        }
+        return hasScope
     }
 
     private companion object {
