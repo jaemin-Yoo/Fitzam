@@ -211,7 +211,7 @@ private fun ExerciseCategoryGridItem(
         Spacer(modifier = Modifier.size(4.dp))
         Text(
             text = category.name,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.bodyMedium,
         )
     }
 }

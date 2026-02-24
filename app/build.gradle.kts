@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -20,8 +20,8 @@ android {
         applicationId = "com.jaemin.fitzam"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,7 +79,20 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+    packaging {
+        resources {
+            excludes += "META-INF/DEPENDENCIES"
+
+            excludes += "META-INF/INDEX.LIST"
+        }
+    }
+}
+
+configurations.configureEach {
+    exclude(group = "org.apache.httpcomponents", module = "httpclient")
+    exclude(group = "org.apache.httpcomponents", module = "httpcore")
 }
 
 dependencies {
@@ -120,8 +133,27 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     // Firebase
     implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.storage)
+
+    // Google Sign-In / Drive
+    implementation(libs.google.play.services.auth)
+    implementation(libs.google.auth.library.oauth2.http)
+    implementation(libs.google.api.client.android) {
+        exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
+    }
+    implementation(libs.google.api.services.drive) {
+        exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
+    }
+    implementation(libs.google.http.client.gson)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 }
+
+
+

@@ -4,26 +4,26 @@ package com.jaemin.fitzam.ui.common
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-
-data class TopAppBarItem(
-    val icon: ImageVector,
-    val contentDescription: String?,
-    val onClick: () -> Unit,
-)
+import com.jaemin.fitzam.R
+import com.jaemin.fitzam.ui.theme.FitzamTheme
 
 /**
  * Fitzam 상단바. 제목이 가운데에 배치되어 있는 형태.
@@ -71,7 +71,7 @@ fun FitzamTopAppBar(
                 }
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
         modifier = modifier,
     )
 }
@@ -109,7 +109,7 @@ fun FitzamBrandTopAppBar(
                     Icon(
                         imageVector = action.icon,
                         contentDescription = action.contentDescription,
-                        tint = MaterialTheme.colorScheme.onBackground,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -117,4 +117,55 @@ fun FitzamBrandTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         modifier = modifier.padding(horizontal = 16.dp),
     )
+}
+
+data class TopAppBarItem(
+    val icon: ImageVector,
+    val contentDescription: String?,
+    val onClick: () -> Unit,
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun FitzamTopAppBarPreview() {
+    FitzamTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            FitzamTopAppBar(
+                title = "홈",
+                modifier = Modifier.fillMaxWidth(),
+                navigation = TopAppBarItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    contentDescription = "뒤로가기",
+                    onClick = {},
+                ),
+                actions = listOf(
+                    TopAppBarItem(
+                        icon = ImageVector.vectorResource(id = R.drawable.ic_settings),
+                        contentDescription = "설정",
+                        onClick = {},
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FitzamBrandTopAppBarPreview() {
+    FitzamTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            FitzamBrandTopAppBar(
+                logoRes = R.drawable.fitzam_logo,
+                modifier = Modifier.fillMaxWidth(),
+                actions = listOf(
+                    TopAppBarItem(
+                        icon = ImageVector.vectorResource(id = R.drawable.ic_settings),
+                        contentDescription = "추가",
+                        onClick = {},
+                    ),
+                ),
+            )
+        }
+    }
 }

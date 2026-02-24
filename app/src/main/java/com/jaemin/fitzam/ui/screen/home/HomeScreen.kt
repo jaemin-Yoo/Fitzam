@@ -34,16 +34,17 @@ import com.jaemin.fitzam.ui.common.FitzamCalendar
 import com.jaemin.fitzam.ui.common.FitzamCalendarDayList
 import com.jaemin.fitzam.ui.common.FitzamCalendarState
 import com.jaemin.fitzam.ui.common.FitzamFloatingActionButton
+import com.jaemin.fitzam.ui.common.TopAppBarItem
 import com.jaemin.fitzam.ui.common.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
 fun HomeScreen(
     onAddOrEditWorkout: (LocalDate) -> Unit,
+    onSettingsClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
@@ -58,6 +59,7 @@ fun HomeScreen(
         workouts = workouts,
         calendarState = calendarState,
         onAddOrEditWorkout = onAddOrEditWorkout,
+        onSettingsClick = onSettingsClick,
     )
 }
 
@@ -67,11 +69,19 @@ fun HomeScreen(
     workouts: List<Workout>,
     calendarState: FitzamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             FitzamBrandTopAppBar(
-                logoRes = R.drawable.fitzam_logo
+                logoRes = R.drawable.fitzam_logo,
+                actions = listOf(
+                    TopAppBarItem(
+                        icon = ImageVector.vectorResource(R.drawable.ic_settings),
+                        contentDescription = "설정",
+                        onClick = onSettingsClick,
+                    ),
+                ),
             )
         },
         floatingActionButton = {
@@ -234,6 +244,7 @@ fun HomeScreenPreview() {
             workouts = workouts,
             calendarState = rememberFitzamCalendarState(),
             onAddOrEditWorkout = {},
+            onSettingsClick = {},
         )
     }
 }
