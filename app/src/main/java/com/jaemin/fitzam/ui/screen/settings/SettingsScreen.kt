@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.sync.NetworkStatus
 import com.jaemin.fitzam.ui.common.DZamAlertDialog
@@ -147,7 +148,9 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(24.dp))
 
-            InfoSection(onTermsClick = onTermsClick)
+            InfoSection(
+                onTermsClick = onTermsClick,
+            )
         }
     }
 
@@ -321,7 +324,10 @@ private fun SyncConnectedCard(
 }
 
 @Composable
-private fun InfoSection(onTermsClick: () -> Unit) {
+private fun InfoSection(
+    onTermsClick: () -> Unit,
+) {
+    val context = LocalContext.current
     SectionTitle(text = "정보")
     Spacer(Modifier.height(8.dp))
 
@@ -332,12 +338,15 @@ private fun InfoSection(onTermsClick: () -> Unit) {
     ) {
         SettingRow(
             title = "앱 버전",
-            trailingText = "v 1.0.0",
+            trailingText = "v ${BuildConfig.VERSION_NAME}",
         )
         SettingRow(
             title = "약관 및 정책",
             trailingIcon = R.drawable.ic_right_arrow,
-            onClick = onTermsClick,
+            onClick = {
+                Toast.makeText(context, "준비 중", Toast.LENGTH_SHORT).show()
+                onTermsClick()
+            },
         )
     }
 }
