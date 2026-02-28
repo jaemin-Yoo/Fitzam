@@ -3,9 +3,7 @@
 import android.accounts.AccountManager
 import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -50,10 +48,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.sync.NetworkStatus
-import com.jaemin.fitzam.ui.common.DZamAlertDialog
-import com.jaemin.fitzam.ui.common.DZamButton
-import com.jaemin.fitzam.ui.common.FitzamTopAppBar
-import com.jaemin.fitzam.ui.common.TopAppBarItem
+import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
+import com.jaemin.fitzam.ui.dzam.DZamButton
+import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

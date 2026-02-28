@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.common
+package com.jaemin.fitzam.ui.dzam
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
