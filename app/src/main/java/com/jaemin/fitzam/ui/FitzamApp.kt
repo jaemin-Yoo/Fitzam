@@ -9,6 +9,7 @@ import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelect
 import com.jaemin.fitzam.ui.screen.detailexerciseadd.DetailExerciseAddScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
 import com.jaemin.fitzam.ui.screen.settings.SettingsScreen
+import com.jaemin.fitzam.ui.screen.workoutadd.WorkoutAddScreen
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
@@ -17,6 +18,7 @@ sealed interface Screen {
     @Serializable data object Settings : NavKey
     @Serializable data class ExerciseCategorySelect(val selectedDate: String) : NavKey
     @Serializable data class DetailExerciseAdd(val selectedDate: String) : NavKey
+    @Serializable data class WorkoutAdd(val selectedDate: String, val selectedExerciseIds: String) : NavKey
 }
 
 @Composable
@@ -54,7 +56,29 @@ fun FitzamApp() {
                 DetailExerciseAddScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     onBackClick = popBackStack,
+                    onCompleteClick = { selectedExerciseIds ->
+                        backStack.add(
+                            Screen.WorkoutAdd(
+                                selectedDate = screen.selectedDate,
+                                selectedExerciseIds = selectedExerciseIds.joinToString(","),
+                            )
+                        )
+                    },
+                )
+            }
+            entry<Screen.WorkoutAdd> { screen ->
+                WorkoutAddScreen(
+                    selectedDate = LocalDate.parse(screen.selectedDate),
+                    selectedExerciseIds = screen.selectedExerciseIds
+                        .split(",")
+                        .mapNotNull { value -> value.toLongOrNull() }
+                        .toSet(),
+                    onBackClick = popBackStack,
+                    onDetailAddClick = {
+                        backStack.add(Screen.DetailExerciseAdd(selectedDate = screen.selectedDate))
+                    },
                     onCompleteClick = {
+                        popBackStack()
                         popBackStack()
                         popBackStack()
                     },
