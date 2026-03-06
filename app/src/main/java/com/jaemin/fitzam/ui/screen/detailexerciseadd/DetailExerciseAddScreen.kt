@@ -25,9 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +45,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
@@ -58,16 +62,34 @@ import java.time.LocalDate
 @Composable
 fun DetailExerciseAddScreen(
     selectedDate: LocalDate,
+    selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
+    viewModel: DetailExerciseAddViewModel = hiltViewModel(),
 ) {
-    DetailExerciseAddScreen(
-        selectedDate = selectedDate,
-        onBackClick = onBackClick,
-        onCompleteClick = onCompleteClick,
-        exercises = sampleExercises(),
-        initialFavoriteIds = sampleFavoriteIds,
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedCategoryIds) {
+        viewModel.loadExercises(selectedCategoryIds)
+    }
+
+    when (val value = uiState) {
+        DetailExerciseAddUiState.Loading -> {
+            DetailExerciseAddLoadingScreen(onBackClick = onBackClick)
+        }
+        DetailExerciseAddUiState.Failed -> {
+            DetailExerciseAddFailedScreen(onBackClick = onBackClick)
+        }
+        is DetailExerciseAddUiState.Success -> {
+            DetailExerciseAddScreen(
+                selectedDate = selectedDate,
+                onBackClick = onBackClick,
+                onCompleteClick = onCompleteClick,
+                exercises = value.exercises,
+                initialFavoriteIds = value.favoriteIds,
+            )
+        }
+    }
 }
 
 @Composable
@@ -166,6 +188,60 @@ fun DetailExerciseAddScreen(
                 ),
                 modifier = Modifier.weight(1f),
             )
+        }
+    }
+}
+
+@Composable
+private fun DetailExerciseAddLoadingScreen(
+    onBackClick: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            FitzamTopAppBar(
+                title = "세부 운동 추가",
+                navigation = TopAppBarItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    contentDescription = "뒤로 가기",
+                    onClick = onBackClick,
+                )
+            )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun DetailExerciseAddFailedScreen(
+    onBackClick: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            FitzamTopAppBar(
+                title = "세부 운동 추가",
+                navigation = TopAppBarItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    contentDescription = "뒤로 가기",
+                    onClick = onBackClick,
+                )
+            )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "운동 목록 로딩에 실패했습니다.")
         }
     }
 }

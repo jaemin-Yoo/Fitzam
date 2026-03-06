@@ -10,11 +10,11 @@ interface ExerciseDao {
     @Query(
         """
         SELECT * FROM exercise
-        WHERE categoryId = :partCode
+        WHERE categoryId IN (:categoryIds)
         ORDER BY id
     """
     )
-    fun getExerciseEntities(partCode: String): List<ExerciseEntity>
+    suspend fun getExerciseEntitiesByCategoryIds(categoryIds: List<Long>): List<ExerciseEntity>
 
     @Query(
         """

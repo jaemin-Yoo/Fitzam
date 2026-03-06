@@ -17,8 +17,12 @@ sealed interface Screen {
     @Serializable data object Home : NavKey
     @Serializable data object Settings : NavKey
     @Serializable data class ExerciseCategorySelect(val selectedDate: String) : NavKey
-    @Serializable data class DetailExerciseAdd(val selectedDate: String) : NavKey
-    @Serializable data class WorkoutAdd(val selectedDate: String, val selectedExerciseIds: String) : NavKey
+    @Serializable data class DetailExerciseAdd(val selectedDate: String, val selectedCategoryIds: String) : NavKey
+    @Serializable data class WorkoutAdd(
+        val selectedDate: String,
+        val selectedExerciseIds: String,
+        val selectedCategoryIds: String,
+    ) : NavKey
 }
 
 @Composable
@@ -46,8 +50,13 @@ fun FitzamApp() {
                 ExerciseCategorySelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     onBackClick = popBackStack,
-                    onDetailAddClick = {
-                        backStack.add(Screen.DetailExerciseAdd(selectedDate = screen.selectedDate))
+                    onDetailAddClick = { selectedCategoryIds ->
+                        backStack.add(
+                            Screen.DetailExerciseAdd(
+                                selectedDate = screen.selectedDate,
+                                selectedCategoryIds = selectedCategoryIds.joinToString(","),
+                            )
+                        )
                     },
                     onCompleteClick = popBackStack,
                 )
@@ -55,12 +64,17 @@ fun FitzamApp() {
             entry<Screen.DetailExerciseAdd> { screen ->
                 DetailExerciseAddScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
+                    selectedCategoryIds = screen.selectedCategoryIds
+                        .split(",")
+                        .mapNotNull { value -> value.toLongOrNull() }
+                        .toSet(),
                     onBackClick = popBackStack,
                     onCompleteClick = { selectedExerciseIds ->
                         backStack.add(
                             Screen.WorkoutAdd(
                                 selectedDate = screen.selectedDate,
                                 selectedExerciseIds = selectedExerciseIds.joinToString(","),
+                                selectedCategoryIds = screen.selectedCategoryIds,
                             )
                         )
                     },
@@ -75,7 +89,12 @@ fun FitzamApp() {
                         .toSet(),
                     onBackClick = popBackStack,
                     onDetailAddClick = {
-                        backStack.add(Screen.DetailExerciseAdd(selectedDate = screen.selectedDate))
+                        backStack.add(
+                            Screen.DetailExerciseAdd(
+                                selectedDate = screen.selectedDate,
+                                selectedCategoryIds = screen.selectedCategoryIds,
+                            )
+                        )
                     },
                     onCompleteClick = {
                         popBackStack()

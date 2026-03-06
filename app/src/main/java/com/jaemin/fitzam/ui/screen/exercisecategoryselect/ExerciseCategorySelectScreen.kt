@@ -54,7 +54,7 @@ import java.time.LocalDate
 fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
     onBackClick: () -> Unit,
-    onDetailAddClick: () -> Unit,
+    onDetailAddClick: (Set<Long>) -> Unit,
     onCompleteClick: () -> Unit,
     viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
@@ -71,7 +71,7 @@ fun ExerciseCategorySelectScreen(
         selectedCategoryIds = selectedCategoryIds,
         onBackClick = onBackClick,
         onCategoryClick = { category -> viewModel.toggleCategory(category.id) },
-        onDetailAddClick = onDetailAddClick,
+        onDetailAddClick = { onDetailAddClick(selectedCategoryIds) },
         onCompleteClick = {
             viewModel.applyWorkoutChanges(selectedDate)
             onCompleteClick()
