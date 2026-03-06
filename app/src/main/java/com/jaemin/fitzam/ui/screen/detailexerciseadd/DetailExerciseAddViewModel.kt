@@ -7,8 +7,11 @@ import com.jaemin.fitzam.model.Exercise
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -25,6 +28,9 @@ class DetailExerciseAddViewModel @Inject constructor(
         DetailExerciseAddUiState.Loading,
     )
     val uiState = _uiState.asStateFlow()
+
+    private val _event = MutableSharedFlow<DetailExerciseAddEvent>()
+    val event = _event.asSharedFlow()
 
     fun loadExercises(selectedCategoryIds: Set<Long>) {
         viewModelScope.launch {
@@ -52,6 +58,51 @@ class DetailExerciseAddViewModel @Inject constructor(
             }
         }
     }
+
+    fun toggleFavorite(exerciseId: Long) {
+        val currentState = _uiState.value as? DetailExerciseAddUiState.Success ?: return
+        val wasFavorite = currentState.favoriteIds.contains(exerciseId)
+        val updatedFavoriteIds = if (wasFavorite) {
+            currentState.favoriteIds - exerciseId
+        } else {
+            currentState.favoriteIds + exerciseId
+        }
+
+        _uiState.update { state ->
+            if (state is DetailExerciseAddUiState.Success) {
+                state.copy(favoriteIds = updatedFavoriteIds)
+            } else {
+                state
+            }
+        }
+
+        viewModelScope.launch {
+            val saveResult = runCatching {
+                withContext(Dispatchers.IO) {
+                    if (wasFavorite) {
+                        exerciseRepository.removeFavoriteExercise(exerciseId)
+                    } else {
+                        exerciseRepository.addFavoriteExercise(exerciseId)
+                    }
+                }
+            }
+
+            if (saveResult.isFailure) {
+                _uiState.update { state ->
+                    if (state is DetailExerciseAddUiState.Success) {
+                        state.copy(favoriteIds = currentState.favoriteIds)
+                    } else {
+                        state
+                    }
+                }
+                _event.emit(DetailExerciseAddEvent.FavoriteSaveFailed)
+            }
+        }
+    }
+}
+
+sealed interface DetailExerciseAddEvent {
+    data object FavoriteSaveFailed : DetailExerciseAddEvent
 }
 
 sealed interface DetailExerciseAddUiState {

@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui.screen.detailexerciseadd
+package com.jaemin.fitzam.ui.screen.detailexerciseadd
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +27,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,9 +70,18 @@ fun DetailExerciseAddScreen(
     viewModel: DetailExerciseAddViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(selectedCategoryIds) {
         viewModel.loadExercises(selectedCategoryIds)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.event.collect { event ->
+            if (event is DetailExerciseAddEvent.FavoriteSaveFailed) {
+                snackbarHostState.showSnackbar("즐겨찾기 저장에 실패했습니다.")
+            }
+        }
     }
 
     when (val value = uiState) {
@@ -86,7 +97,9 @@ fun DetailExerciseAddScreen(
                 onBackClick = onBackClick,
                 onCompleteClick = onCompleteClick,
                 exercises = value.exercises,
-                initialFavoriteIds = value.favoriteIds,
+                favoriteExerciseIds = value.favoriteIds,
+                onToggleFavorite = viewModel::toggleFavorite,
+                snackbarHostState = snackbarHostState,
             )
         }
     }
@@ -98,12 +111,13 @@ fun DetailExerciseAddScreen(
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
     exercises: List<Exercise>,
-    initialFavoriteIds: Set<Long>,
+    favoriteExerciseIds: Set<Long>,
+    onToggleFavorite: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState,
     initialSelectedIds: Set<Long> = emptySet(),
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedExerciseIds by remember { mutableStateOf(initialSelectedIds) }
-    var favoriteExerciseIds by remember { mutableStateOf(initialFavoriteIds) }
 
     val filteredExercises = exercises.filter { exercise ->
         exercise.name.contains(searchQuery, ignoreCase = true)
@@ -143,6 +157,9 @@ fun DetailExerciseAddScreen(
                 )
             }
         },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -178,9 +195,7 @@ fun DetailExerciseAddScreen(
                 onToggleSelected = { exerciseId ->
                     selectedExerciseIds = selectedExerciseIds.toggle(exerciseId)
                 },
-                onToggleFavorite = { exerciseId ->
-                    favoriteExerciseIds = favoriteExerciseIds.toggle(exerciseId)
-                },
+                onToggleFavorite = onToggleFavorite,
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
@@ -436,8 +451,10 @@ private fun DetailExerciseAddScreenPreview() {
             onBackClick = {},
             onCompleteClick = {},
             exercises = sampleExercises(),
+            onToggleFavorite = {},
+            snackbarHostState = remember { SnackbarHostState() },
             initialSelectedIds = setOf(1L, 2L),
-            initialFavoriteIds = sampleFavoriteIds,
+            favoriteExerciseIds = sampleFavoriteIds,
         )
     }
 }

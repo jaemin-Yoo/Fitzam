@@ -4,6 +4,7 @@ import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
+import com.jaemin.fitzam.data.source.local.entity.FavoriteExerciseEntity
 import com.jaemin.fitzam.model.Exercise
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -36,5 +37,13 @@ class ExerciseRepository @Inject constructor(
             .first()
             .map { entity -> entity.exerciseId }
             .toSet()
+    }
+
+    suspend fun addFavoriteExercise(exerciseId: Long) {
+        favoriteExerciseDao.insert(FavoriteExerciseEntity(exerciseId = exerciseId))
+    }
+
+    suspend fun removeFavoriteExercise(exerciseId: Long) {
+        favoriteExerciseDao.deleteByExerciseId(exerciseId)
     }
 }
