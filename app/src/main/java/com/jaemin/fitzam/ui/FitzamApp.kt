@@ -16,11 +16,14 @@ import kotlinx.serialization.Serializable
 sealed interface Screen {
     @Serializable data object Home : NavKey
     @Serializable data object Settings : NavKey
-    @Serializable data class ExerciseCategorySelect(val selectedDate: String) : NavKey
+    @Serializable data class ExerciseCategorySelect(
+        val selectedDate: String,
+        val sessionId: Long,
+    ) : NavKey
     @Serializable data class DetailExerciseAdd(
         val selectedDate: String,
         val selectedCategoryIds: String,
-        val selectedExerciseIds: String = "",
+        val sessionId: Long,
     ) : NavKey
     @Serializable data class WorkoutAdd(
         val selectedDate: String,
@@ -45,7 +48,12 @@ fun FitzamApp() {
             entry<Screen.Home> {
                 HomeScreen(
                     onAddOrEditWorkout = { selectedDate ->
-                        backStack.add(Screen.ExerciseCategorySelect(selectedDate = selectedDate.toString()))
+                        backStack.add(
+                            Screen.ExerciseCategorySelect(
+                                selectedDate = selectedDate.toString(),
+                                sessionId = System.currentTimeMillis(),
+                            )
+                        )
                     },
                     onSettingsClick = { backStack.add(Screen.Settings) },
                 )
@@ -53,13 +61,14 @@ fun FitzamApp() {
             entry<Screen.ExerciseCategorySelect> { screen ->
                 ExerciseCategorySelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
+                    sessionId = screen.sessionId,
                     onBackClick = popBackStack,
                     onDetailAddClick = { selectedCategoryIds ->
                         backStack.add(
                             Screen.DetailExerciseAdd(
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = selectedCategoryIds.joinToString(","),
-                                selectedExerciseIds = "",
+                                sessionId = System.currentTimeMillis(),
                             )
                         )
                     },
@@ -73,10 +82,7 @@ fun FitzamApp() {
                         .split(",")
                         .mapNotNull { value -> value.toLongOrNull() }
                         .toSet(),
-                    initialSelectedIds = screen.selectedExerciseIds
-                        .split(",")
-                        .mapNotNull { value -> value.toLongOrNull() }
-                        .toSet(),
+                    sessionId = screen.sessionId,
                     onBackClick = popBackStack,
                     onCompleteClick = { selectedExerciseIds ->
                         backStack.add(
@@ -102,7 +108,7 @@ fun FitzamApp() {
                             Screen.DetailExerciseAdd(
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = screen.selectedCategoryIds,
-                                selectedExerciseIds = screen.selectedExerciseIds,
+                                sessionId = System.currentTimeMillis(),
                             )
                         )
                     },

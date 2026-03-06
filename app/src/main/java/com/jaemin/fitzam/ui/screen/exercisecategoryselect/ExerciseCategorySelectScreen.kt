@@ -53,11 +53,14 @@ import java.time.LocalDate
 @Composable
 fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
+    sessionId: Long,
     onBackClick: () -> Unit,
     onDetailAddClick: (Set<Long>) -> Unit,
     onCompleteClick: () -> Unit,
-    viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
+    val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
+        key = "exercise-category-select-$sessionId",
+    )
     val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
     val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
 

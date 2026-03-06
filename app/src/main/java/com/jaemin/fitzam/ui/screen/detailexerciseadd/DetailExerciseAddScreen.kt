@@ -65,18 +65,16 @@ import java.time.LocalDate
 fun DetailExerciseAddScreen(
     selectedDate: LocalDate,
     selectedCategoryIds: Set<Long>,
-    initialSelectedIds: Set<Long>,
+    sessionId: Long,
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
-    viewModel: DetailExerciseAddViewModel = hiltViewModel(),
 ) {
+    val viewModel: DetailExerciseAddViewModel = hiltViewModel(
+        key = "detail-exercise-add-$sessionId",
+    )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(initialSelectedIds) {
-        viewModel.setInitialSelectedExerciseIds(initialSelectedIds)
-    }
 
     LaunchedEffect(selectedCategoryIds) {
         viewModel.loadExercises(selectedCategoryIds)

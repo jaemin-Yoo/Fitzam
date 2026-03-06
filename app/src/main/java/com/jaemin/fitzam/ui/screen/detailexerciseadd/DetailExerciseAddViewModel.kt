@@ -35,12 +35,6 @@ class DetailExerciseAddViewModel @Inject constructor(
     val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
     private var lastLoadedCategoryIds: Set<Long>? = null
 
-    fun setInitialSelectedExerciseIds(selectedExerciseIds: Set<Long>) {
-        if (_selectedExerciseIds.value.isEmpty() && selectedExerciseIds.isNotEmpty()) {
-            _selectedExerciseIds.value = selectedExerciseIds
-        }
-    }
-
     fun toggleSelectedExercise(exerciseId: Long) {
         _selectedExerciseIds.update { selectedIds ->
             if (selectedIds.contains(exerciseId)) {
