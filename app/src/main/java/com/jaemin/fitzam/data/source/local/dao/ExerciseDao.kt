@@ -18,6 +18,15 @@ interface ExerciseDao {
 
     @Query(
         """
+        SELECT * FROM exercise
+        WHERE id IN (:ids)
+        ORDER BY id
+    """
+    )
+    suspend fun getExerciseEntitiesByIds(ids: List<Long>): List<ExerciseEntity>
+
+    @Query(
+        """
             SELECT * FROM exercise
             WHERE id = :id
         """

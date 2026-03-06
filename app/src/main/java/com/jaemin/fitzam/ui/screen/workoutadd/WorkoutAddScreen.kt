@@ -1,8 +1,8 @@
 package com.jaemin.fitzam.ui.screen.workoutadd
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,10 +45,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
@@ -86,86 +90,111 @@ fun WorkoutAddScreen(
     onBackClick: () -> Unit,
     onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
+    viewModel: WorkoutAddViewModel = hiltViewModel(),
 ) {
-    val filteredItems = sampleWorkoutAddItems().filter { item ->
-        selectedExerciseIds.isEmpty() || selectedExerciseIds.contains(item.exercise.id)
-    }
-    var exerciseItems by remember(filteredItems) {
-        mutableStateOf(filteredItems.map { item -> item.toUiState() })
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedExerciseIds) {
+        viewModel.loadExercises(selectedExerciseIds)
     }
 
-    WorkoutAddScreen(
-        selectedDate = selectedDate,
-        exerciseItems = exerciseItems,
-        onBackClick = onBackClick,
-        onDetailAddClick = onDetailAddClick,
-        onCompleteClick = onCompleteClick,
-        onExerciseToggleEditClick = { exercise ->
-            exerciseItems = exerciseItems.map { item ->
-                if (item.exercise.id == exercise.id) {
-                    item.copy(isEditing = !item.isEditing)
-                } else {
-                    item
-                }
-            }
-        },
-        onExerciseStartClick = {},
-        onExerciseDeleteClick = { exercise ->
-            exerciseItems = exerciseItems.filterNot { item -> item.exercise.id == exercise.id }
-        },
-        onSetWeightChange = { exercise, setIndex, weight ->
-            exerciseItems = exerciseItems.map { item ->
-                if (item.exercise.id == exercise.id) {
-                    item.copy(
-                        sets = item.sets.map { set ->
-                            if (set.index == setIndex) {
-                                set.copy(weightText = weight)
-                            } else {
-                                set
-                            }
-                        },
-                    )
-                } else {
-                    item
-                }
-            }
-        },
-        onSetRepsChange = { exercise, setIndex, reps ->
-            exerciseItems = exerciseItems.map { item ->
-                if (item.exercise.id == exercise.id) {
-                    item.copy(
-                        sets = item.sets.map { set ->
-                            if (set.index == setIndex) {
-                                set.copy(repsText = reps)
-                            } else {
-                                set
-                            }
-                        },
-                    )
-                } else {
-                    item
-                }
-            }
-        },
-        onSetDeleteClick = { exercise, setIndex ->
-            exerciseItems = exerciseItems.map { item ->
-                if (item.exercise.id == exercise.id) {
-                    val reindexedSets = item.sets
-                        .filterNot { set -> set.index == setIndex }
-                        .mapIndexed { index, set ->
-                            set.copy(index = index + 1)
+    when (val value = uiState) {
+        WorkoutAddUiState.Loading -> {
+            WorkoutAddLoadingScreen(onBackClick = onBackClick)
+        }
+
+        WorkoutAddUiState.Failed -> {
+            WorkoutAddFailedScreen(onBackClick = onBackClick)
+        }
+
+        is WorkoutAddUiState.Success -> {
+            var exerciseItems by remember(value.exercises) {
+                mutableStateOf(
+                    value.exercises
+                        .map { exercise ->
+                            WorkoutAddExerciseItem(
+                                exercise = exercise,
+                                sets = emptyList(),
+                            )
                         }
-                    item.copy(sets = reindexedSets)
-                } else {
-                    item
-                }
+                        .map { item -> item.toUiState() },
+                )
             }
-        },
-    )
+
+            WorkoutAddContent(
+                selectedDate = selectedDate,
+                exerciseItems = exerciseItems,
+                onBackClick = onBackClick,
+                onDetailAddClick = onDetailAddClick,
+                onCompleteClick = onCompleteClick,
+                onExerciseToggleEditClick = { exercise ->
+                    exerciseItems = exerciseItems.map { item ->
+                        if (item.exercise.id == exercise.id) {
+                            item.copy(isEditing = !item.isEditing)
+                        } else {
+                            item
+                        }
+                    }
+                },
+                onExerciseStartClick = {},
+                onExerciseDeleteClick = { exercise ->
+                    exerciseItems = exerciseItems.filterNot { item -> item.exercise.id == exercise.id }
+                },
+                onSetWeightChange = { exercise, setIndex, weight ->
+                    exerciseItems = exerciseItems.map { item ->
+                        if (item.exercise.id == exercise.id) {
+                            item.copy(
+                                sets = item.sets.map { set ->
+                                    if (set.index == setIndex) {
+                                        set.copy(weightText = weight)
+                                    } else {
+                                        set
+                                    }
+                                },
+                            )
+                        } else {
+                            item
+                        }
+                    }
+                },
+                onSetRepsChange = { exercise, setIndex, reps ->
+                    exerciseItems = exerciseItems.map { item ->
+                        if (item.exercise.id == exercise.id) {
+                            item.copy(
+                                sets = item.sets.map { set ->
+                                    if (set.index == setIndex) {
+                                        set.copy(repsText = reps)
+                                    } else {
+                                        set
+                                    }
+                                },
+                            )
+                        } else {
+                            item
+                        }
+                    }
+                },
+                onSetDeleteClick = { exercise, setIndex ->
+                    exerciseItems = exerciseItems.map { item ->
+                        if (item.exercise.id == exercise.id) {
+                            val reindexedSets = item.sets
+                                .filterNot { set -> set.index == setIndex }
+                                .mapIndexed { index, set ->
+                                    set.copy(index = index + 1)
+                                }
+                            item.copy(sets = reindexedSets)
+                        } else {
+                            item
+                        }
+                    }
+                },
+            )
+        }
+    }
 }
 
 @Composable
-private fun WorkoutAddScreen(
+private fun WorkoutAddContent(
     selectedDate: LocalDate,
     exerciseItems: List<WorkoutAddExerciseUiState>,
     onBackClick: () -> Unit,
@@ -230,12 +259,20 @@ private fun WorkoutAddScreen(
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    selectedCategories.forEach { category ->
-                        ExerciseCategoryTag(
-                            name = category.name,
-                            borderColor = Color(category.colorHex),
-                        )
+                if (selectedCategories.isEmpty()) {
+                    Text(
+                        text = "선택한 운동이 없습니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        selectedCategories.forEach { category ->
+                            ExerciseCategoryTag(
+                                name = category.name,
+                                borderColor = Color(category.colorHex),
+                            )
+                        }
                     }
                 }
             }
@@ -264,6 +301,60 @@ private fun WorkoutAddScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun WorkoutAddLoadingScreen(
+    onBackClick: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            FitzamTopAppBar(
+                title = "운동 추가",
+                navigation = TopAppBarItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    contentDescription = "뒤로 가기",
+                    onClick = onBackClick,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun WorkoutAddFailedScreen(
+    onBackClick: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            FitzamTopAppBar(
+                title = "운동 추가",
+                navigation = TopAppBarItem(
+                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    contentDescription = "뒤로 가기",
+                    onClick = onBackClick,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "운동 목록 로딩에 실패했습니다.")
         }
     }
 }
@@ -365,7 +456,7 @@ private fun WorkoutExerciseCard(
                 onClick = onStartClick,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surface,
                 ),
                 trailingIcon = ImageVector.vectorResource(id = R.drawable.ic_play),
             )
@@ -586,12 +677,18 @@ private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseItem> {
 @Composable
 private fun WorkoutAddScreenPreview() {
     FitzamTheme {
-        WorkoutAddScreen(
+        WorkoutAddContent(
             selectedDate = LocalDate.now(),
-            selectedExerciseIds = setOf(1L, 2L),
+            exerciseItems = sampleWorkoutAddItems().map { it.toUiState() },
             onBackClick = {},
             onDetailAddClick = {},
             onCompleteClick = {},
+            onExerciseToggleEditClick = {},
+            onExerciseStartClick = {},
+            onExerciseDeleteClick = {},
+            onSetWeightChange = { _, _, _ -> },
+            onSetRepsChange = { _, _, _ -> },
+            onSetDeleteClick = { _, _ -> },
         )
     }
 }

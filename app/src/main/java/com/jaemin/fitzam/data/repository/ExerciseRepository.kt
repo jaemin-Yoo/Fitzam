@@ -32,6 +32,23 @@ class ExerciseRepository @Inject constructor(
         }
     }
 
+    suspend fun getExercisesByIds(ids: Set<Long>): List<Exercise> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+
+        val exerciseEntities = exerciseDao.getExerciseEntitiesByIds(ids.toList())
+        val categoryEntities = exerciseCategoryDao.getExerciseCategoryEntitiesByIds(
+            ids = exerciseEntities.map { entity -> entity.categoryId }.distinct(),
+        )
+        val categoryMap = categoryEntities.associateBy { entity -> entity.id }
+
+        return exerciseEntities.mapNotNull { entity ->
+            val category = categoryMap[entity.categoryId] ?: return@mapNotNull null
+            entity.toModel(category = category.toModel())
+        }
+    }
+
     suspend fun getFavoriteExerciseIds(): Set<Long> {
         return favoriteExerciseDao.getFavoriteExerciseEntities()
             .first()
