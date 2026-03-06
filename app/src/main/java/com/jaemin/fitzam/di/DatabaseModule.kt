@@ -1,6 +1,7 @@
 package com.jaemin.fitzam.di
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -14,6 +15,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.data.source.local.seed.DefaultExerciseSeedManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,23 +41,29 @@ object DatabaseModule {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
 
-                    db.execSQL(
-                        """
-                        INSERT INTO exercise_category (name, imageName, colorHex, colorDarkHex) VALUES
-                        ('가슴', 'img_chest', 0xFF2563EB, 0xFF2563EB),
-                        ('등', 'img_back', 0xFF06B6D4, 0xFF06B6D4),
-                        ('어깨', 'img_shoulder', 0xFFD81DAF, 0xFFD81DAF),
-                        ('삼두', 'img_triceps', 0xFF3CAD36, 0xFF3CAD36),
-                        ('이두', 'img_biceps', 0xFFFACC15, 0xFFFACC15),
-                        ('하체', 'img_lower_body', 0xFFF97316, 0xFFF97316),
-                        ('복근', 'img_abs', 0xFF8B5CF6, 0xFF8B5CF6),
-                        ('유산소', 'img_aerobic', 0xFF64748B, 0xFF64748B)
-                        """.trimIndent()
-                    )
+                    runCatching {
+                        DefaultExerciseSeedManager(context).seedIfNeeded(db)
+                    }.onFailure { throwable ->
+                        Log.e(
+                            DATABASE_SEED_LOG_TAG,
+                            "기본 운동 데이터 로드에 실패했습니다.",
+                            throwable
+                        )
+                    }
                 }
 
                 override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
                     db.execSQL("PRAGMA foreign_keys=ON;")
+                    runCatching {
+                        DefaultExerciseSeedManager(context).seedIfNeeded(db)
+                    }.onFailure { throwable ->
+                        Log.e(
+                            DATABASE_SEED_LOG_TAG,
+                            "기존 DB 시드 보정에 실패했습니다.",
+                            throwable
+                        )
+                    }
                 }
             })
             .build()
@@ -91,4 +99,6 @@ object DatabaseModule {
     @Provides
     fun provideImageUrlCacheDao(db: FitzamDatabase): ImageUrlCacheDao =
         db.imageUrlCacheDao()
+
+    private const val DATABASE_SEED_LOG_TAG = "DatabaseSeed"
 }

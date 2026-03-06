@@ -1,0 +1,213 @@
+[
+  {
+    "id": 1,
+    "name": "벤치 프레스 (머신)",
+    "categoryId": 1,
+    "imageName": "img_chest"
+  },
+  {
+    "id": 2,
+    "name": "인클라인 덤벨 프레스",
+    "categoryId": 1,
+    "imageName": "img_chest"
+  },
+  {
+    "id": 17,
+    "name": "체스트 플라이 (머신)",
+    "categoryId": 1,
+    "imageName": "img_chest"
+  },
+  {
+    "id": 18,
+    "name": "푸시업",
+    "categoryId": 1,
+    "imageName": "img_chest"
+  },
+
+  {
+    "id": 3,
+    "name": "랫 풀다운 (머신)",
+    "categoryId": 2,
+    "imageName": "img_back"
+  },
+  {
+    "id": 4,
+    "name": "시티드 로우 (머신)",
+    "categoryId": 2,
+    "imageName": "img_back"
+  },
+  {
+    "id": 19,
+    "name": "바벨 로우",
+    "categoryId": 2,
+    "imageName": "img_back"
+  },
+  {
+    "id": 20,
+    "name": "원암 덤벨 로우",
+    "categoryId": 2,
+    "imageName": "img_back"
+  },
+
+  {
+    "id": 5,
+    "name": "숄더 프레스 (바벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder"
+  },
+  {
+    "id": 6,
+    "name": "사이드 레터럴 레이즈",
+    "categoryId": 3,
+    "imageName": "img_shoulder"
+  },
+  {
+    "id": 21,
+    "name": "리어 델트 플라이",
+    "categoryId": 3,
+    "imageName": "img_shoulder"
+  },
+  {
+    "id": 22,
+    "name": "아놀드 프레스",
+    "categoryId": 3,
+    "imageName": "img_shoulder"
+  },
+
+  {
+    "id": 7,
+    "name": "트라이셉스 푸시다운",
+    "categoryId": 4,
+    "imageName": "img_triceps"
+  },
+  {
+    "id": 8,
+    "name": "오버헤드 트라이셉스 익스텐션",
+    "categoryId": 4,
+    "imageName": "img_triceps"
+  },
+  {
+    "id": 23,
+    "name": "클로즈그립 벤치 프레스",
+    "categoryId": 4,
+    "imageName": "img_triceps"
+  },
+  {
+    "id": 24,
+    "name": "딥스",
+    "categoryId": 4,
+    "imageName": "img_triceps"
+  },
+
+  {
+    "id": 9,
+    "name": "바벨 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps"
+  },
+  {
+    "id": 10,
+    "name": "해머 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps"
+  },
+  {
+    "id": 25,
+    "name": "프리처 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps"
+  },
+  {
+    "id": 26,
+    "name": "케이블 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps"
+  },
+
+  {
+    "id": 11,
+    "name": "레그 프레스 (머신)",
+    "categoryId": 6,
+    "imageName": "img_lower_body"
+  },
+  {
+    "id": 12,
+    "name": "레그 익스텐션 (머신)",
+    "categoryId": 6,
+    "imageName": "img_lower_body"
+  },
+  {
+    "id": 27,
+    "name": "스쿼트 (바벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body"
+  },
+  {
+    "id": 28,
+    "name": "루마니안 데드리프트",
+    "categoryId": 6,
+    "imageName": "img_lower_body"
+  },
+  {
+    "id": 29,
+    "name": "레그 컬 (머신)",
+    "categoryId": 6,
+    "imageName": "img_lower_body"
+  },
+  {
+    "id": 30,
+    "name": "카프 레이즈",
+    "categoryId": 6,
+    "imageName": "img_lower_body"
+  },
+
+  {
+    "id": 13,
+    "name": "크런치",
+    "categoryId": 7,
+    "imageName": "img_abs"
+  },
+  {
+    "id": 14,
+    "name": "레그 레이즈",
+    "categoryId": 7,
+    "imageName": "img_abs"
+  },
+  {
+    "id": 31,
+    "name": "플랭크",
+    "categoryId": 7,
+    "imageName": "img_abs"
+  },
+  {
+    "id": 32,
+    "name": "바이시클 크런치",
+    "categoryId": 7,
+    "imageName": "img_abs"
+  },
+
+  {
+    "id": 15,
+    "name": "러닝",
+    "categoryId": 8,
+    "imageName": "img_aerobic"
+  },
+  {
+    "id": 16,
+    "name": "사이클",
+    "categoryId": 8,
+    "imageName": "img_aerobic"
+  },
+  {
+    "id": 33,
+    "name": "로잉 머신",
+    "categoryId": 8,
+    "imageName": "img_aerobic"
+  },
+  {
+    "id": 34,
+    "name": "줄넘기",
+    "categoryId": 8,
+    "imageName": "img_aerobic"
+  }
+]
