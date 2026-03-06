@@ -31,8 +31,31 @@ class DetailExerciseAddViewModel @Inject constructor(
 
     private val _event = MutableSharedFlow<DetailExerciseAddEvent>()
     val event = _event.asSharedFlow()
+    private val _selectedExerciseIds = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
+    private var lastLoadedCategoryIds: Set<Long>? = null
+
+    fun setInitialSelectedExerciseIds(selectedExerciseIds: Set<Long>) {
+        if (_selectedExerciseIds.value.isEmpty() && selectedExerciseIds.isNotEmpty()) {
+            _selectedExerciseIds.value = selectedExerciseIds
+        }
+    }
+
+    fun toggleSelectedExercise(exerciseId: Long) {
+        _selectedExerciseIds.update { selectedIds ->
+            if (selectedIds.contains(exerciseId)) {
+                selectedIds - exerciseId
+            } else {
+                selectedIds + exerciseId
+            }
+        }
+    }
 
     fun loadExercises(selectedCategoryIds: Set<Long>) {
+        val shouldSkipReload = _uiState.value is DetailExerciseAddUiState.Success &&
+            lastLoadedCategoryIds == selectedCategoryIds
+        if (shouldSkipReload) return
+
         viewModelScope.launch {
             _uiState.value = DetailExerciseAddUiState.Loading
             val startedAt = System.currentTimeMillis()
@@ -55,6 +78,16 @@ class DetailExerciseAddViewModel @Inject constructor(
 
             _uiState.value = result.getOrElse {
                 DetailExerciseAddUiState.Failed
+            }
+            if (_uiState.value is DetailExerciseAddUiState.Success) {
+                val loadedExerciseIds = (_uiState.value as DetailExerciseAddUiState.Success)
+                    .exercises
+                    .map { exercise -> exercise.id }
+                    .toSet()
+                _selectedExerciseIds.update { selectedIds ->
+                    selectedIds.intersect(loadedExerciseIds)
+                }
+                lastLoadedCategoryIds = selectedCategoryIds
             }
         }
     }

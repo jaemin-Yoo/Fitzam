@@ -65,12 +65,18 @@ import java.time.LocalDate
 fun DetailExerciseAddScreen(
     selectedDate: LocalDate,
     selectedCategoryIds: Set<Long>,
+    initialSelectedIds: Set<Long>,
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
     viewModel: DetailExerciseAddViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(initialSelectedIds) {
+        viewModel.setInitialSelectedExerciseIds(initialSelectedIds)
+    }
 
     LaunchedEffect(selectedCategoryIds) {
         viewModel.loadExercises(selectedCategoryIds)
@@ -97,6 +103,8 @@ fun DetailExerciseAddScreen(
                 onBackClick = onBackClick,
                 onCompleteClick = onCompleteClick,
                 exercises = value.exercises,
+                selectedExerciseIds = selectedExerciseIds,
+                onToggleSelected = viewModel::toggleSelectedExercise,
                 favoriteExerciseIds = value.favoriteIds,
                 onToggleFavorite = viewModel::toggleFavorite,
                 snackbarHostState = snackbarHostState,
@@ -111,13 +119,13 @@ fun DetailExerciseAddScreen(
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
     exercises: List<Exercise>,
+    selectedExerciseIds: Set<Long>,
+    onToggleSelected: (Long) -> Unit,
     favoriteExerciseIds: Set<Long>,
     onToggleFavorite: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
-    initialSelectedIds: Set<Long> = emptySet(),
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var selectedExerciseIds by remember { mutableStateOf(initialSelectedIds) }
 
     val filteredExercises = exercises.filter { exercise ->
         exercise.name.contains(searchQuery, ignoreCase = true)
@@ -192,9 +200,7 @@ fun DetailExerciseAddScreen(
                 exercises = filteredExercises,
                 selectedExerciseIds = selectedExerciseIds,
                 favoriteExerciseIds = favoriteExerciseIds,
-                onToggleSelected = { exerciseId ->
-                    selectedExerciseIds = selectedExerciseIds.toggle(exerciseId)
-                },
+                onToggleSelected = onToggleSelected,
                 onToggleFavorite = onToggleFavorite,
                 contentPadding = PaddingValues(
                     start = 16.dp,
@@ -385,16 +391,6 @@ private fun DetailExerciseAddItem(
     }
 }
 
-private fun Set<Long>.toggle(id: Long): Set<Long> {
-    return toMutableSet().apply {
-        if (contains(id)) {
-            remove(id)
-        } else {
-            add(id)
-        }
-    }.toSet()
-}
-
 private val sampleFavoriteIds = setOf(0L, 1L)
 
 private fun sampleExercises(): List<Exercise> {
@@ -451,9 +447,10 @@ private fun DetailExerciseAddScreenPreview() {
             onBackClick = {},
             onCompleteClick = {},
             exercises = sampleExercises(),
+            selectedExerciseIds = setOf(1L, 2L),
+            onToggleSelected = {},
             onToggleFavorite = {},
             snackbarHostState = remember { SnackbarHostState() },
-            initialSelectedIds = setOf(1L, 2L),
             favoriteExerciseIds = sampleFavoriteIds,
         )
     }
