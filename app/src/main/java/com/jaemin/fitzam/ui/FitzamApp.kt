@@ -10,6 +10,7 @@ import com.jaemin.fitzam.ui.screen.detailexerciseadd.DetailExerciseAddScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
 import com.jaemin.fitzam.ui.screen.settings.SettingsScreen
 import com.jaemin.fitzam.ui.screen.workoutadd.WorkoutAddScreen
+import com.jaemin.fitzam.ui.screen.workoutseteditor.WorkoutSetEditorScreen
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
@@ -29,6 +30,13 @@ sealed interface Screen {
         val selectedDate: String,
         val selectedExerciseIds: String,
         val selectedCategoryIds: String,
+        val sessionId: Long,
+    ) : NavKey
+    @Serializable data class WorkoutSetEditor(
+        val selectedDate: String,
+        val exerciseId: Long,
+        val exerciseName: String,
+        val sessionId: Long,
     ) : NavKey
 }
 
@@ -90,6 +98,7 @@ fun FitzamApp() {
                                 selectedDate = screen.selectedDate,
                                 selectedExerciseIds = selectedExerciseIds.joinToString(","),
                                 selectedCategoryIds = screen.selectedCategoryIds,
+                                sessionId = System.currentTimeMillis(),
                             )
                         )
                     },
@@ -102,6 +111,7 @@ fun FitzamApp() {
                         .split(",")
                         .mapNotNull { value -> value.toLongOrNull() }
                         .toSet(),
+                    sessionId = screen.sessionId,
                     onBackClick = popBackStack,
                     onDetailAddClick = {
                         backStack.add(
@@ -117,6 +127,26 @@ fun FitzamApp() {
                         popBackStack()
                         popBackStack()
                     },
+                    onExerciseStartClick = { exercise ->
+                        backStack.add(
+                            Screen.WorkoutSetEditor(
+                                selectedDate = screen.selectedDate,
+                                exerciseId = exercise.id,
+                                exerciseName = exercise.name,
+                                sessionId = screen.sessionId,
+                            )
+                        )
+                    },
+                )
+            }
+            entry<Screen.WorkoutSetEditor> { screen ->
+                WorkoutSetEditorScreen(
+                    selectedDate = LocalDate.parse(screen.selectedDate),
+                    exerciseId = screen.exerciseId,
+                    exerciseName = screen.exerciseName,
+                    sessionId = screen.sessionId,
+                    onBackClick = popBackStack,
+                    onCompleteClick = popBackStack,
                 )
             }
             entry<Screen.Settings> {

@@ -54,7 +54,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
-import com.jaemin.fitzam.model.WorkoutSet
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
@@ -64,18 +63,6 @@ import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import java.time.LocalDate
-import java.util.Locale
-
-private data class WorkoutAddExerciseItem(
-    val exercise: Exercise,
-    val sets: List<WorkoutSet>,
-)
-
-private data class EditableWorkoutSetUi(
-    val index: Int,
-    val weightText: String,
-    val repsText: String,
-)
 
 private data class WorkoutAddExerciseUiState(
     val exercise: Exercise,
@@ -87,18 +74,23 @@ private data class WorkoutAddExerciseUiState(
 fun WorkoutAddScreen(
     selectedDate: LocalDate,
     selectedExerciseIds: Set<Long>,
+    sessionId: Long,
     onBackClick: () -> Unit,
     onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
-    viewModel: WorkoutAddViewModel = hiltViewModel(),
+    onExerciseStartClick: (Exercise) -> Unit,
 ) {
+    val viewModel: WorkoutAddViewModel = hiltViewModel(
+        key = "workout-add-$sessionId",
+    )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val exerciseItemsFromViewModel by viewModel.exerciseItems.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedExerciseIds) {
         viewModel.loadExercises(selectedExerciseIds)
     }
 
-    when (val value = uiState) {
+    when (uiState) {
         WorkoutAddUiState.Loading -> {
             WorkoutAddLoadingScreen(onBackClick = onBackClick)
         }
@@ -108,16 +100,16 @@ fun WorkoutAddScreen(
         }
 
         is WorkoutAddUiState.Success -> {
-            var exerciseItems by remember(value.exercises) {
-                mutableStateOf(
-                    value.exercises
-                        .map { exercise ->
-                            WorkoutAddExerciseItem(
-                                exercise = exercise,
-                                sets = emptyList(),
-                            )
-                        }
-                        .map { item -> item.toUiState() },
+            var editingExerciseIds by remember {
+                mutableStateOf(emptySet<Long>())
+            }
+            val availableIds = exerciseItemsFromViewModel.map { item -> item.exercise.id }.toSet()
+            editingExerciseIds = editingExerciseIds.intersect(availableIds)
+            val exerciseItems = exerciseItemsFromViewModel.map { item ->
+                WorkoutAddExerciseUiState(
+                    exercise = item.exercise,
+                    sets = item.sets,
+                    isEditing = editingExerciseIds.contains(item.exercise.id),
                 )
             }
 
@@ -127,66 +119,28 @@ fun WorkoutAddScreen(
                 onBackClick = onBackClick,
                 onDetailAddClick = onDetailAddClick,
                 onCompleteClick = onCompleteClick,
-                onExerciseToggleEditClick = { exercise ->
-                    exerciseItems = exerciseItems.map { item ->
-                        if (item.exercise.id == exercise.id) {
-                            item.copy(isEditing = !item.isEditing)
-                        } else {
-                            item
-                        }
+                onExerciseToggleEditClick = { exerciseId ->
+                    editingExerciseIds = if (editingExerciseIds.contains(exerciseId)) {
+                        editingExerciseIds - exerciseId
+                    } else {
+                        editingExerciseIds + exerciseId
                     }
                 },
-                onExerciseStartClick = {},
-                onExerciseDeleteClick = { exercise ->
-                    exerciseItems = exerciseItems.filterNot { item -> item.exercise.id == exercise.id }
+                onExerciseStartClick = { exercise ->
+                    onExerciseStartClick(exercise)
                 },
-                onSetWeightChange = { exercise, setIndex, weight ->
-                    exerciseItems = exerciseItems.map { item ->
-                        if (item.exercise.id == exercise.id) {
-                            item.copy(
-                                sets = item.sets.map { set ->
-                                    if (set.index == setIndex) {
-                                        set.copy(weightText = weight)
-                                    } else {
-                                        set
-                                    }
-                                },
-                            )
-                        } else {
-                            item
-                        }
-                    }
+                onExerciseDeleteClick = { exerciseId ->
+                    editingExerciseIds = editingExerciseIds - exerciseId
+                    viewModel.deleteExercise(exerciseId)
                 },
-                onSetRepsChange = { exercise, setIndex, reps ->
-                    exerciseItems = exerciseItems.map { item ->
-                        if (item.exercise.id == exercise.id) {
-                            item.copy(
-                                sets = item.sets.map { set ->
-                                    if (set.index == setIndex) {
-                                        set.copy(repsText = reps)
-                                    } else {
-                                        set
-                                    }
-                                },
-                            )
-                        } else {
-                            item
-                        }
-                    }
+                onSetWeightChange = { exerciseId, setIndex, weight ->
+                    viewModel.updateSetWeight(exerciseId, setIndex, weight)
                 },
-                onSetDeleteClick = { exercise, setIndex ->
-                    exerciseItems = exerciseItems.map { item ->
-                        if (item.exercise.id == exercise.id) {
-                            val reindexedSets = item.sets
-                                .filterNot { set -> set.index == setIndex }
-                                .mapIndexed { index, set ->
-                                    set.copy(index = index + 1)
-                                }
-                            item.copy(sets = reindexedSets)
-                        } else {
-                            item
-                        }
-                    }
+                onSetRepsChange = { exerciseId, setIndex, reps ->
+                    viewModel.updateSetReps(exerciseId, setIndex, reps)
+                },
+                onSetDeleteClick = { exerciseId, setIndex ->
+                    viewModel.deleteSet(exerciseId, setIndex)
                 },
             )
         }
@@ -200,12 +154,12 @@ private fun WorkoutAddContent(
     onBackClick: () -> Unit,
     onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
-    onExerciseToggleEditClick: (Exercise) -> Unit,
+    onExerciseToggleEditClick: (Long) -> Unit,
     onExerciseStartClick: (Exercise) -> Unit,
-    onExerciseDeleteClick: (Exercise) -> Unit,
-    onSetWeightChange: (Exercise, Int, String) -> Unit,
-    onSetRepsChange: (Exercise, Int, String) -> Unit,
-    onSetDeleteClick: (Exercise, Int) -> Unit,
+    onExerciseDeleteClick: (Long) -> Unit,
+    onSetWeightChange: (Long, Int, String) -> Unit,
+    onSetRepsChange: (Long, Int, String) -> Unit,
+    onSetDeleteClick: (Long, Int) -> Unit,
 ) {
     val selectedCategories = exerciseItems
         .map { item -> item.exercise.category }
@@ -283,17 +237,17 @@ private fun WorkoutAddContent(
             ) { item ->
                 WorkoutExerciseCard(
                     exerciseItem = item,
-                    onEditClick = { onExerciseToggleEditClick(item.exercise) },
+                    onEditClick = { onExerciseToggleEditClick(item.exercise.id) },
                     onStartClick = { onExerciseStartClick(item.exercise) },
-                    onDeleteClick = { onExerciseDeleteClick(item.exercise) },
+                    onDeleteClick = { onExerciseDeleteClick(item.exercise.id) },
                     onSetWeightChange = { setIndex, weight ->
-                        onSetWeightChange(item.exercise, setIndex, weight)
+                        onSetWeightChange(item.exercise.id, setIndex, weight)
                     },
                     onSetRepsChange = { setIndex, reps ->
-                        onSetRepsChange(item.exercise, setIndex, reps)
+                        onSetRepsChange(item.exercise.id, setIndex, reps)
                     },
                     onSetDeleteClick = { setIndex ->
-                        onSetDeleteClick(item.exercise, setIndex)
+                        onSetDeleteClick(item.exercise.id, setIndex)
                     },
                 )
             }
@@ -610,28 +564,7 @@ private fun TableInputCell(
 private val WEIGHT_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
 private val REPS_INPUT_REGEX = Regex("^\\d*$")
 
-private fun WorkoutAddExerciseItem.toUiState(): WorkoutAddExerciseUiState {
-    return WorkoutAddExerciseUiState(
-        exercise = exercise,
-        sets = sets.map { set ->
-            EditableWorkoutSetUi(
-                index = set.index,
-                weightText = formatWeightText(set.weightKg),
-                repsText = set.reps.toString(),
-            )
-        },
-    )
-}
-
-private fun formatWeightText(weightKg: Double): String {
-    return if (weightKg % 1.0 == 0.0) {
-        weightKg.toInt().toString()
-    } else {
-        String.format(Locale.US, "%.2f", weightKg).trimEnd('0').trimEnd('.')
-    }
-}
-
-private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseItem> {
+private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseUiModel> {
     val chest = ExerciseCategory(
         id = 0,
         name = "가슴",
@@ -648,7 +581,7 @@ private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseItem> {
     )
 
     return listOf(
-        WorkoutAddExerciseItem(
+        WorkoutAddExerciseUiModel(
             exercise = Exercise(
                 id = 1,
                 name = "숄더 프레스 (바벨)",
@@ -656,12 +589,12 @@ private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseItem> {
                 imageName = chest.imageName,
             ),
             sets = listOf(
-                WorkoutSet(index = 1, weightKg = 80.0, reps = 10),
-                WorkoutSet(index = 2, weightKg = 85.0, reps = 10),
-                WorkoutSet(index = 3, weightKg = 90.0, reps = 8),
+                EditableWorkoutSetUi(index = 1, weightText = "80", repsText = "10"),
+                EditableWorkoutSetUi(index = 2, weightText = "85", repsText = "10"),
+                EditableWorkoutSetUi(index = 3, weightText = "90", repsText = "8"),
             ),
         ),
-        WorkoutAddExerciseItem(
+        WorkoutAddExerciseUiModel(
             exercise = Exercise(
                 id = 2,
                 name = "밀리터리 프레스 (바벨)",
@@ -679,7 +612,12 @@ private fun WorkoutAddScreenPreview() {
     FitzamTheme {
         WorkoutAddContent(
             selectedDate = LocalDate.now(),
-            exerciseItems = sampleWorkoutAddItems().map { it.toUiState() },
+            exerciseItems = sampleWorkoutAddItems().map { item ->
+                WorkoutAddExerciseUiState(
+                    exercise = item.exercise,
+                    sets = item.sets,
+                )
+            },
             onBackClick = {},
             onDetailAddClick = {},
             onCompleteClick = {},
