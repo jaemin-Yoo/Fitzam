@@ -50,12 +50,14 @@ fun DZamInputField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
     Column(modifier = modifier) {
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
+        if (label.isNotBlank()) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -66,11 +68,13 @@ fun DZamInputField(
             },
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,
-            supportingText = {
-                Text(
-                    text = supportingText,
-                    style = MaterialTheme.typography.labelMedium,
-                )
+            supportingText = supportingText.takeIf { it.isNotBlank() }?.let { text ->
+                {
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
             },
             isError = isError,
             keyboardOptions = keyboardOptions,

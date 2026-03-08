@@ -186,8 +186,7 @@ fun ExerciseSelectScreen(
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 16.dp),
+                    .padding(horizontal = 16.dp),
                 placeholder = "운동을 검색하세요.",
                 leadingIcon = {
                     Icon(
@@ -197,7 +196,7 @@ fun ExerciseSelectScreen(
                     )
                 },
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             ExerciseSelectList(
                 favoriteExercises = favoriteExercises,
@@ -306,7 +305,14 @@ private fun ExerciseSelectList(
         }
 
         item {
-            SectionTitle(text = "전체 보기")
+            SectionTitle(
+                text = "전체 보기",
+                modifier = if (favoriteExercises.isNotEmpty()) {
+                    Modifier.padding(top = 16.dp)
+                } else {
+                    Modifier
+                },
+            )
         }
         items(
             items = exercises,
