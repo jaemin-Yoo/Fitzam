@@ -58,6 +58,7 @@ import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
+import com.jaemin.fitzam.ui.theme.ErrorRed
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
@@ -412,6 +413,7 @@ private fun WorkoutExerciseCard(
                 text = "삭제",
                 onClick = onDeleteClick,
                 modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = ErrorRed),
                 leadingIcon = ImageVector.vectorResource(id = R.drawable.ic_trash),
             )
         } else {
