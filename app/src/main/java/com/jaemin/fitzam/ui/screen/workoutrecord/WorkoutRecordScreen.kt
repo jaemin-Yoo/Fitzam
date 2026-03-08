@@ -1,5 +1,7 @@
 package com.jaemin.fitzam.ui.screen.workoutrecord
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -34,9 +38,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -44,6 +52,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -67,6 +78,7 @@ import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 private data class WorkoutRecordExerciseUiState(
     val exercise: Exercise,
@@ -181,9 +193,44 @@ private fun WorkoutRecordContent(
     onSetSecondMetricChange: (Long, Int, String) -> Unit,
     onSetDeleteClick: (Long, Int) -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val itemSpacingPx = with(density) { 24.dp.toPx() }
     val selectedCategories = exerciseItems
         .map { item -> item.exercise.category }
         .distinctBy { category -> category.id }
+
+    suspend fun ensureItemFullyVisible(exerciseId: Long, targetIndexHint: Int) {
+        withFrameNanos { }
+
+        fun findVisibleItem() = listState.layoutInfo.visibleItemsInfo.firstOrNull { visibleItem ->
+            (visibleItem.key as? Long) == exerciseId || visibleItem.key == exerciseId
+        }
+
+        var itemInfo = findVisibleItem()
+        if (itemInfo == null) {
+            listState.animateScrollToItem(index = targetIndexHint)
+            withFrameNanos { }
+            itemInfo = findVisibleItem() ?: return
+        }
+
+        val layoutInfo = listState.layoutInfo
+        val viewportTop = layoutInfo.viewportStartOffset
+        val viewportBottom = layoutInfo.viewportEndOffset
+        val itemTop = itemInfo.offset
+        val itemBottom = itemInfo.offset + itemInfo.size
+
+        val scrollDelta = when {
+            itemTop < viewportTop -> (itemTop - viewportTop).toFloat()
+            itemBottom > viewportBottom -> (itemBottom - viewportBottom).toFloat()
+            else -> 0f
+        }
+
+        if (scrollDelta != 0f) {
+            listState.animateScrollBy(scrollDelta)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -216,6 +263,7 @@ private fun WorkoutRecordContent(
         },
     ) { paddingValues ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
@@ -248,15 +296,60 @@ private fun WorkoutRecordContent(
                 items = exerciseItems,
                 key = { _, item -> item.exercise.id },
             ) { index, item ->
+                var previousIndex by remember(item.exercise.id) { mutableIntStateOf(index) }
+                var cardHeightPx by remember(item.exercise.id) { mutableIntStateOf(0) }
+                var targetTranslationYPx by remember(item.exercise.id) { mutableFloatStateOf(0f) }
+                val animatedTranslationYPx by animateFloatAsState(
+                    targetValue = targetTranslationYPx,
+                    animationSpec = tween(durationMillis = 260),
+                    label = "workout-card-reorder-translation",
+                )
+
+                LaunchedEffect(index) {
+                    if (previousIndex != index) {
+                        val delta = previousIndex - index
+                        val moveDistancePx = (if (cardHeightPx > 0) cardHeightPx.toFloat() else 0f) + itemSpacingPx
+                        targetTranslationYPx = delta * moveDistancePx
+                        previousIndex = index
+                        withFrameNanos { }
+                        targetTranslationYPx = 0f
+                    } else {
+                        previousIndex = index
+                    }
+                }
+
                 WorkoutExerciseCard(
+                    modifier = Modifier
+                        .onSizeChanged { size ->
+                            cardHeightPx = size.height
+                        }
+                        .graphicsLayer {
+                            translationY = animatedTranslationYPx
+                        },
                     exerciseItem = item,
                     canMoveUp = index > 0,
                     canMoveDown = index < exerciseItems.lastIndex,
                     onEditClick = { onExerciseToggleEditClick(item.exercise.id) },
                     onStartClick = { onExerciseStartClick(item.exercise) },
                     onDeleteClick = { onExerciseDeleteClick(item.exercise.id) },
-                    onMoveUpClick = { onExerciseMoveUpClick(item.exercise.id) },
-                    onMoveDownClick = { onExerciseMoveDownClick(item.exercise.id) },
+                    onMoveUpClick = {
+                        onExerciseMoveUpClick(item.exercise.id)
+                        coroutineScope.launch {
+                            ensureItemFullyVisible(
+                                exerciseId = item.exercise.id,
+                                targetIndexHint = (index - 1).coerceAtLeast(0),
+                            )
+                        }
+                    },
+                    onMoveDownClick = {
+                        onExerciseMoveDownClick(item.exercise.id)
+                        coroutineScope.launch {
+                            ensureItemFullyVisible(
+                                exerciseId = item.exercise.id,
+                                targetIndexHint = (index + 1).coerceAtMost(exerciseItems.lastIndex),
+                            )
+                        }
+                    },
                     onSetFirstMetricChange = { setIndex, value ->
                         onSetFirstMetricChange(item.exercise.id, setIndex, value)
                     },
@@ -332,6 +425,7 @@ private fun WorkoutRecordFailedScreen(
 
 @Composable
 private fun WorkoutExerciseCard(
+    modifier: Modifier = Modifier,
     exerciseItem: WorkoutRecordExerciseUiState,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
@@ -347,7 +441,7 @@ private fun WorkoutExerciseCard(
     val exercise = exerciseItem.exercise
     val sets = exerciseItem.sets
 
-    Column {
+    Column(modifier = modifier) {
         Surface(
             shape = RoundedCornerShape(8.dp),
             shadowElevation = if (exerciseItem.isEditing) 8.dp else 0.dp,
