@@ -83,14 +83,11 @@ fun WorkoutStartScreen(
     val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
-    val exercise = remember(exerciseId) { viewModel.getExercise(exerciseId) }
-    val initialRecordSchema = exercise?.recordSchema ?: ExerciseRecordSchema.WEIGHT_REPS
-    var recordSchema by rememberSaveable(exerciseId) { mutableStateOf(initialRecordSchema) }
-    val config = remember(recordSchema) { metricConfig(recordSchema) }
-
     val initialValue = remember(exerciseId) {
         viewModel.getEditorInitialValue(exerciseId)
     }
+    var recordSchema by rememberSaveable(exerciseId) { mutableStateOf(initialValue.recordSchema) }
+    val config = remember(recordSchema) { metricConfig(recordSchema) }
 
     var firstValue by rememberSaveable(exerciseId) { mutableStateOf(initialValue.firstValue) }
     var secondValue by rememberSaveable(exerciseId) { mutableStateOf(initialValue.secondValue) }
@@ -121,14 +118,18 @@ fun WorkoutStartScreen(
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),
-                actions = listOf(
-                    TopAppBarItem(
-                        label = toggleLabel(recordSchema),
-                        onClick = {
-                            recordSchema = toggleRecordSchema(recordSchema)
-                        },
-                    ),
-                ),
+                actions = if (initialValue.isSchemaLocked) {
+                    emptyList()
+                } else {
+                    listOf(
+                        TopAppBarItem(
+                            label = toggleLabel(recordSchema),
+                            onClick = {
+                                recordSchema = toggleRecordSchema(recordSchema)
+                            },
+                        ),
+                    )
+                },
             )
         },
         bottomBar = {
@@ -151,6 +152,7 @@ fun WorkoutStartScreen(
                             exerciseId = exerciseId,
                             firstValue = firstValue,
                             secondValue = secondValue,
+                            recordSchema = recordSchema,
                         )
                         onCompleteClick()
                     },

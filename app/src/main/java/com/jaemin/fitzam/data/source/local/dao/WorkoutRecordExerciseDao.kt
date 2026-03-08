@@ -38,4 +38,14 @@ interface WorkoutRecordExerciseDao {
 
     @Query("DELETE FROM workout_record_exercise WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: List<Long>)
+
+    @Query(
+        """
+        SELECT recordSchema FROM workout_record_exercise
+        WHERE exerciseId = :exerciseId
+        ORDER BY workoutRecordDate DESC, id DESC
+        LIMIT 1
+    """
+    )
+    suspend fun getLatestRecordSchemaByExerciseId(exerciseId: Long): String?
 }

@@ -297,7 +297,24 @@ class DriveSyncRepository @Inject constructor(
 
     private fun mergeWorkoutRecordExerciseTable(db: SQLiteDatabase) {
         if (hasTable(db, "backup", "workout_record_exercise")) {
-            mergeTable(db, "workout_record_exercise")
+            val columns = getTableColumns(db, "backup", "workout_record_exercise")
+            if (columns.contains("recordSchema")) {
+                mergeTable(db, "workout_record_exercise")
+            } else {
+                mergeMappedTable(
+                    db = db,
+                    targetTable = "workout_record_exercise",
+                    sourceTable = "workout_record_exercise",
+                    targetColumns = listOf("id", "workoutRecordDate", "exerciseId", "orderIndex", "recordSchema"),
+                    sourceColumns = listOf(
+                        "id",
+                        "workoutRecordDate",
+                        "exerciseId",
+                        "orderIndex",
+                        "COALESCE((SELECT CASE WHEN be.name IN ('러닝', '사이클') THEN 'DISTANCE_DURATION' ELSE 'WEIGHT_REPS' END FROM backup.exercise be WHERE be.id = exerciseId), 'WEIGHT_REPS')",
+                    ),
+                )
+            }
             return
         }
 
@@ -305,8 +322,14 @@ class DriveSyncRepository @Inject constructor(
             db = db,
             targetTable = "workout_record_exercise",
             sourceTable = "workout_exercise",
-            targetColumns = listOf("id", "workoutRecordDate", "exerciseId", "orderIndex"),
-            sourceColumns = listOf("id", "workoutDate", "exerciseId", "orderIndex"),
+            targetColumns = listOf("id", "workoutRecordDate", "exerciseId", "orderIndex", "recordSchema"),
+            sourceColumns = listOf(
+                "id",
+                "workoutDate",
+                "exerciseId",
+                "orderIndex",
+                "COALESCE((SELECT CASE WHEN be.name IN ('러닝', '사이클') THEN 'DISTANCE_DURATION' ELSE 'WEIGHT_REPS' END FROM backup.exercise be WHERE be.id = exerciseId), 'WEIGHT_REPS')",
+            ),
         )
     }
 

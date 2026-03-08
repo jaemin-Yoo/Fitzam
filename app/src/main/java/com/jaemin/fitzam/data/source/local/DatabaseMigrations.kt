@@ -197,3 +197,36 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("PRAGMA foreign_keys=ON")
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            ALTER TABLE workout_record_exercise
+            ADD COLUMN recordSchema TEXT NOT NULL DEFAULT 'WEIGHT_REPS'
+            """
+                .trimIndent(),
+        )
+        db.execSQL(
+            """
+            UPDATE workout_record_exercise
+            SET recordSchema = CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM workout_record_exercise_set_metric metric
+                    WHERE metric.workoutRecordExerciseId = workout_record_exercise.id
+                      AND metric.metricType = 'DISTANCE_KM'
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM workout_record_exercise_set_metric metric
+                    WHERE metric.workoutRecordExerciseId = workout_record_exercise.id
+                      AND metric.metricType = 'DURATION_SEC'
+                ) THEN 'DISTANCE_DURATION'
+                ELSE 'WEIGHT_REPS'
+            END
+            """
+                .trimIndent(),
+        )
+    }
+}

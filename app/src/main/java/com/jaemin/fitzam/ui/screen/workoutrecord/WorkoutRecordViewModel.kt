@@ -34,6 +34,8 @@ data class WorkoutRecordExerciseUiModel(
 data class WorkoutStartInitialValue(
     val firstValue: Double,
     val secondValue: Int,
+    val recordSchema: ExerciseRecordSchema,
+    val isSchemaLocked: Boolean,
 )
 
 @HiltViewModel
@@ -148,15 +150,23 @@ class WorkoutRecordViewModel @Inject constructor(
             exerciseItem.exercise.id == exerciseId
         }
         val lastSet = item?.sets?.lastOrNull()
+        val recordSchema = item?.exercise?.recordSchema ?: ExerciseRecordSchema.WEIGHT_REPS
         val firstValue = lastSet?.firstMetricText?.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
         val secondValue = lastSet?.secondMetricText?.toIntOrNull()?.coerceAtLeast(0) ?: 0
         return WorkoutStartInitialValue(
             firstValue = firstValue,
             secondValue = secondValue,
+            recordSchema = recordSchema,
+            isSchemaLocked = !item?.sets.isNullOrEmpty(),
         )
     }
 
-    fun appendSet(exerciseId: Long, firstValue: Double, secondValue: Int) {
+    fun appendSet(
+        exerciseId: Long,
+        firstValue: Double,
+        secondValue: Int,
+        recordSchema: ExerciseRecordSchema,
+    ) {
         val normalizedFirst = firstValue.coerceAtLeast(0.0)
         val normalizedSecond = secondValue.coerceAtLeast(0)
 
@@ -167,10 +177,13 @@ class WorkoutRecordViewModel @Inject constructor(
                 val nextIndex = item.sets.size + 1
                 val appendedSet = EditableWorkoutSetUi(
                     index = nextIndex,
-                    firstMetricText = formatMetricFirstText(item.exercise.recordSchema, normalizedFirst),
+                    firstMetricText = formatMetricFirstText(recordSchema, normalizedFirst),
                     secondMetricText = normalizedSecond.toString(),
                 )
-                item.copy(sets = item.sets + appendedSet)
+                item.copy(
+                    exercise = item.exercise.copy(recordSchema = recordSchema),
+                    sets = item.sets + appendedSet,
+                )
             }
         }
     }
@@ -185,6 +198,7 @@ class WorkoutRecordViewModel @Inject constructor(
                     exerciseId = item.exercise.id,
                     categoryId = item.exercise.category.id,
                     orderIndex = index,
+                    recordSchema = item.exercise.recordSchema,
                     sets = item.sets.map { set ->
                         WorkoutSetDraft(
                             setIndex = set.index,
@@ -239,12 +253,16 @@ class WorkoutRecordViewModel @Inject constructor(
         return mergedOrderedIds.mapNotNull { exerciseId ->
             val savedExercise = savedExerciseMap[exerciseId]
             val exercise = savedExercise?.exercise ?: exercisesById[exerciseId]
+            val recordSchema = savedExercise?.exercise?.recordSchema
+                ?: workoutRepository.getLatestRecordSchema(exerciseId)
+                ?: exercise?.recordSchema
+                ?: ExerciseRecordSchema.WEIGHT_REPS
             exercise?.let { existingExercise ->
                 WorkoutRecordExerciseUiModel(
-                    exercise = existingExercise,
+                    exercise = existingExercise.copy(recordSchema = recordSchema),
                     sets = savedExercise?.sets
                         ?.map { set ->
-                            set.toEditableSet(existingExercise.recordSchema)
+                            set.toEditableSet(recordSchema)
                         }
                         .orEmpty(),
                 )

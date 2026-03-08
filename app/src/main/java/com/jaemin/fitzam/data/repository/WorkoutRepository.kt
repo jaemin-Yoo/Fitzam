@@ -16,6 +16,7 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.WorkoutMetricType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,7 @@ data class WorkoutExerciseDraft(
     val exerciseId: Long,
     val categoryId: Long,
     val orderIndex: Int,
+    val recordSchema: ExerciseRecordSchema,
     val sets: List<WorkoutSetDraft>,
 )
 
@@ -188,6 +190,7 @@ class WorkoutRepository @Inject constructor(
                         workoutRecordDate = date.toString(),
                         exerciseId = exercise.exerciseId,
                         orderIndex = exercise.orderIndex,
+                        recordSchema = exercise.recordSchema.name,
                     ),
                 )
 
@@ -220,6 +223,11 @@ class WorkoutRepository @Inject constructor(
     private suspend fun deleteWorkout(date: LocalDate) {
         workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
         workoutRecordDao.deleteByDate(date.toString())
+    }
+
+    suspend fun getLatestRecordSchema(exerciseId: Long): ExerciseRecordSchema? {
+        val rawSchema = workoutRecordExerciseDao.getLatestRecordSchemaByExerciseId(exerciseId) ?: return null
+        return runCatching { ExerciseRecordSchema.valueOf(rawSchema) }.getOrNull()
     }
 
 }

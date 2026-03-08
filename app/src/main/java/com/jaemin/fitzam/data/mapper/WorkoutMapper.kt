@@ -57,9 +57,12 @@ fun WorkoutRecordExerciseEntity.toModel(
     exercise: Exercise,
     sets: List<WorkoutSet>,
 ): WorkoutExercise {
+    val sessionRecordSchema = runCatching {
+        ExerciseRecordSchema.valueOf(recordSchema)
+    }.getOrDefault(exercise.recordSchema)
     return WorkoutExercise(
         id = id,
-        exercise = exercise,
+        exercise = exercise.copy(recordSchema = sessionRecordSchema),
         sets = sets,
     )
 }

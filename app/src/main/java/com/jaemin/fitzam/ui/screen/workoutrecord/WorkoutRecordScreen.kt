@@ -526,7 +526,10 @@ private fun WorkoutSetTable(
                         )
                     }
                 } else {
-                    TableValueCell(text = set.firstMetricText, modifier = Modifier.weight(1f))
+                    TableValueCell(
+                        text = set.firstMetricText,
+                        modifier = Modifier.weight(1f),
+                    )
                     TableValueCell(
                         text = if (recordSchema == ExerciseRecordSchema.DISTANCE_DURATION) {
                             formatDurationInMinutesAndSeconds(set.secondMetricText)

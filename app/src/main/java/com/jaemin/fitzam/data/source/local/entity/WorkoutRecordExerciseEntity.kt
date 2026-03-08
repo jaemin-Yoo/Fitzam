@@ -32,4 +32,5 @@ data class WorkoutRecordExerciseEntity(
     val workoutRecordDate: String,
     val exerciseId: Long,
     val orderIndex: Int,
+    val recordSchema: String,
 )
