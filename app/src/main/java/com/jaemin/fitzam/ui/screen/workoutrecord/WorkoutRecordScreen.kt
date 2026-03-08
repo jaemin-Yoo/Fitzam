@@ -331,7 +331,10 @@ private fun WorkoutExerciseCard(
     val sets = exerciseItem.sets
 
     Column {
-        Surface(shape = RoundedCornerShape(8.dp)) {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            shadowElevation = if (exerciseItem.isEditing) 8.dp else 0.dp,
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
