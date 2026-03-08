@@ -12,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ fun FitzamTopAppBar(
     modifier: Modifier = Modifier,
     navigation: TopAppBarItem? = null,
     actions: List<TopAppBarItem> = emptyList(),
+    actionContent: (@Composable () -> Unit)? = null,
 ) {
     CenterAlignedTopAppBar(
         title = {
@@ -51,24 +53,19 @@ fun FitzamTopAppBar(
         },
         navigationIcon = {
             if (navigation != null) {
-                IconButton(onClick = navigation.onClick) {
-                    Icon(
-                        imageVector = navigation.icon,
-                        contentDescription = navigation.contentDescription,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
+                TopAppBarActionItem(
+                    item = navigation,
+                    iconTint = MaterialTheme.colorScheme.onBackground,
+                )
             }
         },
         actions = {
+            actionContent?.invoke()
             actions.forEach { action ->
-                IconButton(onClick = action.onClick) {
-                    Icon(
-                        imageVector = action.icon,
-                        contentDescription = action.contentDescription,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
+                TopAppBarActionItem(
+                    item = action,
+                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -105,13 +102,10 @@ fun FitzamBrandTopAppBar(
         },
         actions = {
             actions.forEach { action ->
-                IconButton(onClick = action.onClick) {
-                    Icon(
-                        imageVector = action.icon,
-                        contentDescription = action.contentDescription,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                TopAppBarActionItem(
+                    item = action,
+                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -120,10 +114,41 @@ fun FitzamBrandTopAppBar(
 }
 
 data class TopAppBarItem(
-    val icon: ImageVector,
-    val contentDescription: String?,
+    val icon: ImageVector? = null,
+    val contentDescription: String? = null,
+    val label: String? = null,
     val onClick: () -> Unit,
 )
+
+@Composable
+private fun TopAppBarActionItem(
+    item: TopAppBarItem,
+    iconTint: Color,
+) {
+    when {
+        item.icon != null -> {
+            IconButton(onClick = item.onClick) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.contentDescription,
+                    tint = iconTint,
+                )
+            }
+        }
+
+        !item.label.isNullOrBlank() -> {
+            TextButton(onClick = item.onClick) {
+                Text(
+                    text = item.label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = iconTint,
+                )
+            }
+        }
+
+        else -> return
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

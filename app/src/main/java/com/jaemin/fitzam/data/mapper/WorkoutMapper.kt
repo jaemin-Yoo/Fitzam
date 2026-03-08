@@ -5,10 +5,13 @@ import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
+import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
 import java.time.LocalDate
 
@@ -35,14 +38,18 @@ fun ExerciseEntity.toModel(category: ExerciseCategory): Exercise {
         name = name,
         category = category,
         imageName = imageName,
+        recordSchema = ExerciseRecordSchema.valueOf(recordSchema),
     )
 }
 
-fun WorkoutRecordExerciseSetEntity.toModel(): WorkoutSet {
+fun WorkoutRecordExerciseSetEntity.toModel(
+    metrics: List<WorkoutRecordExerciseSetMetricEntity>,
+): WorkoutSet {
     return WorkoutSet(
         index = setIndex,
-        weightKg = weightKg,
-        reps = reps,
+        metrics = metrics.associate { entity ->
+            WorkoutMetricType.valueOf(entity.metricType) to entity.value
+        },
     )
 }
 

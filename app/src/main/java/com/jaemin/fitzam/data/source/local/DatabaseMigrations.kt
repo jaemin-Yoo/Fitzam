@@ -115,3 +115,85 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         db.execSQL("PRAGMA foreign_keys=ON")
     }
 }
+
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("PRAGMA foreign_keys=OFF")
+
+        db.execSQL(
+            """
+            ALTER TABLE exercise
+            ADD COLUMN recordSchema TEXT NOT NULL DEFAULT 'WEIGHT_REPS'
+            """
+                .trimIndent(),
+        )
+        db.execSQL(
+            """
+            UPDATE exercise
+            SET recordSchema = 'DISTANCE_DURATION'
+            WHERE name IN ('러닝', '사이클')
+            """
+                .trimIndent(),
+        )
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS workout_record_exercise_set_new (
+                workoutRecordExerciseId INTEGER NOT NULL,
+                setIndex INTEGER NOT NULL,
+                PRIMARY KEY(workoutRecordExerciseId, setIndex),
+                FOREIGN KEY(workoutRecordExerciseId) REFERENCES workout_record_exercise(id) ON DELETE CASCADE
+            )
+            """
+                .trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO workout_record_exercise_set_new (workoutRecordExerciseId, setIndex)
+            SELECT workoutRecordExerciseId, setIndex FROM workout_record_exercise_set
+            """
+                .trimIndent(),
+        )
+        db.execSQL("DROP TABLE workout_record_exercise_set")
+        db.execSQL("ALTER TABLE workout_record_exercise_set_new RENAME TO workout_record_exercise_set")
+        db.execSQL(
+            """
+            CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_workoutRecordExerciseId
+            ON workout_record_exercise_set(workoutRecordExerciseId)
+            """
+                .trimIndent(),
+        )
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS workout_record_exercise_set_metric (
+                workoutRecordExerciseId INTEGER NOT NULL,
+                setIndex INTEGER NOT NULL,
+                metricType TEXT NOT NULL,
+                value REAL NOT NULL,
+                PRIMARY KEY(workoutRecordExerciseId, setIndex, metricType),
+                FOREIGN KEY(workoutRecordExerciseId, setIndex)
+                    REFERENCES workout_record_exercise_set(workoutRecordExerciseId, setIndex)
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_metric_workoutRecordExerciseId
+            ON workout_record_exercise_set_metric(workoutRecordExerciseId)
+            """
+                .trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_metric_workoutRecordExerciseId_setIndex
+            ON workout_record_exercise_set_metric(workoutRecordExerciseId, setIndex)
+            """
+                .trimIndent(),
+        )
+
+        db.execSQL("PRAGMA foreign_keys=ON")
+    }
+}

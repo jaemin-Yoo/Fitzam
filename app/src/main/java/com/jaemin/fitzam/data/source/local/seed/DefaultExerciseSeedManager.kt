@@ -41,6 +41,7 @@ class DefaultExerciseSeedManager(
                         exercise.name,
                         exercise.categoryId,
                         exercise.imageName,
+                        resolveRecordSchema(exercise.name),
                     )
                 )
             }
@@ -68,7 +69,7 @@ class DefaultExerciseSeedManager(
     }
 
     companion object {
-        private const val EXERCISE_SEED_VERSION = 1
+        private const val EXERCISE_SEED_VERSION = 2
         private const val SEED_KEY_EXERCISE_DEFAULT_DATA = "exercise_default_data"
 
         private val CREATE_SEED_META_TABLE_SQL =
@@ -92,6 +93,13 @@ class DefaultExerciseSeedManager(
             "INSERT OR IGNORE INTO exercise_category (id, name, imageName, colorHex, colorDarkHex) VALUES (?, ?, ?, ?, ?)"
 
         private const val INSERT_EXERCISE_IF_NOT_EXISTS_SQL =
-            "INSERT OR IGNORE INTO exercise (id, name, categoryId, imageName) VALUES (?, ?, ?, ?)"
+            "INSERT OR IGNORE INTO exercise (id, name, categoryId, imageName, recordSchema) VALUES (?, ?, ?, ?, ?)"
+    }
+
+    private fun resolveRecordSchema(exerciseName: String): String {
+        return when (exerciseName) {
+            "러닝", "사이클" -> "DISTANCE_DURATION"
+            else -> "WEIGHT_REPS"
+        }
     }
 }

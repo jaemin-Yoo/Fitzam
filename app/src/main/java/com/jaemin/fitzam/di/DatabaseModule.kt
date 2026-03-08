@@ -8,6 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jaemin.fitzam.data.source.local.DatabaseConfig
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.MIGRATION_1_2
+import com.jaemin.fitzam.data.source.local.MIGRATION_2_3
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
@@ -15,6 +16,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetMetricDao
 import com.jaemin.fitzam.data.source.local.seed.DefaultExerciseSeedManager
 import dagger.Module
 import dagger.Provides
@@ -37,7 +39,7 @@ object DatabaseModule {
             FitzamDatabase::class.java,
             DatabaseConfig.localDbFileName()
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -84,6 +86,10 @@ object DatabaseModule {
     @Provides
     fun provideWorkoutRecordExerciseSetDao(db: FitzamDatabase): WorkoutRecordExerciseSetDao =
         db.workoutRecordExerciseSetDao()
+
+    @Provides
+    fun provideWorkoutRecordExerciseSetMetricDao(db: FitzamDatabase): WorkoutRecordExerciseSetMetricDao =
+        db.workoutRecordExerciseSetMetricDao()
 
     @Provides
     fun provideExerciseCategoryDao(db: FitzamDatabase): ExerciseCategoryDao =

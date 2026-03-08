@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseRepository
 import com.jaemin.fitzam.model.Exercise
+import com.jaemin.fitzam.model.ExerciseRecordSchema
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +16,8 @@ import java.util.Locale
 
 data class EditableWorkoutSetUi(
     val index: Int,
-    val weightText: String,
-    val repsText: String,
+    val firstMetricText: String,
+    val secondMetricText: String,
 )
 
 data class WorkoutRecordExerciseUiModel(
@@ -25,8 +26,8 @@ data class WorkoutRecordExerciseUiModel(
 )
 
 data class WorkoutStartInitialValue(
-    val weightKg: Double,
-    val reps: Int,
+    val firstValue: Double,
+    val secondValue: Int,
 )
 
 @HiltViewModel
@@ -72,7 +73,7 @@ class WorkoutRecordViewModel @Inject constructor(
         }?.exercise
     }
 
-    fun updateSetWeight(exerciseId: Long, setIndex: Int, weight: String) {
+    fun updateSetFirstMetric(exerciseId: Long, setIndex: Int, value: String) {
         _exerciseItems.value = _exerciseItems.value.map { item ->
             if (item.exercise.id != exerciseId) {
                 item
@@ -80,7 +81,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 item.copy(
                     sets = item.sets.map { set ->
                         if (set.index == setIndex) {
-                            set.copy(weightText = weight)
+                            set.copy(firstMetricText = value)
                         } else {
                             set
                         }
@@ -90,7 +91,7 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
-    fun updateSetReps(exerciseId: Long, setIndex: Int, reps: String) {
+    fun updateSetSecondMetric(exerciseId: Long, setIndex: Int, value: String) {
         _exerciseItems.value = _exerciseItems.value.map { item ->
             if (item.exercise.id != exerciseId) {
                 item
@@ -98,7 +99,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 item.copy(
                     sets = item.sets.map { set ->
                         if (set.index == setIndex) {
-                            set.copy(repsText = reps)
+                            set.copy(secondMetricText = value)
                         } else {
                             set
                         }
@@ -130,18 +131,21 @@ class WorkoutRecordViewModel @Inject constructor(
     }
 
     fun getEditorInitialValue(exerciseId: Long): WorkoutStartInitialValue {
-        val lastSet = _exerciseItems.value.firstOrNull { item ->
-            item.exercise.id == exerciseId
-        }?.sets?.lastOrNull()
-
-        val weight = lastSet?.weightText?.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
-        val reps = lastSet?.repsText?.toIntOrNull()?.coerceAtLeast(0) ?: 0
-        return WorkoutStartInitialValue(weightKg = weight, reps = reps)
+        val item = _exerciseItems.value.firstOrNull { exerciseItem ->
+            exerciseItem.exercise.id == exerciseId
+        }
+        val lastSet = item?.sets?.lastOrNull()
+        val firstValue = lastSet?.firstMetricText?.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+        val secondValue = lastSet?.secondMetricText?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+        return WorkoutStartInitialValue(
+            firstValue = firstValue,
+            secondValue = secondValue,
+        )
     }
 
-    fun appendSet(exerciseId: Long, weightKg: Double, reps: Int) {
-        val normalizedWeight = weightKg.coerceAtLeast(0.0)
-        val normalizedReps = reps.coerceAtLeast(0)
+    fun appendSet(exerciseId: Long, firstValue: Double, secondValue: Int) {
+        val normalizedFirst = firstValue.coerceAtLeast(0.0)
+        val normalizedSecond = secondValue.coerceAtLeast(0)
 
         _exerciseItems.value = _exerciseItems.value.map { item ->
             if (item.exercise.id != exerciseId) {
@@ -150,8 +154,8 @@ class WorkoutRecordViewModel @Inject constructor(
                 val nextIndex = item.sets.size + 1
                 val appendedSet = EditableWorkoutSetUi(
                     index = nextIndex,
-                    weightText = formatWeightText(normalizedWeight),
-                    repsText = normalizedReps.toString(),
+                    firstMetricText = formatMetricFirstText(item.exercise.recordSchema, normalizedFirst),
+                    secondMetricText = normalizedSecond.toString(),
                 )
                 item.copy(sets = item.sets + appendedSet)
             }
@@ -174,5 +178,12 @@ fun formatWeightText(weightKg: Double): String {
         weightKg.toInt().toString()
     } else {
         String.format(Locale.US, "%.2f", weightKg).trimEnd('0').trimEnd('.')
+    }
+}
+
+private fun formatMetricFirstText(recordSchema: ExerciseRecordSchema, value: Double): String {
+    return when (recordSchema) {
+        ExerciseRecordSchema.WEIGHT_REPS -> formatWeightText(value)
+        ExerciseRecordSchema.DISTANCE_DURATION -> formatWeightText(value)
     }
 }

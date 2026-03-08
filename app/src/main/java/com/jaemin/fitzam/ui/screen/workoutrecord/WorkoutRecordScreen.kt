@@ -54,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
+import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
@@ -133,11 +134,11 @@ fun WorkoutRecordScreen(
                     editingExerciseIds = editingExerciseIds - exerciseId
                     viewModel.deleteExercise(exerciseId)
                 },
-                onSetWeightChange = { exerciseId, setIndex, weight ->
-                    viewModel.updateSetWeight(exerciseId, setIndex, weight)
+                onSetFirstMetricChange = { exerciseId, setIndex, value ->
+                    viewModel.updateSetFirstMetric(exerciseId, setIndex, value)
                 },
-                onSetRepsChange = { exerciseId, setIndex, reps ->
-                    viewModel.updateSetReps(exerciseId, setIndex, reps)
+                onSetSecondMetricChange = { exerciseId, setIndex, value ->
+                    viewModel.updateSetSecondMetric(exerciseId, setIndex, value)
                 },
                 onSetDeleteClick = { exerciseId, setIndex ->
                     viewModel.deleteSet(exerciseId, setIndex)
@@ -157,8 +158,8 @@ private fun WorkoutRecordContent(
     onExerciseToggleEditClick: (Long) -> Unit,
     onExerciseStartClick: (Exercise) -> Unit,
     onExerciseDeleteClick: (Long) -> Unit,
-    onSetWeightChange: (Long, Int, String) -> Unit,
-    onSetRepsChange: (Long, Int, String) -> Unit,
+    onSetFirstMetricChange: (Long, Int, String) -> Unit,
+    onSetSecondMetricChange: (Long, Int, String) -> Unit,
     onSetDeleteClick: (Long, Int) -> Unit,
 ) {
     val selectedCategories = exerciseItems
@@ -240,11 +241,11 @@ private fun WorkoutRecordContent(
                     onEditClick = { onExerciseToggleEditClick(item.exercise.id) },
                     onStartClick = { onExerciseStartClick(item.exercise) },
                     onDeleteClick = { onExerciseDeleteClick(item.exercise.id) },
-                    onSetWeightChange = { setIndex, weight ->
-                        onSetWeightChange(item.exercise.id, setIndex, weight)
+                    onSetFirstMetricChange = { setIndex, value ->
+                        onSetFirstMetricChange(item.exercise.id, setIndex, value)
                     },
-                    onSetRepsChange = { setIndex, reps ->
-                        onSetRepsChange(item.exercise.id, setIndex, reps)
+                    onSetSecondMetricChange = { setIndex, value ->
+                        onSetSecondMetricChange(item.exercise.id, setIndex, value)
                     },
                     onSetDeleteClick = { setIndex ->
                         onSetDeleteClick(item.exercise.id, setIndex)
@@ -319,8 +320,8 @@ private fun WorkoutExerciseCard(
     onEditClick: () -> Unit,
     onStartClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onSetWeightChange: (Int, String) -> Unit,
-    onSetRepsChange: (Int, String) -> Unit,
+    onSetFirstMetricChange: (Int, String) -> Unit,
+    onSetSecondMetricChange: (Int, String) -> Unit,
     onSetDeleteClick: (Int) -> Unit,
 ) {
     val exercise = exerciseItem.exercise
@@ -386,10 +387,11 @@ private fun WorkoutExerciseCard(
                     )
                 } else {
                     WorkoutSetTable(
+                        recordSchema = exercise.recordSchema,
                         sets = sets,
                         isEditing = exerciseItem.isEditing,
-                        onWeightChange = onSetWeightChange,
-                        onRepsChange = onSetRepsChange,
+                        onFirstMetricChange = onSetFirstMetricChange,
+                        onSecondMetricChange = onSetSecondMetricChange,
                         onRemoveSet = onSetDeleteClick,
                     )
                 }
@@ -420,12 +422,32 @@ private fun WorkoutExerciseCard(
 
 @Composable
 private fun WorkoutSetTable(
+    recordSchema: ExerciseRecordSchema,
     sets: List<EditableWorkoutSetUi>,
     isEditing: Boolean,
-    onWeightChange: (Int, String) -> Unit,
-    onRepsChange: (Int, String) -> Unit,
+    onFirstMetricChange: (Int, String) -> Unit,
+    onSecondMetricChange: (Int, String) -> Unit,
     onRemoveSet: (Int) -> Unit,
 ) {
+    val config = when (recordSchema) {
+        ExerciseRecordSchema.WEIGHT_REPS -> WorkoutSetTableConfig(
+            firstHeader = "무게(KG)",
+            secondHeader = "횟수",
+            firstRegex = WEIGHT_INPUT_REGEX,
+            secondRegex = REPS_INPUT_REGEX,
+            firstKeyboardType = KeyboardType.Decimal,
+            secondKeyboardType = KeyboardType.Number,
+        )
+        ExerciseRecordSchema.DISTANCE_DURATION -> WorkoutSetTableConfig(
+            firstHeader = "거리(KM)",
+            secondHeader = "시간(초)",
+            firstRegex = DISTANCE_INPUT_REGEX,
+            secondRegex = DURATION_INPUT_REGEX,
+            firstKeyboardType = KeyboardType.Decimal,
+            secondKeyboardType = KeyboardType.Number,
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -435,8 +457,8 @@ private fun WorkoutSetTable(
                 .padding(vertical = 8.dp),
         ) {
             TableHeaderCell(text = "세트", modifier = Modifier.weight(1f))
-            TableHeaderCell(text = "무게(KG)", modifier = Modifier.weight(1f))
-            TableHeaderCell(text = "횟수", modifier = Modifier.weight(1f))
+            TableHeaderCell(text = config.firstHeader, modifier = Modifier.weight(1f))
+            TableHeaderCell(text = config.secondHeader, modifier = Modifier.weight(1f))
             if (isEditing) {
                 Spacer(modifier = Modifier.width(36.dp))
             }
@@ -453,24 +475,24 @@ private fun WorkoutSetTable(
                 TableValueCell(text = set.index.toString(), modifier = Modifier.weight(1f))
                 if (isEditing) {
                     TableInputCell(
-                        value = set.weightText,
+                        value = set.firstMetricText,
                         onValueChange = { nextValue ->
-                            if (nextValue.matches(WEIGHT_INPUT_REGEX)) {
-                                onWeightChange(set.index, nextValue)
+                            if (nextValue.matches(config.firstRegex)) {
+                                onFirstMetricChange(set.index, nextValue)
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        keyboardType = KeyboardType.Decimal,
+                        keyboardType = config.firstKeyboardType,
                     )
                     TableInputCell(
-                        value = set.repsText,
+                        value = set.secondMetricText,
                         onValueChange = { nextValue ->
-                            if (nextValue.matches(REPS_INPUT_REGEX)) {
-                                onRepsChange(set.index, nextValue)
+                            if (nextValue.matches(config.secondRegex)) {
+                                onSecondMetricChange(set.index, nextValue)
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        keyboardType = KeyboardType.Number,
+                        keyboardType = config.secondKeyboardType,
                     )
                     IconButton(
                         onClick = { onRemoveSet(set.index) },
@@ -483,8 +505,8 @@ private fun WorkoutSetTable(
                         )
                     }
                 } else {
-                    TableValueCell(text = set.weightText, modifier = Modifier.weight(1f))
-                    TableValueCell(text = set.repsText, modifier = Modifier.weight(1f))
+                    TableValueCell(text = set.firstMetricText, modifier = Modifier.weight(1f))
+                    TableValueCell(text = set.secondMetricText, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -563,6 +585,17 @@ private fun TableInputCell(
 
 private val WEIGHT_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
 private val REPS_INPUT_REGEX = Regex("^\\d*$")
+private val DISTANCE_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
+private val DURATION_INPUT_REGEX = Regex("^\\d*$")
+
+private data class WorkoutSetTableConfig(
+    val firstHeader: String,
+    val secondHeader: String,
+    val firstRegex: Regex,
+    val secondRegex: Regex,
+    val firstKeyboardType: KeyboardType,
+    val secondKeyboardType: KeyboardType,
+)
 
 private fun sampleWorkoutRecordItems(): List<WorkoutRecordExerciseUiModel> {
     val chest = ExerciseCategory(
@@ -589,9 +622,9 @@ private fun sampleWorkoutRecordItems(): List<WorkoutRecordExerciseUiModel> {
                 imageName = chest.imageName,
             ),
             sets = listOf(
-                EditableWorkoutSetUi(index = 1, weightText = "80", repsText = "10"),
-                EditableWorkoutSetUi(index = 2, weightText = "85", repsText = "10"),
-                EditableWorkoutSetUi(index = 3, weightText = "90", repsText = "8"),
+                EditableWorkoutSetUi(index = 1, firstMetricText = "80", secondMetricText = "10"),
+                EditableWorkoutSetUi(index = 2, firstMetricText = "85", secondMetricText = "10"),
+                EditableWorkoutSetUi(index = 3, firstMetricText = "90", secondMetricText = "8"),
             ),
         ),
         WorkoutRecordExerciseUiModel(
@@ -624,8 +657,8 @@ private fun WorkoutRecordScreenPreview() {
             onExerciseToggleEditClick = {},
             onExerciseStartClick = {},
             onExerciseDeleteClick = {},
-            onSetWeightChange = { _, _, _ -> },
-            onSetRepsChange = { _, _, _ -> },
+            onSetFirstMetricChange = { _, _, _ -> },
+            onSetSecondMetricChange = { _, _, _ -> },
             onSetDeleteClick = { _, _ -> },
         )
     }

@@ -1,8 +1,7 @@
-﻿package com.jaemin.fitzam.ui.screen.workoutstart
+package com.jaemin.fitzam.ui.screen.workoutstart
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +20,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jaemin.fitzam.R
+import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
@@ -60,10 +61,12 @@ import com.jaemin.fitzam.ui.screen.workoutrecord.formatWeightText
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
 
-private val WEIGHT_QUICK_VALUES = listOf(2.5, 5.0, 10.0, 10.0, 15.0, 20.0)
+private val WEIGHT_QUICK_VALUES = listOf(2.5, 5.0, 10.0, 15.0, 20.0)
 private val REPS_QUICK_VALUES = listOf(5, 10, 50)
-private val WEIGHT_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
-private val REPS_INPUT_REGEX = Regex("^\\d*$")
+private val DISTANCE_QUICK_VALUES = listOf(0.5, 1.0, 2.0, 3.0, 5.0)
+private val DURATION_QUICK_VALUES = listOf(10, 60, 300)
+private val DECIMAL_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
+private val INT_INPUT_REGEX = Regex("^\\d*$")
 private val SuccessGreen = Color(0xFF4CAF50)
 
 @Composable
@@ -79,28 +82,33 @@ fun WorkoutStartScreen(
     val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
+    val exercise = remember(exerciseId) { viewModel.getExercise(exerciseId) }
+    val initialRecordSchema = exercise?.recordSchema ?: ExerciseRecordSchema.WEIGHT_REPS
+    var recordSchema by rememberSaveable(exerciseId) { mutableStateOf(initialRecordSchema) }
+    val config = remember(recordSchema) { metricConfig(recordSchema) }
+
     val initialValue = remember(exerciseId) {
         viewModel.getEditorInitialValue(exerciseId)
     }
 
-    var weightKg by rememberSaveable(exerciseId) { mutableStateOf(initialValue.weightKg) }
-    var reps by rememberSaveable(exerciseId) { mutableStateOf(initialValue.reps) }
-    var weightInputText by rememberSaveable(exerciseId) { mutableStateOf(formatWeightText(initialValue.weightKg)) }
-    var repsInputText by rememberSaveable(exerciseId) { mutableStateOf(initialValue.reps.toString()) }
-    var isWeightEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
-    var isRepsEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
+    var firstValue by rememberSaveable(exerciseId) { mutableStateOf(initialValue.firstValue) }
+    var secondValue by rememberSaveable(exerciseId) { mutableStateOf(initialValue.secondValue) }
+    var firstInputText by rememberSaveable(exerciseId) { mutableStateOf(formatWeightText(initialValue.firstValue)) }
+    var secondInputText by rememberSaveable(exerciseId) { mutableStateOf(initialValue.secondValue.toString()) }
+    var isFirstEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
+    var isSecondEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
 
-    val commitWeightEdit = {
-        val parsed = weightInputText.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
-        weightKg = parsed
-        weightInputText = formatWeightText(parsed)
-        isWeightEditing = false
+    val commitFirstEdit = {
+        val parsed = firstInputText.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+        firstValue = parsed
+        firstInputText = formatWeightText(parsed)
+        isFirstEditing = false
     }
-    val commitRepsEdit = {
-        val parsed = repsInputText.toIntOrNull()?.coerceAtLeast(0) ?: 0
-        reps = parsed
-        repsInputText = parsed.toString()
-        isRepsEditing = false
+    val commitSecondEdit = {
+        val parsed = secondInputText.toIntOrNull()?.coerceAtLeast(0) ?: 0
+        secondValue = parsed
+        secondInputText = parsed.toString()
+        isSecondEditing = false
     }
 
     Scaffold(
@@ -111,6 +119,14 @@ fun WorkoutStartScreen(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
+                ),
+                actions = listOf(
+                    TopAppBarItem(
+                        label = toggleLabel(recordSchema),
+                        onClick = {
+                            recordSchema = toggleRecordSchema(recordSchema)
+                        },
+                    ),
                 ),
             )
         },
@@ -128,12 +144,12 @@ fun WorkoutStartScreen(
                 DZamButton(
                     text = "완료",
                     onClick = {
-                        commitWeightEdit()
-                        commitRepsEdit()
+                        commitFirstEdit()
+                        commitSecondEdit()
                         viewModel.appendSet(
                             exerciseId = exerciseId,
-                            weightKg = weightKg,
-                            reps = reps,
+                            firstValue = firstValue,
+                            secondValue = secondValue,
                         )
                         onCompleteClick()
                     },
@@ -151,64 +167,65 @@ fun WorkoutStartScreen(
                     start = 16.dp,
                     end = 16.dp,
                 ),
-            weightKg = weightKg,
-            reps = reps,
-            weightInputText = weightInputText,
-            repsInputText = repsInputText,
-            isWeightEditing = isWeightEditing,
-            isRepsEditing = isRepsEditing,
-            onWeightInputTextChange = { nextValue ->
-                if (nextValue.matches(WEIGHT_INPUT_REGEX)) {
-                    weightInputText = nextValue
+            config = config,
+            firstValue = firstValue,
+            secondValue = secondValue,
+            firstInputText = firstInputText,
+            secondInputText = secondInputText,
+            isFirstEditing = isFirstEditing,
+            isSecondEditing = isSecondEditing,
+            onFirstInputTextChange = { nextValue ->
+                if (nextValue.matches(DECIMAL_INPUT_REGEX)) {
+                    firstInputText = nextValue
                 }
             },
-            onRepsInputTextChange = { nextValue ->
-                if (nextValue.matches(REPS_INPUT_REGEX)) {
-                    repsInputText = nextValue
+            onSecondInputTextChange = { nextValue ->
+                if (nextValue.matches(INT_INPUT_REGEX)) {
+                    secondInputText = nextValue
                 }
             },
-            onWeightValueClick = {
-                isWeightEditing = true
-                weightInputText = formatWeightText(weightKg)
+            onFirstValueClick = {
+                isFirstEditing = true
+                firstInputText = formatWeightText(firstValue)
             },
-            onRepsValueClick = {
-                isRepsEditing = true
-                repsInputText = reps.toString()
+            onSecondValueClick = {
+                isSecondEditing = true
+                secondInputText = secondValue.toString()
             },
-            onWeightArrowDecrease = {
-                weightKg = (weightKg - 2.5).coerceAtLeast(0.0)
-                weightInputText = formatWeightText(weightKg)
+            onFirstArrowDecrease = {
+                firstValue = (firstValue - config.firstStep).coerceAtLeast(0.0)
+                firstInputText = formatWeightText(firstValue)
             },
-            onWeightArrowIncrease = {
-                weightKg += 2.5
-                weightInputText = formatWeightText(weightKg)
+            onFirstArrowIncrease = {
+                firstValue += config.firstStep
+                firstInputText = formatWeightText(firstValue)
             },
-            onRepsArrowDecrease = {
-                reps = (reps - 1).coerceAtLeast(0)
-                repsInputText = reps.toString()
+            onSecondArrowDecrease = {
+                secondValue = (secondValue - config.secondStep).coerceAtLeast(0)
+                secondInputText = secondValue.toString()
             },
-            onRepsArrowIncrease = {
-                reps += 1
-                repsInputText = reps.toString()
+            onSecondArrowIncrease = {
+                secondValue += config.secondStep
+                secondInputText = secondValue.toString()
             },
-            onWeightQuickIncrease = { delta ->
-                weightKg += delta
-                weightInputText = formatWeightText(weightKg)
+            onFirstQuickIncrease = { delta ->
+                firstValue += delta
+                firstInputText = formatWeightText(firstValue)
             },
-            onWeightQuickDecrease = { delta ->
-                weightKg = (weightKg - delta).coerceAtLeast(0.0)
-                weightInputText = formatWeightText(weightKg)
+            onFirstQuickDecrease = { delta ->
+                firstValue = (firstValue - delta).coerceAtLeast(0.0)
+                firstInputText = formatWeightText(firstValue)
             },
-            onRepsQuickIncrease = { delta ->
-                reps += delta
-                repsInputText = reps.toString()
+            onSecondQuickIncrease = { delta ->
+                secondValue += delta.toInt()
+                secondInputText = secondValue.toString()
             },
-            onRepsQuickDecrease = { delta ->
-                reps = (reps - delta).coerceAtLeast(0)
-                repsInputText = reps.toString()
+            onSecondQuickDecrease = { delta ->
+                secondValue = (secondValue - delta.toInt()).coerceAtLeast(0)
+                secondInputText = secondValue.toString()
             },
-            onWeightEditCommit = commitWeightEdit,
-            onRepsEditCommit = commitRepsEdit,
+            onFirstEditCommit = commitFirstEdit,
+            onSecondEditCommit = commitSecondEdit,
         )
     }
 }
@@ -216,26 +233,27 @@ fun WorkoutStartScreen(
 @Composable
 private fun WorkoutStartContent(
     modifier: Modifier,
-    weightKg: Double,
-    reps: Int,
-    weightInputText: String,
-    repsInputText: String,
-    isWeightEditing: Boolean,
-    isRepsEditing: Boolean,
-    onWeightInputTextChange: (String) -> Unit,
-    onRepsInputTextChange: (String) -> Unit,
-    onWeightValueClick: () -> Unit,
-    onRepsValueClick: () -> Unit,
-    onWeightArrowDecrease: () -> Unit,
-    onWeightArrowIncrease: () -> Unit,
-    onRepsArrowDecrease: () -> Unit,
-    onRepsArrowIncrease: () -> Unit,
-    onWeightQuickIncrease: (Double) -> Unit,
-    onWeightQuickDecrease: (Double) -> Unit,
-    onRepsQuickIncrease: (Int) -> Unit,
-    onRepsQuickDecrease: (Int) -> Unit,
-    onWeightEditCommit: () -> Unit,
-    onRepsEditCommit: () -> Unit,
+    config: MetricConfig,
+    firstValue: Double,
+    secondValue: Int,
+    firstInputText: String,
+    secondInputText: String,
+    isFirstEditing: Boolean,
+    isSecondEditing: Boolean,
+    onFirstInputTextChange: (String) -> Unit,
+    onSecondInputTextChange: (String) -> Unit,
+    onFirstValueClick: () -> Unit,
+    onSecondValueClick: () -> Unit,
+    onFirstArrowDecrease: () -> Unit,
+    onFirstArrowIncrease: () -> Unit,
+    onSecondArrowDecrease: () -> Unit,
+    onSecondArrowIncrease: () -> Unit,
+    onFirstQuickIncrease: (Double) -> Unit,
+    onFirstQuickDecrease: (Double) -> Unit,
+    onSecondQuickIncrease: (Double) -> Unit,
+    onSecondQuickDecrease: (Double) -> Unit,
+    onFirstEditCommit: () -> Unit,
+    onSecondEditCommit: () -> Unit,
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
@@ -244,43 +262,43 @@ private fun WorkoutStartContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         ValueSection(
-            title = "무게",
-            value = "${formatWeightText(weightKg)}KG",
-            valueInputText = weightInputText,
-            isEditing = isWeightEditing,
-            onInputChange = onWeightInputTextChange,
-            onValueClick = onWeightValueClick,
-            onEditCommit = onWeightEditCommit,
-            onArrowDecrease = onWeightArrowDecrease,
-            onArrowIncrease = onWeightArrowIncrease,
+            title = config.firstLabel,
+            value = config.firstValueFormatter(firstValue),
+            valueInputText = firstInputText,
+            isEditing = isFirstEditing,
+            onInputChange = onFirstInputTextChange,
+            onValueClick = onFirstValueClick,
+            onEditCommit = onFirstEditCommit,
+            onArrowDecrease = onFirstArrowDecrease,
+            onArrowIncrease = onFirstArrowIncrease,
             keyboardType = KeyboardType.Decimal,
         )
         QuickAdjustGrid(
-            values = WEIGHT_QUICK_VALUES,
-            formatter = { value -> formatWeightQuickLabel(value) },
-            onIncrease = onWeightQuickIncrease,
-            onDecrease = onWeightQuickDecrease,
+            values = config.firstQuickValues,
+            formatter = config.firstQuickFormatter,
+            onIncrease = onFirstQuickIncrease,
+            onDecrease = onFirstQuickDecrease,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         ValueSection(
-            title = "횟수",
-            value = "${reps}회",
-            valueInputText = repsInputText,
-            isEditing = isRepsEditing,
-            onInputChange = onRepsInputTextChange,
-            onValueClick = onRepsValueClick,
-            onEditCommit = onRepsEditCommit,
-            onArrowDecrease = onRepsArrowDecrease,
-            onArrowIncrease = onRepsArrowIncrease,
+            title = config.secondLabel,
+            value = config.secondValueFormatter(secondValue),
+            valueInputText = secondInputText,
+            isEditing = isSecondEditing,
+            onInputChange = onSecondInputTextChange,
+            onValueClick = onSecondValueClick,
+            onEditCommit = onSecondEditCommit,
+            onArrowDecrease = onSecondArrowDecrease,
+            onArrowIncrease = onSecondArrowIncrease,
             keyboardType = KeyboardType.Number,
         )
         QuickAdjustGrid(
-            values = REPS_QUICK_VALUES,
-            formatter = { value -> "${value.toInt()}회" },
-            onIncrease = { onRepsQuickIncrease(it.toInt()) },
-            onDecrease = { onRepsQuickDecrease(it.toInt()) },
+            values = config.secondQuickValues,
+            formatter = config.secondQuickFormatter,
+            onIncrease = onSecondQuickIncrease,
+            onDecrease = onSecondQuickDecrease,
             contentPadding = PaddingValues(bottom = 8.dp),
         )
     }
@@ -447,8 +465,73 @@ private fun QuickAdjustButton(
     }
 }
 
-private fun formatWeightQuickLabel(value: Double): String {
-    return "${formatWeightText(value)}KG"
+private data class MetricConfig(
+    val firstLabel: String,
+    val secondLabel: String,
+    val firstStep: Double,
+    val secondStep: Int,
+    val firstQuickValues: List<Number>,
+    val secondQuickValues: List<Number>,
+    val firstValueFormatter: (Double) -> String,
+    val secondValueFormatter: (Int) -> String,
+    val firstQuickFormatter: (Double) -> String,
+    val secondQuickFormatter: (Double) -> String,
+)
+
+private fun metricConfig(recordSchema: ExerciseRecordSchema): MetricConfig {
+    return when (recordSchema) {
+        ExerciseRecordSchema.WEIGHT_REPS -> MetricConfig(
+            firstLabel = "무게",
+            secondLabel = "횟수",
+            firstStep = 2.5,
+            secondStep = 1,
+            firstQuickValues = WEIGHT_QUICK_VALUES,
+            secondQuickValues = REPS_QUICK_VALUES,
+            firstValueFormatter = { value -> "${formatWeightText(value)}KG" },
+            secondValueFormatter = { value -> "${value}회" },
+            firstQuickFormatter = { value -> "${formatWeightText(value)}KG" },
+            secondQuickFormatter = { value -> "${value.toInt()}회" },
+        )
+        ExerciseRecordSchema.DISTANCE_DURATION -> MetricConfig(
+            firstLabel = "거리",
+            secondLabel = "시간",
+            firstStep = 0.1,
+            secondStep = 1,
+            firstQuickValues = DISTANCE_QUICK_VALUES,
+            secondQuickValues = DURATION_QUICK_VALUES,
+            firstValueFormatter = { value -> "${formatWeightText(value)}KM" },
+            secondValueFormatter = { value -> formatDurationText(value) },
+            firstQuickFormatter = { value -> "${formatWeightText(value)}KM" },
+            secondQuickFormatter = { value -> formatDurationText(value.toInt()) },
+        )
+    }
+}
+
+private fun formatDurationText(totalSeconds: Int): String {
+    if (totalSeconds <= 0) return "0초"
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    val parts = buildList {
+        if (hours > 0) add("${hours}시간")
+        if (minutes > 0) add("${minutes}분")
+        if (seconds > 0) add("${seconds}초")
+    }
+    return parts.joinToString(" ")
+}
+
+private fun toggleRecordSchema(current: ExerciseRecordSchema): ExerciseRecordSchema {
+    return when (current) {
+        ExerciseRecordSchema.WEIGHT_REPS -> ExerciseRecordSchema.DISTANCE_DURATION
+        ExerciseRecordSchema.DISTANCE_DURATION -> ExerciseRecordSchema.WEIGHT_REPS
+    }
+}
+
+private fun toggleLabel(current: ExerciseRecordSchema): String {
+    return when (current) {
+        ExerciseRecordSchema.WEIGHT_REPS -> "거리/시간"
+        ExerciseRecordSchema.DISTANCE_DURATION -> "무게/횟수"
+    }
 }
 
 @Preview(showBackground = true)
@@ -457,26 +540,27 @@ private fun WorkoutStartPreview() {
     FitzamTheme {
         WorkoutStartContent(
             modifier = Modifier.fillMaxSize(),
-            weightKg = 80.0,
-            reps = 10,
-            weightInputText = "80",
-            repsInputText = "10",
-            isWeightEditing = false,
-            isRepsEditing = false,
-            onWeightInputTextChange = {},
-            onRepsInputTextChange = {},
-            onWeightValueClick = {},
-            onRepsValueClick = {},
-            onWeightArrowDecrease = {},
-            onWeightArrowIncrease = {},
-            onRepsArrowDecrease = {},
-            onRepsArrowIncrease = {},
-            onWeightQuickIncrease = {},
-            onWeightQuickDecrease = {},
-            onRepsQuickIncrease = {},
-            onRepsQuickDecrease = {},
-            onWeightEditCommit = {},
-            onRepsEditCommit = {},
+            config = metricConfig(ExerciseRecordSchema.WEIGHT_REPS),
+            firstValue = 80.0,
+            secondValue = 10,
+            firstInputText = "80",
+            secondInputText = "10",
+            isFirstEditing = false,
+            isSecondEditing = false,
+            onFirstInputTextChange = {},
+            onSecondInputTextChange = {},
+            onFirstValueClick = {},
+            onSecondValueClick = {},
+            onFirstArrowDecrease = {},
+            onFirstArrowIncrease = {},
+            onSecondArrowDecrease = {},
+            onSecondArrowIncrease = {},
+            onFirstQuickIncrease = {},
+            onFirstQuickDecrease = {},
+            onSecondQuickIncrease = {},
+            onSecondQuickDecrease = {},
+            onFirstEditCommit = {},
+            onSecondEditCommit = {},
         )
     }
 }

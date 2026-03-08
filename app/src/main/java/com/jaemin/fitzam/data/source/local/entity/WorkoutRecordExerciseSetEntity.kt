@@ -20,6 +20,4 @@ import androidx.room.Index
 data class WorkoutRecordExerciseSetEntity(
     val workoutRecordExerciseId: Long,
     val setIndex: Int,
-    val weightKg: Double,
-    val reps: Int,
 )

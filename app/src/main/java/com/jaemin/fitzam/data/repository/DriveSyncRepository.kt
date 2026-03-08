@@ -164,11 +164,12 @@ class DriveSyncRepository @Inject constructor(
             db.beginTransaction()
             try {
                 mergeTable(db, "exercise_category")
-                mergeTable(db, "exercise")
+                mergeExerciseTable(db)
                 mergeWorkoutRecordTable(db)
                 mergeWorkoutRecordExerciseCategoryTable(db)
                 mergeWorkoutRecordExerciseTable(db)
                 mergeWorkoutRecordExerciseSetTable(db)
+                mergeWorkoutRecordExerciseSetMetricTable(db)
                 mergeTable(db, "favorite_exercise")
 
                 db.setTransactionSuccessful()
@@ -224,6 +225,7 @@ class DriveSyncRepository @Inject constructor(
                 "workout_record_exercise_category",
                 "workout_record_exercise",
                 "workout_record_exercise_set",
+                "workout_record_exercise_set_metric",
                 "favorite_exercise",
             )
             val missing = requiredTables.filterNot { tables.contains(it) }
@@ -318,9 +320,60 @@ class DriveSyncRepository @Inject constructor(
             db = db,
             targetTable = "workout_record_exercise_set",
             sourceTable = "workout_set",
-            targetColumns = listOf("workoutRecordExerciseId", "setIndex", "weightKg", "reps"),
-            sourceColumns = listOf("workoutExerciseId", "setIndex", "weightKg", "reps"),
+            targetColumns = listOf("workoutRecordExerciseId", "setIndex"),
+            sourceColumns = listOf("workoutExerciseId", "setIndex"),
         )
+    }
+
+    private fun mergeExerciseTable(db: SQLiteDatabase) {
+        if (!hasTable(db, "backup", "exercise")) {
+            Log.w(TAG, "Drive restore: missing table in backup: exercise")
+            return
+        }
+
+        val columns = getTableColumns(db, "backup", "exercise")
+        if (columns.contains("recordSchema")) {
+            mergeTable(db, "exercise")
+            return
+        }
+
+        val before = queryCount(db, "exercise")
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO exercise (id, name, categoryId, imageName, recordSchema)
+            SELECT id, name, categoryId, imageName,
+                CASE WHEN name IN ('러닝', '사이클') THEN 'DISTANCE_DURATION' ELSE 'WEIGHT_REPS' END
+            FROM backup.exercise
+            """
+                .trimIndent(),
+        )
+        val after = queryCount(db, "exercise")
+        Log.i(TAG, "Drive restore: exercise merged with schema mapping, inserted=${after - before}")
+    }
+
+    private fun mergeWorkoutRecordExerciseSetMetricTable(db: SQLiteDatabase) {
+        if (hasTable(db, "backup", "workout_record_exercise_set_metric")) {
+            mergeTable(db, "workout_record_exercise_set_metric")
+            return
+        }
+
+        if (!hasTable(db, "backup", "workout_set")) {
+            Log.w(TAG, "Drive restore: missing table in backup: workout_set")
+            return
+        }
+
+        val before = queryCount(db, "workout_record_exercise_set_metric")
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO workout_record_exercise_set_metric (workoutRecordExerciseId, setIndex, metricType, value)
+            SELECT workoutExerciseId, setIndex, 'WEIGHT_KG', weightKg FROM backup.workout_set
+            UNION ALL
+            SELECT workoutExerciseId, setIndex, 'REPS', reps FROM backup.workout_set
+            """
+                .trimIndent(),
+        )
+        val after = queryCount(db, "workout_record_exercise_set_metric")
+        Log.i(TAG, "Drive restore: workout_record_exercise_set_metric merged, inserted=${after - before}")
     }
 
     private fun mergeMappedTable(
@@ -360,6 +413,21 @@ class DriveSyncRepository @Inject constructor(
             arrayOf(tableName),
         )
         return cursor.use { it.moveToFirst() }
+    }
+
+    private fun getTableColumns(
+        db: SQLiteDatabase,
+        schemaName: String,
+        tableName: String,
+    ): Set<String> {
+        val cursor = db.rawQuery("PRAGMA $schemaName.table_info($tableName)", null)
+        return cursor.use { cur ->
+            val names = mutableSetOf<String>()
+            while (cur.moveToNext()) {
+                names.add(cur.getString(1))
+            }
+            names
+        }
     }
 
     private fun queryCount(

@@ -7,6 +7,7 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetMetricDao
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseCategoryEntity
 import com.jaemin.fitzam.model.Workout
@@ -28,6 +29,7 @@ class WorkoutRepository @Inject constructor(
     private val exerciseCategoryDao: ExerciseCategoryDao,
     private val exerciseDao: ExerciseDao,
     private val setDao: WorkoutRecordExerciseSetDao,
+    private val setMetricDao: WorkoutRecordExerciseSetMetricDao,
 ) {
 
     fun getWorkoutsForYearMonth(yearMonth: YearMonth): Flow<List<Workout>> {
@@ -56,7 +58,10 @@ class WorkoutRepository @Inject constructor(
                     flowOf(emptyList())
                 } else {
                     val flows = entities.map { workoutRecordExercise ->
-                        setDao.getSetEntities(workoutRecordExercise.id).map { setEntities ->
+                        combine(
+                            setDao.getSetEntities(workoutRecordExercise.id),
+                            setMetricDao.getMetricEntities(workoutRecordExercise.id),
+                        ) { setEntities, metricEntities ->
                             val exerciseEntity = exerciseDao.getExerciseEntity(
                                 workoutRecordExercise.exerciseId,
                             )
@@ -66,9 +71,14 @@ class WorkoutRepository @Inject constructor(
                             val exercise = exerciseEntity.toModel(
                                 category = categoryEntity.toModel(),
                             )
+                            val metricsBySetIndex = metricEntities.groupBy { entity -> entity.setIndex }
                             workoutRecordExercise.toModel(
                                 exercise = exercise,
-                                sets = setEntities.map { entity -> entity.toModel() },
+                                sets = setEntities.map { entity ->
+                                    entity.toModel(
+                                        metrics = metricsBySetIndex[entity.setIndex].orEmpty(),
+                                    )
+                                },
                             )
                         }
                     }
