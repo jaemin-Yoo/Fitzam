@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -195,8 +196,14 @@ fun ExerciseSelectScreen(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    errorContainerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             ExerciseSelectList(
                 favoriteExercises = favoriteExercises,
@@ -206,9 +213,8 @@ fun ExerciseSelectScreen(
                 onToggleSelected = onToggleSelected,
                 onToggleFavorite = onToggleFavorite,
                 contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 16.dp,
+                    horizontal = 16.dp,
+                    vertical = 16.dp,
                 ),
                 modifier = Modifier.weight(1f),
             )
@@ -281,18 +287,48 @@ private fun ExerciseSelectList(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface),
     ) {
-        if (favoriteExercises.isNotEmpty()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (favoriteExercises.isNotEmpty()) {
+                item {
+                    SectionTitle(text = "즐겨찾는 운동")
+                }
+                items(
+                    items = favoriteExercises,
+                    key = { "favorite-${it.id}" },
+                ) { exercise ->
+                    ExerciseSelectItem(
+                        exercise = exercise,
+                        isSelected = selectedExerciseIds.contains(exercise.id),
+                        isFavorite = favoriteExerciseIds.contains(exercise.id),
+                        onToggleSelected = { onToggleSelected(exercise.id) },
+                        onToggleFavorite = { onToggleFavorite(exercise.id) },
+                    )
+                }
+            }
+
             item {
-                SectionTitle(text = "즐겨찾는 운동")
+                SectionTitle(
+                    text = "전체 보기",
+                    modifier = if (favoriteExercises.isNotEmpty()) {
+                        Modifier.padding(top = 16.dp)
+                    } else {
+                        Modifier
+                    },
+                )
             }
             items(
-                items = favoriteExercises,
-                key = { "favorite-${it.id}" },
+                items = exercises,
+                key = { "all-${it.id}" },
             ) { exercise ->
                 ExerciseSelectItem(
                     exercise = exercise,
@@ -302,32 +338,9 @@ private fun ExerciseSelectList(
                     onToggleFavorite = { onToggleFavorite(exercise.id) },
                 )
             }
-        }
-
-        item {
-            SectionTitle(
-                text = "전체 보기",
-                modifier = if (favoriteExercises.isNotEmpty()) {
-                    Modifier.padding(top = 16.dp)
-                } else {
-                    Modifier
-                },
-            )
-        }
-        items(
-            items = exercises,
-            key = { "all-${it.id}" },
-        ) { exercise ->
-            ExerciseSelectItem(
-                exercise = exercise,
-                isSelected = selectedExerciseIds.contains(exercise.id),
-                isFavorite = favoriteExerciseIds.contains(exercise.id),
-                onToggleSelected = { onToggleSelected(exercise.id) },
-                onToggleFavorite = { onToggleFavorite(exercise.id) },
-            )
-        }
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
@@ -356,6 +369,7 @@ private fun ExerciseSelectItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onToggleSelected),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +51,7 @@ fun DZamInputField(
     isError: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 ) {
     Column(modifier = modifier) {
         if (label.isNotBlank()) {
@@ -79,6 +83,8 @@ fun DZamInputField(
             isError = isError,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
+            colors = colors,
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
         )
     }
