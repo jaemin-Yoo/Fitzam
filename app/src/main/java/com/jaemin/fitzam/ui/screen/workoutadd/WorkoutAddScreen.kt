@@ -168,7 +168,7 @@ private fun WorkoutAddContent(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "운동 추가",
+                title = "운동 기록",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
@@ -209,7 +209,7 @@ private fun WorkoutAddContent(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "운동 부위",
+                    text = "운동 유형",
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -266,7 +266,7 @@ private fun WorkoutAddLoadingScreen(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "운동 추가",
+                title = "운동 기록",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
@@ -293,7 +293,7 @@ private fun WorkoutAddFailedScreen(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "운동 추가",
+                title = "운동 기록",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",

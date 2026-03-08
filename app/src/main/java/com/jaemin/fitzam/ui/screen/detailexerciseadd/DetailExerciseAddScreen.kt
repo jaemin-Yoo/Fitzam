@@ -135,7 +135,7 @@ fun DetailExerciseAddScreen(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "세부 운동 추가",
+                title = "운동 선택",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
@@ -218,7 +218,7 @@ private fun DetailExerciseAddLoadingScreen(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "세부 운동 추가",
+                title = "운동 선택",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",
@@ -245,7 +245,7 @@ private fun DetailExerciseAddFailedScreen(
     Scaffold(
         topBar = {
             FitzamTopAppBar(
-                title = "세부 운동 추가",
+                title = "운동 선택",
                 navigation = TopAppBarItem(
                     icon = ImageVector.vectorResource(id = R.drawable.ic_back),
                     contentDescription = "뒤로 가기",

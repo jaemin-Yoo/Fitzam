@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui.screen.exercisecategoryselect
+package com.jaemin.fitzam.ui.screen.exercisecategoryselect
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -115,7 +115,7 @@ fun ExerciseCategorySelectScreen(
                         ),
                 ) {
                     DZamOutlinedButton(
-                        text = "세부 운동 추가",
+                        text = "운동 선택하기",
                         onClick = onDetailAddClick,
                         enabled = selectedCategoryIds.isNotEmpty(),
                         trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
