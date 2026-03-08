@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui.screen.settings
+package com.jaemin.fitzam.ui.screen.settings
 
 import android.accounts.AccountManager
 import android.app.Activity
@@ -51,6 +51,7 @@ import com.jaemin.fitzam.data.sync.NetworkStatus
 import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import java.time.Instant
 import java.time.ZoneId
@@ -118,7 +119,7 @@ fun SettingsScreen(
             FitzamTopAppBar(
                 title = "설정",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),

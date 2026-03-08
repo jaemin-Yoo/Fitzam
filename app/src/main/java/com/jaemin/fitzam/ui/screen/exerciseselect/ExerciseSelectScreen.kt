@@ -56,6 +56,7 @@ import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamInputField
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.util.drawableResIdByName
@@ -142,7 +143,7 @@ fun ExerciseSelectScreen(
             FitzamTopAppBar(
                 title = "운동 선택",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 )
@@ -225,7 +226,7 @@ private fun ExerciseSelectLoadingScreen(
             FitzamTopAppBar(
                 title = "운동 선택",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 )
@@ -252,7 +253,7 @@ private fun ExerciseSelectFailedScreen(
             FitzamTopAppBar(
                 title = "운동 선택",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 )

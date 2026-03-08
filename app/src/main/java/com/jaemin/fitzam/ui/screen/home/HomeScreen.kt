@@ -29,11 +29,12 @@ import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.ui.dzam.CalendarDayItem
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
-import com.jaemin.fitzam.ui.dzam.FitzamBrandTopAppBar
 import com.jaemin.fitzam.ui.dzam.FitzamCalendar
 import com.jaemin.fitzam.ui.dzam.FitzamCalendarDayList
 import com.jaemin.fitzam.ui.dzam.FitzamCalendarState
 import com.jaemin.fitzam.ui.dzam.FitzamFloatingActionButton
+import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.dzam.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
@@ -73,11 +74,17 @@ fun HomeScreen(
 ) {
     Scaffold(
         topBar = {
-            FitzamBrandTopAppBar(
-                logoRes = R.drawable.fitzam_logo,
+            FitzamTopAppBar(
+                title = null,
+                navigation = TopAppBarItem(
+                    icon = IconSource.Drawable(R.drawable.fitzam_logo),
+                    contentDescription = "로고 이미지",
+                    iconTint = Color.Unspecified,
+                    onClick = {},
+                ),
                 actions = listOf(
                     TopAppBarItem(
-                        icon = ImageVector.vectorResource(R.drawable.ic_settings),
+                        icon = IconSource.Vector(ImageVector.vectorResource(R.drawable.ic_settings)),
                         contentDescription = "설정",
                         onClick = onSettingsClick,
                     ),

@@ -55,6 +55,7 @@ import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordViewModel
 import com.jaemin.fitzam.ui.screen.workoutrecord.formatWeightText
@@ -116,7 +117,7 @@ fun WorkoutStartScreen(
             FitzamTopAppBar(
                 title = exerciseName,
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),

@@ -1,10 +1,8 @@
 package com.jaemin.fitzam.ui.dzam
 
-
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -16,156 +14,161 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 
 /**
- * Fitzam 상단바. 제목이 가운데에 배치되어 있는 형태.
- * Material 3 [CenterAlignedTopAppBar] 래핑
+ * Fitzam 상단바.
+ * 제목이 있으면 중앙 정렬 타이틀 형태, 없으면 네비게이션/액션 전용 형태로 동작한다.
  *
- * @param title 상단바 제목
+ * @param title 상단바 제목. null 이거나 빈 문자열이면 타이틀 없이 렌더링
  * @param modifier 상단바 modifier
- * @param navigation 상단바 시작 부분 아이콘, 설명, 클릭 시 호출되는 콜백 아이템
- * @param actions 상단바 끝 부분 아이콘, 설명, 클릭 시 호출되는 콜백 아이템 리스트
+ * @param navigation 상단바 시작 부분 아이템
+ * @param actions 상단바 끝 부분 아이템 리스트
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FitzamTopAppBar(
-    title: String,
+    title: String? = null,
     modifier: Modifier = Modifier,
     navigation: TopAppBarItem? = null,
     actions: List<TopAppBarItem> = emptyList(),
     actionContent: (@Composable () -> Unit)? = null,
 ) {
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-            )
-        },
-        navigationIcon = {
-            if (navigation != null) {
-                TopAppBarActionItem(
-                    item = navigation,
-                    iconTint = MaterialTheme.colorScheme.onBackground,
+    val hasTitle = !title.isNullOrBlank()
+
+    if (hasTitle) {
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
                 )
-            }
-        },
-        actions = {
-            actionContent?.invoke()
-            actions.forEach { action ->
-                TopAppBarActionItem(
-                    item = action,
-                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-        modifier = modifier,
-    )
+            },
+            navigationIcon = {
+                if (navigation != null) {
+                    TopAppBarActionItem(
+                        item = navigation,
+                        defaultTint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            },
+            actions = {
+                actionContent?.invoke()
+                actions.forEach { action ->
+                    TopAppBarActionItem(
+                        item = action,
+                        defaultTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            modifier = modifier,
+        )
+    } else {
+        TopAppBar(
+            title = {},
+            navigationIcon = {
+                if (navigation != null) {
+                    TopAppBarActionItem(
+                        item = navigation,
+                        defaultTint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            },
+            actions = {
+                actionContent?.invoke()
+                actions.forEach { action ->
+                    TopAppBarActionItem(
+                        item = action,
+                        defaultTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            modifier = modifier.padding(horizontal = 16.dp),
+        )
+    }
 }
 
-/**
- * Fitzam 상단바. 왼쪽에 로고 이미지가 보이는 형태.
- * Material 3 [TopAppBar] 래핑
- *
- * @param logoRes 로고 이미지 리소스 (ex: R.drawable.logo)
- * @param modifier 상단바 modifier
- * @param actions 상단바 끝 부분 아이콘, 설명, 클릭 시 호출되는 콜백 아이템 리스트
- * @param onLogoClick 로고 이미지 클릭 시 호출되는 콜백
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FitzamBrandTopAppBar(
-    @DrawableRes logoRes: Int,
-    modifier: Modifier = Modifier,
-    actions: List<TopAppBarItem> = emptyList(),
-    onLogoClick: () -> Unit = {},
-) {
-    TopAppBar(
-        title = {},
-        navigationIcon = {
-            IconButton(onClick = onLogoClick) {
-                Image(
-                    painter = painterResource(logoRes),
-                    contentDescription = "로고 이미지",
-                )
-            }
-        },
-        actions = {
-            actions.forEach { action ->
-                TopAppBarActionItem(
-                    item = action,
-                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-        modifier = modifier.padding(horizontal = 16.dp),
-    )
+sealed interface IconSource {
+    data class Vector(val imageVector: ImageVector) : IconSource
+    data class Drawable(@DrawableRes val resId: Int) : IconSource
 }
 
 data class TopAppBarItem(
-    val icon: ImageVector? = null,
+    val icon: IconSource? = null,
     val contentDescription: String? = null,
     val label: String? = null,
+    val iconTint: Color? = null,
     val onClick: () -> Unit,
 )
 
 @Composable
 private fun TopAppBarActionItem(
     item: TopAppBarItem,
-    iconTint: Color,
+    defaultTint: Color,
 ) {
-    when {
-        item.icon != null -> {
+    val resolvedTint = item.iconTint ?: defaultTint
+
+    when (val icon = item.icon) {
+        is IconSource.Vector -> {
             IconButton(onClick = item.onClick) {
                 Icon(
-                    imageVector = item.icon,
+                    imageVector = icon.imageVector,
                     contentDescription = item.contentDescription,
-                    tint = iconTint,
+                    tint = resolvedTint,
                 )
             }
         }
 
-        !item.label.isNullOrBlank() -> {
-            TextButton(onClick = item.onClick) {
-                Text(
-                    text = item.label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = iconTint,
+        is IconSource.Drawable -> {
+            IconButton(onClick = item.onClick) {
+                Icon(
+                    painter = painterResource(id = icon.resId),
+                    contentDescription = item.contentDescription,
+                    tint = resolvedTint,
                 )
             }
         }
 
-        else -> return
+        null -> {
+            if (!item.label.isNullOrBlank()) {
+                TextButton(onClick = item.onClick) {
+                    Text(
+                        text = item.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = resolvedTint,
+                    )
+                }
+            }
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun FitzamTopAppBarPreview() {
+private fun FitzamTopAppBarTitlePreview() {
     FitzamTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             FitzamTopAppBar(
                 title = "홈",
                 modifier = Modifier.fillMaxWidth(),
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로가기",
                     onClick = {},
                 ),
                 actions = listOf(
                     TopAppBarItem(
-                        icon = ImageVector.vectorResource(id = R.drawable.ic_settings),
+                        icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_settings)),
                         contentDescription = "설정",
                         onClick = {},
                     ),
@@ -177,15 +180,21 @@ private fun FitzamTopAppBarPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun FitzamBrandTopAppBarPreview() {
+private fun FitzamTopAppBarBrandPreview() {
     FitzamTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            FitzamBrandTopAppBar(
-                logoRes = R.drawable.fitzam_logo,
+            FitzamTopAppBar(
+                title = null,
                 modifier = Modifier.fillMaxWidth(),
+                navigation = TopAppBarItem(
+                    icon = IconSource.Drawable(R.drawable.fitzam_logo),
+                    contentDescription = "로고 이미지",
+                    iconTint = Color.Unspecified,
+                    onClick = {},
+                ),
                 actions = listOf(
                     TopAppBarItem(
-                        icon = ImageVector.vectorResource(id = R.drawable.ic_settings),
+                        icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_settings)),
                         contentDescription = "추가",
                         onClick = {},
                     ),

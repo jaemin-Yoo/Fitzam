@@ -60,6 +60,7 @@ import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
 import com.jaemin.fitzam.ui.theme.ErrorRed
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
@@ -180,7 +181,7 @@ private fun WorkoutRecordContent(
             FitzamTopAppBar(
                 title = "운동 기록",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),
@@ -278,7 +279,7 @@ private fun WorkoutRecordLoadingScreen(
             FitzamTopAppBar(
                 title = "운동 기록",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),
@@ -305,7 +306,7 @@ private fun WorkoutRecordFailedScreen(
             FitzamTopAppBar(
                 title = "운동 기록",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),

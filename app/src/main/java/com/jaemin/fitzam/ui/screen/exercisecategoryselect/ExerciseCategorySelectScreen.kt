@@ -46,6 +46,7 @@ import com.jaemin.fitzam.ui.util.drawableResIdByName
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
@@ -96,7 +97,7 @@ fun ExerciseCategorySelectScreen(
             FitzamTopAppBar(
                 title = "운동 유형 선택",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 )
