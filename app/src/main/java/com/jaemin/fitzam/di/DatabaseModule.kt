@@ -8,7 +8,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jaemin.fitzam.data.source.local.DatabaseConfig
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
-import com.jaemin.fitzam.data.source.local.dao.ImageUrlCacheDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
@@ -95,10 +94,6 @@ object DatabaseModule {
     @Provides
     fun provideFavoriteExerciseDao(db: FitzamDatabase): FavoriteExerciseDao =
         db.favoriteExerciseDao()
-
-    @Provides
-    fun provideImageUrlCacheDao(db: FitzamDatabase): ImageUrlCacheDao =
-        db.imageUrlCacheDao()
 
     private const val DATABASE_SEED_LOG_TAG = "DatabaseSeed"
 }

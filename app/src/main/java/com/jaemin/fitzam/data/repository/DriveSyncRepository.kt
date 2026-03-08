@@ -170,7 +170,6 @@ class DriveSyncRepository @Inject constructor(
                 mergeTable(db, "workout_exercise")
                 mergeTable(db, "workout_set")
                 mergeTable(db, "favorite_exercise")
-                mergeTable(db, "image_url_cache")
 
                 db.setTransactionSuccessful()
                 Log.i(TAG, "Drive restore: merge committed")
@@ -226,7 +225,6 @@ class DriveSyncRepository @Inject constructor(
                 "workout_exercise",
                 "workout_set",
                 "favorite_exercise",
-                "image_url_cache",
             )
             val missing = requiredTables.filterNot { tables.contains(it) }
             if (missing.isNotEmpty()) {
