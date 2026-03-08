@@ -5,20 +5,20 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 
 @Entity(
-    tableName = "workout_set",
-    primaryKeys = ["workoutExerciseId", "setIndex"],
+    tableName = "workout_record_exercise_set",
+    primaryKeys = ["workoutRecordExerciseId", "setIndex"],
     foreignKeys = [
         ForeignKey(
-            entity = WorkoutExerciseEntity::class,
+            entity = WorkoutRecordExerciseEntity::class,
             parentColumns = ["id"],
-            childColumns = ["workoutExerciseId"],
+            childColumns = ["workoutRecordExerciseId"],
             onDelete = ForeignKey.CASCADE,
         )
     ],
-    indices = [Index("workoutExerciseId")]
+    indices = [Index("workoutRecordExerciseId")]
 )
-data class WorkoutSetEntity(
-    val workoutExerciseId: Long,
+data class WorkoutRecordExerciseSetEntity(
+    val workoutRecordExerciseId: Long,
     val setIndex: Int,
     val weightKg: Double,
     val reps: Int,

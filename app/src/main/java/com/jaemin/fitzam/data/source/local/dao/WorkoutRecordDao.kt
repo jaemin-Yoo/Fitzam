@@ -4,28 +4,28 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface WorkoutDao {
+interface WorkoutRecordDao {
 
     @Query(
         """
         SELECT *
-        FROM workout
+        FROM workout_record
         WHERE date BETWEEN :startDate AND :endDate
         ORDER BY date
     """
     )
-    fun getWorkoutEntities(
+    fun getWorkoutRecordEntities(
         startDate: String,
         endDate: String,
-    ): Flow<List<WorkoutEntity>>
+    ): Flow<List<WorkoutRecordEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(workout: WorkoutEntity)
+    suspend fun insert(workoutRecord: WorkoutRecordEntity)
 
-    @Query("DELETE FROM workout WHERE date = :date")
+    @Query("DELETE FROM workout_record WHERE date = :date")
     suspend fun deleteByDate(date: String)
 }

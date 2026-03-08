@@ -165,10 +165,10 @@ class DriveSyncRepository @Inject constructor(
             try {
                 mergeTable(db, "exercise_category")
                 mergeTable(db, "exercise")
-                mergeTable(db, "workout")
-                mergeTable(db, "workout_category")
-                mergeTable(db, "workout_exercise")
-                mergeTable(db, "workout_set")
+                mergeWorkoutRecordTable(db)
+                mergeWorkoutRecordExerciseCategoryTable(db)
+                mergeWorkoutRecordExerciseTable(db)
+                mergeWorkoutRecordExerciseSetTable(db)
                 mergeTable(db, "favorite_exercise")
 
                 db.setTransactionSuccessful()
@@ -220,10 +220,10 @@ class DriveSyncRepository @Inject constructor(
             val requiredTables = listOf(
                 "exercise_category",
                 "exercise",
-                "workout",
-                "workout_category",
-                "workout_exercise",
-                "workout_set",
+                "workout_record",
+                "workout_record_exercise_category",
+                "workout_record_exercise",
+                "workout_record_exercise_set",
                 "favorite_exercise",
             )
             val missing = requiredTables.filterNot { tables.contains(it) }
@@ -261,6 +261,93 @@ class DriveSyncRepository @Inject constructor(
         db.execSQL("INSERT OR IGNORE INTO $tableName SELECT * FROM backup.$tableName")
         val after = queryCount(db, tableName)
         Log.i(TAG, "Drive restore: $tableName merged, inserted=${after - before}")
+    }
+
+    private fun mergeWorkoutRecordTable(db: SQLiteDatabase) {
+        if (hasTable(db, "backup", "workout_record")) {
+            mergeTable(db, "workout_record")
+            return
+        }
+
+        mergeMappedTable(
+            db = db,
+            targetTable = "workout_record",
+            sourceTable = "workout",
+            targetColumns = listOf("date"),
+            sourceColumns = listOf("date"),
+        )
+    }
+
+    private fun mergeWorkoutRecordExerciseCategoryTable(db: SQLiteDatabase) {
+        if (hasTable(db, "backup", "workout_record_exercise_category")) {
+            mergeTable(db, "workout_record_exercise_category")
+            return
+        }
+
+        mergeMappedTable(
+            db = db,
+            targetTable = "workout_record_exercise_category",
+            sourceTable = "workout_category",
+            targetColumns = listOf("workoutRecordDate", "exerciseCategoryId"),
+            sourceColumns = listOf("workoutDate", "exerciseCategoryId"),
+        )
+    }
+
+    private fun mergeWorkoutRecordExerciseTable(db: SQLiteDatabase) {
+        if (hasTable(db, "backup", "workout_record_exercise")) {
+            mergeTable(db, "workout_record_exercise")
+            return
+        }
+
+        mergeMappedTable(
+            db = db,
+            targetTable = "workout_record_exercise",
+            sourceTable = "workout_exercise",
+            targetColumns = listOf("id", "workoutRecordDate", "exerciseId", "orderIndex"),
+            sourceColumns = listOf("id", "workoutDate", "exerciseId", "orderIndex"),
+        )
+    }
+
+    private fun mergeWorkoutRecordExerciseSetTable(db: SQLiteDatabase) {
+        if (hasTable(db, "backup", "workout_record_exercise_set")) {
+            mergeTable(db, "workout_record_exercise_set")
+            return
+        }
+
+        mergeMappedTable(
+            db = db,
+            targetTable = "workout_record_exercise_set",
+            sourceTable = "workout_set",
+            targetColumns = listOf("workoutRecordExerciseId", "setIndex", "weightKg", "reps"),
+            sourceColumns = listOf("workoutExerciseId", "setIndex", "weightKg", "reps"),
+        )
+    }
+
+    private fun mergeMappedTable(
+        db: SQLiteDatabase,
+        targetTable: String,
+        sourceTable: String,
+        targetColumns: List<String>,
+        sourceColumns: List<String>,
+    ) {
+        if (!hasTable(db, "backup", sourceTable)) {
+            Log.w(TAG, "Drive restore: missing table in backup: $sourceTable")
+            return
+        }
+
+        val before = queryCount(db, targetTable)
+        db.execSQL(
+            """
+            INSERT OR IGNORE INTO $targetTable (${targetColumns.joinToString(", ")})
+            SELECT ${sourceColumns.joinToString(", ")} FROM backup.$sourceTable
+            """
+                .trimIndent(),
+        )
+        val after = queryCount(db, targetTable)
+        Log.i(
+            TAG,
+            "Drive restore: $targetTable merged from $sourceTable, inserted=${after - before}",
+        )
     }
 
     private fun hasTable(

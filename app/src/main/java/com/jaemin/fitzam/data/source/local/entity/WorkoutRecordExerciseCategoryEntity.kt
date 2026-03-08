@@ -4,13 +4,13 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 
 @Entity(
-    tableName = "workout_category",
-    primaryKeys = ["workoutDate", "exerciseCategoryId"],
+    tableName = "workout_record_exercise_category",
+    primaryKeys = ["workoutRecordDate", "exerciseCategoryId"],
     foreignKeys = [
         ForeignKey(
-            entity = WorkoutEntity::class,
+            entity = WorkoutRecordEntity::class,
             parentColumns = ["date"],
-            childColumns = ["workoutDate"],
+            childColumns = ["workoutRecordDate"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -21,7 +21,7 @@ import androidx.room.ForeignKey
         ),
     ]
 )
-data class WorkoutCategoryEntity(
-    val workoutDate: String, // YYYY-MM-DD
+data class WorkoutRecordExerciseCategoryEntity(
+    val workoutRecordDate: String, // YYYY-MM-DD
     val exerciseCategoryId: Long,
 )

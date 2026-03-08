@@ -1,14 +1,14 @@
-﻿package com.jaemin.fitzam.data.repository
+package com.jaemin.fitzam.data.repository
 
 import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
-import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetDao
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseCategoryEntity
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,23 +22,24 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 class WorkoutRepository @Inject constructor(
-    private val workoutDao: WorkoutDao,
-    private val workoutCategoryDao: WorkoutCategoryDao,
-    private val workoutExerciseDao: WorkoutExerciseDao,
+    private val workoutRecordDao: WorkoutRecordDao,
+    private val workoutRecordExerciseCategoryDao: WorkoutRecordExerciseCategoryDao,
+    private val workoutRecordExerciseDao: WorkoutRecordExerciseDao,
     private val exerciseCategoryDao: ExerciseCategoryDao,
     private val exerciseDao: ExerciseDao,
-    private val setDao: WorkoutSetDao,
+    private val setDao: WorkoutRecordExerciseSetDao,
 ) {
 
     fun getWorkoutsForYearMonth(yearMonth: YearMonth): Flow<List<Workout>> {
         val startDate = yearMonth.atDay(1).toString()
         val endDate = yearMonth.atEndOfMonth().toString()
 
-        return workoutDao.getWorkoutEntities(startDate, endDate).map { entities ->
-            entities.map { workout ->
-                val exerciseCategoryIds = workoutCategoryDao.getExerciseCategoryIds(workout.date)
+        return workoutRecordDao.getWorkoutRecordEntities(startDate, endDate).map { entities ->
+            entities.map { workoutRecord ->
+                val exerciseCategoryIds =
+                    workoutRecordExerciseCategoryDao.getExerciseCategoryIds(workoutRecord.date)
                 val exerciseCategories = exerciseCategoryDao.getExerciseCategoryEntitiesByIds(exerciseCategoryIds)
-                workout.toModel(
+                workoutRecord.toModel(
                     exerciseCategories = exerciseCategories.map { category ->
                         category.toModel()
                     },
@@ -49,15 +50,15 @@ class WorkoutRepository @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getWorkoutExercises(date: LocalDate): Flow<List<WorkoutExercise>> {
-        return workoutExerciseDao.getWorkoutExerciseEntities(date.toString())
+        return workoutRecordExerciseDao.getWorkoutRecordExerciseEntities(date.toString())
             .flatMapLatest { entities ->
                 if (entities.isEmpty()) {
                     flowOf(emptyList())
                 } else {
-                    val flows = entities.map { workoutExercise ->
-                        setDao.getSetEntities(workoutExercise.id).map { setEntities ->
+                    val flows = entities.map { workoutRecordExercise ->
+                        setDao.getSetEntities(workoutRecordExercise.id).map { setEntities ->
                             val exerciseEntity = exerciseDao.getExerciseEntity(
-                                workoutExercise.exerciseId,
+                                workoutRecordExercise.exerciseId,
                             )
                             val categoryEntity = exerciseCategoryDao.getExerciseCategoryEntityById(
                                 exerciseEntity.categoryId,
@@ -65,7 +66,7 @@ class WorkoutRepository @Inject constructor(
                             val exercise = exerciseEntity.toModel(
                                 category = categoryEntity.toModel(),
                             )
-                            workoutExercise.toModel(
+                            workoutRecordExercise.toModel(
                                 exercise = exercise,
                                 sets = setEntities.map { entity -> entity.toModel() },
                             )
@@ -91,24 +92,24 @@ class WorkoutRepository @Inject constructor(
     }
 
     private suspend fun deleteWorkout(date: LocalDate) {
-        workoutCategoryDao.deleteByDate(date.toString())
-        workoutDao.deleteByDate(date.toString())
+        workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
+        workoutRecordDao.deleteByDate(date.toString())
     }
 
     private suspend fun upsertWorkout(date: LocalDate, categoryIds: List<Long>) {
-        val workout = WorkoutEntity(
+        val workoutRecord = WorkoutRecordEntity(
             date = date.toString(),
         )
-        workoutDao.insert(workout)
+        workoutRecordDao.insert(workoutRecord)
 
         // 매핑 데이터 삭제 후 추가
-        workoutCategoryDao.deleteByDate(date.toString())
+        workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
         categoryIds.forEach { id ->
-            val workoutCategory = WorkoutCategoryEntity(
-                workoutDate = date.toString(),
+            val workoutRecordExerciseCategory = WorkoutRecordExerciseCategoryEntity(
+                workoutRecordDate = date.toString(),
                 exerciseCategoryId = id,
             )
-            workoutCategoryDao.insert(workoutCategory)
+            workoutRecordExerciseCategoryDao.insert(workoutRecordExerciseCategory)
         }
     }
 }

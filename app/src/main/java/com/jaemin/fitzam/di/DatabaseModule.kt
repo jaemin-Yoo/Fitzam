@@ -7,13 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jaemin.fitzam.data.source.local.DatabaseConfig
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
+import com.jaemin.fitzam.data.source.local.MIGRATION_1_2
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetDao
 import com.jaemin.fitzam.data.source.local.seed.DefaultExerciseSeedManager
 import dagger.Module
 import dagger.Provides
@@ -36,6 +37,7 @@ object DatabaseModule {
             FitzamDatabase::class.java,
             DatabaseConfig.localDbFileName()
         )
+            .addMigrations(MIGRATION_1_2)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -68,20 +70,20 @@ object DatabaseModule {
             .build()
 
     @Provides
-    fun provideWorkoutDao(db: FitzamDatabase): WorkoutDao =
-        db.workoutDao()
+    fun provideWorkoutRecordDao(db: FitzamDatabase): WorkoutRecordDao =
+        db.workoutRecordDao()
 
     @Provides
-    fun provideWorkoutCategoryDao(db: FitzamDatabase): WorkoutCategoryDao =
-        db.workoutCategoryDao()
+    fun provideWorkoutRecordExerciseCategoryDao(db: FitzamDatabase): WorkoutRecordExerciseCategoryDao =
+        db.workoutRecordExerciseCategoryDao()
 
     @Provides
-    fun provideWorkoutExerciseDao(db: FitzamDatabase): WorkoutExerciseDao =
-        db.workoutExerciseDao()
+    fun provideWorkoutRecordExerciseDao(db: FitzamDatabase): WorkoutRecordExerciseDao =
+        db.workoutRecordExerciseDao()
 
     @Provides
-    fun provideWorkoutSetDao(db: FitzamDatabase): WorkoutSetDao =
-        db.workoutSetDao()
+    fun provideWorkoutRecordExerciseSetDao(db: FitzamDatabase): WorkoutRecordExerciseSetDao =
+        db.workoutRecordExerciseSetDao()
 
     @Provides
     fun provideExerciseCategoryDao(db: FitzamDatabase): ExerciseCategoryDao =

@@ -2,9 +2,9 @@ package com.jaemin.fitzam.data.mapper
 
 import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
 import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutExerciseEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.Workout
@@ -12,7 +12,7 @@ import com.jaemin.fitzam.model.WorkoutExercise
 import com.jaemin.fitzam.model.WorkoutSet
 import java.time.LocalDate
 
-fun WorkoutEntity.toModel(exerciseCategories: List<ExerciseCategory>): Workout {
+fun WorkoutRecordEntity.toModel(exerciseCategories: List<ExerciseCategory>): Workout {
     return Workout(
         date = LocalDate.parse(date),
         exerciseCategories = exerciseCategories,
@@ -38,7 +38,7 @@ fun ExerciseEntity.toModel(category: ExerciseCategory): Exercise {
     )
 }
 
-fun WorkoutSetEntity.toModel(): WorkoutSet {
+fun WorkoutRecordExerciseSetEntity.toModel(): WorkoutSet {
     return WorkoutSet(
         index = setIndex,
         weightKg = weightKg,
@@ -46,7 +46,7 @@ fun WorkoutSetEntity.toModel(): WorkoutSet {
     )
 }
 
-fun WorkoutExerciseEntity.toModel(
+fun WorkoutRecordExerciseEntity.toModel(
     exercise: Exercise,
     sets: List<WorkoutSet>,
 ): WorkoutExercise {
