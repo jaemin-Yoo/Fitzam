@@ -218,26 +218,19 @@ private fun WorkoutRecordContent(
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             item {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "운동 유형",
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                if (selectedCategories.isEmpty()) {
-                    Text(
-                        text = "선택한 운동이 없습니다.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        selectedCategories.forEach { category ->
-                            ExerciseCategoryTag(
-                                name = category.name,
-                                borderColor = Color(category.colorHex),
-                            )
-                        }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    selectedCategories.forEach { category ->
+                        ExerciseCategoryTag(
+                            name = category.name,
+                            borderColor = Color(category.colorHex),
+                        )
                     }
                 }
             }
