@@ -21,6 +21,9 @@ interface WorkoutRecordExerciseDao {
     @Insert
     suspend fun insert(entry: WorkoutRecordExerciseEntity): Long
 
+    @Query("DELETE FROM workout_record_exercise WHERE workoutRecordDate = :date")
+    suspend fun deleteByDate(date: String)
+
     @Query("DELETE FROM workout_record_exercise WHERE id = :id")
     suspend fun deleteById(id: Long)
 }

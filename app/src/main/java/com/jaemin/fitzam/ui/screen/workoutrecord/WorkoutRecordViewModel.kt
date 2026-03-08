@@ -1,17 +1,23 @@
-﻿package com.jaemin.fitzam.ui.screen.workoutrecord
+package com.jaemin.fitzam.ui.screen.workoutrecord
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseRepository
+import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
+import com.jaemin.fitzam.data.repository.WorkoutRepository
+import com.jaemin.fitzam.data.repository.WorkoutSetDraft
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseRecordSchema
+import com.jaemin.fitzam.model.WorkoutMetricType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import java.util.Locale
 
 data class EditableWorkoutSetUi(
@@ -33,31 +39,38 @@ data class WorkoutStartInitialValue(
 @HiltViewModel
 class WorkoutRecordViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
+    private val workoutRepository: WorkoutRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<WorkoutRecordUiState>(WorkoutRecordUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     private val _exerciseItems = MutableStateFlow<List<WorkoutRecordExerciseUiModel>>(emptyList())
     val exerciseItems = _exerciseItems.asStateFlow()
+    private var initializedDate: LocalDate? = null
 
-    fun loadExercises(selectedExerciseIds: Set<Long>) {
+    fun loadExercises(selectedDate: LocalDate, selectedExerciseIds: Set<Long>) {
+        if (initializedDate == selectedDate) {
+            _uiState.value = WorkoutRecordUiState.Success(
+                exercises = _exerciseItems.value.map { item -> item.exercise },
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = WorkoutRecordUiState.Loading
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    exerciseRepository.getExercisesByIds(selectedExerciseIds)
+                    buildInitialItems(
+                        selectedDate = selectedDate,
+                        selectedExerciseIds = selectedExerciseIds,
+                    )
                 }
             }
             _uiState.value = result.fold(
-                onSuccess = { exercises ->
-                    val previousMap = _exerciseItems.value.associateBy { item -> item.exercise.id }
-                    _exerciseItems.value = exercises.map { exercise ->
-                        previousMap[exercise.id] ?: WorkoutRecordExerciseUiModel(
-                            exercise = exercise,
-                            sets = emptyList(),
-                        )
-                    }
-                    WorkoutRecordUiState.Success(exercises = exercises)
+                onSuccess = { items ->
+                    _exerciseItems.value = items
+                    initializedDate = selectedDate
+                    WorkoutRecordUiState.Success(exercises = items.map { item -> item.exercise })
                 },
                 onFailure = {
                     _exerciseItems.value = emptyList()
@@ -161,6 +174,84 @@ class WorkoutRecordViewModel @Inject constructor(
             }
         }
     }
+
+    fun saveWorkout(
+        selectedDate: LocalDate,
+        onSuccess: () -> Unit,
+    ) {
+        viewModelScope.launch {
+            val saveTarget = _exerciseItems.value.mapIndexed { index, item ->
+                WorkoutExerciseDraft(
+                    exerciseId = item.exercise.id,
+                    categoryId = item.exercise.category.id,
+                    orderIndex = index,
+                    sets = item.sets.map { set ->
+                        WorkoutSetDraft(
+                            setIndex = set.index,
+                            metrics = when (item.exercise.recordSchema) {
+                                ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
+                                    WorkoutMetricType.WEIGHT_KG to (set.firstMetricText.toDoubleOrNull() ?: 0.0),
+                                    WorkoutMetricType.REPS to (set.secondMetricText.toDoubleOrNull() ?: 0.0),
+                                )
+
+                                ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
+                                    WorkoutMetricType.DISTANCE_KM to (set.firstMetricText.toDoubleOrNull() ?: 0.0),
+                                    WorkoutMetricType.DURATION_SEC to (set.secondMetricText.toDoubleOrNull() ?: 0.0),
+                                )
+                            },
+                        )
+                    },
+                )
+            }
+
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    workoutRepository.replaceWorkoutExercises(
+                        date = selectedDate,
+                        exercises = saveTarget,
+                    )
+                }
+            }.onSuccess {
+                onSuccess()
+            }
+        }
+    }
+
+    private suspend fun buildInitialItems(
+        selectedDate: LocalDate,
+        selectedExerciseIds: Set<Long>,
+    ): List<WorkoutRecordExerciseUiModel> {
+        val savedWorkoutExercises = workoutRepository.getWorkoutExercises(selectedDate).first()
+        val savedExerciseMap = savedWorkoutExercises.associateBy { workoutExercise ->
+            workoutExercise.exercise.id
+        }
+
+        val mergedExerciseIds = (savedExerciseMap.keys + selectedExerciseIds).toSet()
+        val exercisesById = exerciseRepository.getExercisesByIds(mergedExerciseIds).associateBy { exercise ->
+            exercise.id
+        }
+
+        val mergedOrderedIds = buildList {
+            addAll(savedWorkoutExercises.map { savedExercise -> savedExercise.exercise.id })
+            addAll(selectedExerciseIds.filterNot { selectedId -> selectedId in savedExerciseMap.keys })
+        }
+
+        return mergedOrderedIds.mapNotNull { exerciseId ->
+            val savedExercise = savedExerciseMap[exerciseId]
+            val exercise = savedExercise?.exercise ?: exercisesById[exerciseId]
+            exercise?.let { existingExercise ->
+                WorkoutRecordExerciseUiModel(
+                    exercise = existingExercise,
+                    sets = savedExercise?.sets
+                        ?.map { set ->
+                            set.toEditableSet(existingExercise.recordSchema)
+                        }
+                        .orEmpty(),
+                )
+            }
+        }
+    }
+
 }
 
 sealed interface WorkoutRecordUiState {
@@ -186,4 +277,22 @@ private fun formatMetricFirstText(recordSchema: ExerciseRecordSchema, value: Dou
         ExerciseRecordSchema.WEIGHT_REPS -> formatWeightText(value)
         ExerciseRecordSchema.DISTANCE_DURATION -> formatWeightText(value)
     }
+}
+
+private fun com.jaemin.fitzam.model.WorkoutSet.toEditableSet(
+    recordSchema: ExerciseRecordSchema,
+): EditableWorkoutSetUi {
+    val firstValue = when (recordSchema) {
+        ExerciseRecordSchema.WEIGHT_REPS -> metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0
+        ExerciseRecordSchema.DISTANCE_DURATION -> metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0
+    }
+    val secondValue = when (recordSchema) {
+        ExerciseRecordSchema.WEIGHT_REPS -> metrics[WorkoutMetricType.REPS] ?: 0.0
+        ExerciseRecordSchema.DISTANCE_DURATION -> metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0
+    }
+    return EditableWorkoutSetUi(
+        index = index,
+        firstMetricText = formatMetricFirstText(recordSchema, firstValue),
+        secondMetricText = secondValue.toInt().toString(),
+    )
 }

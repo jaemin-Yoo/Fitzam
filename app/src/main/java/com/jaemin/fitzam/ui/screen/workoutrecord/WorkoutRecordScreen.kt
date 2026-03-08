@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui.screen.workoutrecord
+package com.jaemin.fitzam.ui.screen.workoutrecord
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -87,8 +87,11 @@ fun WorkoutRecordScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val exerciseItemsFromViewModel by viewModel.exerciseItems.collectAsStateWithLifecycle()
 
-    LaunchedEffect(selectedExerciseIds) {
-        viewModel.loadExercises(selectedExerciseIds)
+    LaunchedEffect(selectedDate, selectedExerciseIds) {
+        viewModel.loadExercises(
+            selectedDate = selectedDate,
+            selectedExerciseIds = selectedExerciseIds,
+        )
     }
 
     when (uiState) {
@@ -119,7 +122,12 @@ fun WorkoutRecordScreen(
                 exerciseItems = exerciseItems,
                 onBackClick = onBackClick,
                 onDetailAddClick = onDetailAddClick,
-                onCompleteClick = onCompleteClick,
+                onCompleteClick = {
+                    viewModel.saveWorkout(
+                        selectedDate = selectedDate,
+                        onSuccess = onCompleteClick,
+                    )
+                },
                 onExerciseToggleEditClick = { exerciseId ->
                     editingExerciseIds = if (editingExerciseIds.contains(exerciseId)) {
                         editingExerciseIds - exerciseId

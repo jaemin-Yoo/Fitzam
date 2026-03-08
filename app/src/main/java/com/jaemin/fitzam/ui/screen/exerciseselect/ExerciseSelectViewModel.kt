@@ -1,8 +1,9 @@
-﻿package com.jaemin.fitzam.ui.screen.exerciseselect
+package com.jaemin.fitzam.ui.screen.exerciseselect
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseRepository
+import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.model.Exercise
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -11,14 +12,17 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class ExerciseSelectViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
+    private val workoutRepository: WorkoutRepository,
 ) : ViewModel() {
     companion object {
         private const val MIN_LOADING_DURATION_MS = 300L
@@ -33,7 +37,9 @@ class ExerciseSelectViewModel @Inject constructor(
     val event = _event.asSharedFlow()
     private val _selectedExerciseIds = MutableStateFlow<Set<Long>>(emptySet())
     val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
+    private var lastLoadedDate: LocalDate? = null
     private var lastLoadedCategoryIds: Set<Long>? = null
+    private var hasInitializedSelection = false
 
     fun toggleSelectedExercise(exerciseId: Long) {
         _selectedExerciseIds.update { selectedIds ->
@@ -45,8 +51,16 @@ class ExerciseSelectViewModel @Inject constructor(
         }
     }
 
-    fun loadExercises(selectedCategoryIds: Set<Long>) {
+    fun loadExercises(
+        selectedDate: LocalDate,
+        selectedCategoryIds: Set<Long>,
+        incomingSelectedExerciseIds: Set<Long>,
+    ) {
+        if (lastLoadedDate != selectedDate) {
+            hasInitializedSelection = false
+        }
         val shouldSkipReload = _uiState.value is ExerciseSelectUiState.Success &&
+            lastLoadedDate == selectedDate &&
             lastLoadedCategoryIds == selectedCategoryIds
         if (shouldSkipReload) return
 
@@ -58,9 +72,16 @@ class ExerciseSelectViewModel @Inject constructor(
                 withContext(Dispatchers.IO) {
                     val exercises = exerciseRepository.getExercisesByCategoryIds(selectedCategoryIds)
                     val favoriteIds = exerciseRepository.getFavoriteExerciseIds()
-                    ExerciseSelectUiState.Success(
-                        exercises = exercises,
-                        favoriteIds = favoriteIds,
+                    val savedExerciseIds = workoutRepository.getWorkoutExercises(selectedDate)
+                        .first()
+                        .map { workoutExercise -> workoutExercise.exercise.id }
+                        .toSet()
+                    ExerciseLoadResult(
+                        uiState = ExerciseSelectUiState.Success(
+                            exercises = exercises,
+                            favoriteIds = favoriteIds,
+                        ),
+                        savedExerciseIds = savedExerciseIds,
                     )
                 }
             }
@@ -70,17 +91,29 @@ class ExerciseSelectViewModel @Inject constructor(
                 delay(MIN_LOADING_DURATION_MS - elapsed)
             }
 
-            _uiState.value = result.getOrElse {
-                ExerciseSelectUiState.Failed
+            val loadResult = result.getOrNull()
+            if (loadResult == null) {
+                _uiState.value = ExerciseSelectUiState.Failed
+                return@launch
             }
+
+            _uiState.value = loadResult.uiState
             if (_uiState.value is ExerciseSelectUiState.Success) {
-                val loadedExerciseIds = (_uiState.value as ExerciseSelectUiState.Success)
+                val loadedExerciseIds = loadResult.uiState
                     .exercises
                     .map { exercise -> exercise.id }
                     .toSet()
-                _selectedExerciseIds.update { selectedIds ->
-                    selectedIds.intersect(loadedExerciseIds)
+                val initialSelectedExerciseIds = (loadResult.savedExerciseIds + incomingSelectedExerciseIds)
+                    .intersect(loadedExerciseIds)
+                _selectedExerciseIds.update { currentSelectedIds ->
+                    if (!hasInitializedSelection) {
+                        hasInitializedSelection = true
+                        initialSelectedExerciseIds
+                    } else {
+                        currentSelectedIds.intersect(loadedExerciseIds)
+                    }
                 }
+                lastLoadedDate = selectedDate
                 lastLoadedCategoryIds = selectedCategoryIds
             }
         }
@@ -127,6 +160,11 @@ class ExerciseSelectViewModel @Inject constructor(
         }
     }
 }
+
+private data class ExerciseLoadResult(
+    val uiState: ExerciseSelectUiState.Success,
+    val savedExerciseIds: Set<Long>,
+)
 
 sealed interface ExerciseSelectEvent {
     data object FavoriteSaveFailed : ExerciseSelectEvent

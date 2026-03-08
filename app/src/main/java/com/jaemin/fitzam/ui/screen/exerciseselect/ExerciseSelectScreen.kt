@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui.screen.exerciseselect
+package com.jaemin.fitzam.ui.screen.exerciseselect
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -65,6 +65,7 @@ import java.time.LocalDate
 fun ExerciseSelectScreen(
     selectedDate: LocalDate,
     selectedCategoryIds: Set<Long>,
+    selectedExerciseIds: Set<Long>,
     sessionId: Long,
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
@@ -76,8 +77,12 @@ fun ExerciseSelectScreen(
     val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(selectedCategoryIds) {
-        viewModel.loadExercises(selectedCategoryIds)
+    LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds) {
+        viewModel.loadExercises(
+            selectedDate = selectedDate,
+            selectedCategoryIds = selectedCategoryIds,
+            incomingSelectedExerciseIds = selectedExerciseIds,
+        )
     }
 
     LaunchedEffect(viewModel) {

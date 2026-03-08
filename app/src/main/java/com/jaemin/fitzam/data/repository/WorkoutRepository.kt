@@ -1,6 +1,7 @@
 package com.jaemin.fitzam.data.repository
 
 import com.jaemin.fitzam.data.mapper.toModel
+import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
@@ -10,19 +11,37 @@ import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetMetricDao
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseCategoryEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.WorkoutMetricType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import androidx.room.withTransaction
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
+data class WorkoutSetDraft(
+    val setIndex: Int,
+    val metrics: Map<WorkoutMetricType, Double>,
+)
+
+data class WorkoutExerciseDraft(
+    val exerciseId: Long,
+    val categoryId: Long,
+    val orderIndex: Int,
+    val sets: List<WorkoutSetDraft>,
+)
+
 class WorkoutRepository @Inject constructor(
+    private val database: FitzamDatabase,
     private val workoutRecordDao: WorkoutRecordDao,
     private val workoutRecordExerciseCategoryDao: WorkoutRecordExerciseCategoryDao,
     private val workoutRecordExerciseDao: WorkoutRecordExerciseDao,
@@ -98,6 +117,69 @@ class WorkoutRepository @Inject constructor(
                 date = date,
                 categoryIds = categoryIds,
             )
+        }
+    }
+
+    suspend fun replaceWorkoutExercises(
+        date: LocalDate,
+        exercises: List<WorkoutExerciseDraft>,
+    ) {
+        database.withTransaction {
+            if (exercises.isEmpty()) {
+                deleteWorkout(date)
+                return@withTransaction
+            }
+
+            workoutRecordDao.insert(
+                WorkoutRecordEntity(date = date.toString()),
+            )
+
+            workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
+            exercises
+                .map { exercise -> exercise.categoryId }
+                .distinct()
+                .forEach { categoryId ->
+                    workoutRecordExerciseCategoryDao.insert(
+                        WorkoutRecordExerciseCategoryEntity(
+                            workoutRecordDate = date.toString(),
+                            exerciseCategoryId = categoryId,
+                        ),
+                    )
+                }
+
+            workoutRecordExerciseDao.deleteByDate(date.toString())
+            exercises.sortedBy { exercise -> exercise.orderIndex }.forEach { exercise ->
+                val workoutExerciseId = workoutRecordExerciseDao.insert(
+                    WorkoutRecordExerciseEntity(
+                        workoutRecordDate = date.toString(),
+                        exerciseId = exercise.exerciseId,
+                        orderIndex = exercise.orderIndex,
+                    ),
+                )
+
+                if (exercise.sets.isNotEmpty()) {
+                    setDao.insertOrUpdateAll(
+                        exercise.sets.map { set ->
+                            WorkoutRecordExerciseSetEntity(
+                                workoutRecordExerciseId = workoutExerciseId,
+                                setIndex = set.setIndex,
+                            )
+                        },
+                    )
+                    setMetricDao.insertOrUpdateAll(
+                        exercise.sets.flatMap { set ->
+                            set.metrics.map { (metricType, value) ->
+                                WorkoutRecordExerciseSetMetricEntity(
+                                    workoutRecordExerciseId = workoutExerciseId,
+                                    setIndex = set.setIndex,
+                                    metricType = metricType.name,
+                                    value = value,
+                                )
+                            }
+                        },
+                    )
+                }
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-﻿package com.jaemin.fitzam.ui
+package com.jaemin.fitzam.ui
 
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavKey
@@ -24,6 +24,7 @@ sealed interface Screen {
     @Serializable data class ExerciseSelect(
         val selectedDate: String,
         val selectedCategoryIds: String,
+        val selectedExerciseIds: String = "",
         val sessionId: Long,
     ) : NavKey
     @Serializable data class WorkoutRecord(
@@ -76,6 +77,7 @@ fun FitzamApp() {
                             Screen.ExerciseSelect(
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = selectedCategoryIds.joinToString(","),
+                                selectedExerciseIds = "",
                                 sessionId = System.currentTimeMillis(),
                             )
                         )
@@ -87,6 +89,10 @@ fun FitzamApp() {
                 ExerciseSelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     selectedCategoryIds = screen.selectedCategoryIds
+                        .split(",")
+                        .mapNotNull { value -> value.toLongOrNull() }
+                        .toSet(),
+                    selectedExerciseIds = screen.selectedExerciseIds
                         .split(",")
                         .mapNotNull { value -> value.toLongOrNull() }
                         .toSet(),
@@ -118,6 +124,7 @@ fun FitzamApp() {
                             Screen.ExerciseSelect(
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = screen.selectedCategoryIds,
+                                selectedExerciseIds = screen.selectedExerciseIds,
                                 sessionId = System.currentTimeMillis(),
                             )
                         )
