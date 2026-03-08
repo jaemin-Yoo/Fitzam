@@ -495,16 +495,26 @@ private fun WorkoutSetTable(
                         modifier = Modifier.weight(1f),
                         keyboardType = config.firstKeyboardType,
                     )
-                    TableInputCell(
-                        value = set.secondMetricText,
-                        onValueChange = { nextValue ->
-                            if (nextValue.matches(config.secondRegex)) {
+                    if (recordSchema == ExerciseRecordSchema.DISTANCE_DURATION) {
+                        DurationInputCell(
+                            totalSecondsText = set.secondMetricText,
+                            onValueChange = { nextValue ->
                                 onSecondMetricChange(set.index, nextValue)
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        keyboardType = config.secondKeyboardType,
-                    )
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    } else {
+                        TableInputCell(
+                            value = set.secondMetricText,
+                            onValueChange = { nextValue ->
+                                if (nextValue.matches(config.secondRegex)) {
+                                    onSecondMetricChange(set.index, nextValue)
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            keyboardType = config.secondKeyboardType,
+                        )
+                    }
                     IconButton(
                         onClick = { onRemoveSet(set.index) },
                         modifier = Modifier.size(36.dp),
@@ -517,7 +527,14 @@ private fun WorkoutSetTable(
                     }
                 } else {
                     TableValueCell(text = set.firstMetricText, modifier = Modifier.weight(1f))
-                    TableValueCell(text = set.secondMetricText, modifier = Modifier.weight(1f))
+                    TableValueCell(
+                        text = if (recordSchema == ExerciseRecordSchema.DISTANCE_DURATION) {
+                            formatDurationInMinutesAndSeconds(set.secondMetricText)
+                        } else {
+                            set.secondMetricText
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -550,6 +567,61 @@ private fun TableValueCell(
         Text(
             text = text,
             textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun DurationInputCell(
+    totalSecondsText: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val totalSeconds = totalSecondsText.toIntOrNull() ?: 0
+    val minutesText = (totalSeconds / 60).toString()
+    val secondsText = (totalSeconds % 60).toString()
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TableInputCell(
+            value = minutesText,
+            onValueChange = { nextMinutes ->
+                if (nextMinutes.matches(MINUTES_INPUT_REGEX)) {
+                    val minutes = nextMinutes.toIntOrNull() ?: 0
+                    val seconds = totalSeconds % 60
+                    onValueChange((minutes * 60 + seconds).toString())
+                }
+            },
+            keyboardType = KeyboardType.Number,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "분",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        TableInputCell(
+            value = secondsText,
+            onValueChange = { nextSeconds ->
+                if (nextSeconds.matches(REPS_INPUT_REGEX)) {
+                    val seconds = nextSeconds.toIntOrNull() ?: 0
+                    if (seconds <= 59) {
+                        val minutes = totalSeconds / 60
+                        onValueChange((minutes * 60 + seconds).toString())
+                    }
+                }
+            },
+            keyboardType = KeyboardType.Number,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "초",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -598,6 +670,14 @@ private val WEIGHT_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
 private val REPS_INPUT_REGEX = Regex("^\\d*$")
 private val DISTANCE_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
 private val DURATION_INPUT_REGEX = Regex("^\\d*$")
+private val MINUTES_INPUT_REGEX = Regex("^\\d*$")
+
+private fun formatDurationInMinutesAndSeconds(secondsText: String): String {
+    val totalSeconds = secondsText.toIntOrNull() ?: return secondsText
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "${minutes.toString().padStart(2, '0')}분 ${seconds.toString().padStart(2, '0')}초"
+}
 
 private data class WorkoutSetTableConfig(
     val firstHeader: String,
