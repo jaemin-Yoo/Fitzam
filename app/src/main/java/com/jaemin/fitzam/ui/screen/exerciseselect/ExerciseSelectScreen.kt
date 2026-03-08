@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.screen.detailexerciseadd
+﻿package com.jaemin.fitzam.ui.screen.exerciseselect
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -62,14 +62,14 @@ import com.jaemin.fitzam.ui.util.drawableResIdByName
 import java.time.LocalDate
 
 @Composable
-fun DetailExerciseAddScreen(
+fun ExerciseSelectScreen(
     selectedDate: LocalDate,
     selectedCategoryIds: Set<Long>,
     sessionId: Long,
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
 ) {
-    val viewModel: DetailExerciseAddViewModel = hiltViewModel(
+    val viewModel: ExerciseSelectViewModel = hiltViewModel(
         key = "detail-exercise-add-$sessionId",
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -82,21 +82,21 @@ fun DetailExerciseAddScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
-            if (event is DetailExerciseAddEvent.FavoriteSaveFailed) {
+            if (event is ExerciseSelectEvent.FavoriteSaveFailed) {
                 snackbarHostState.showSnackbar("즐겨찾기 저장에 실패했습니다.")
             }
         }
     }
 
     when (val value = uiState) {
-        DetailExerciseAddUiState.Loading -> {
-            DetailExerciseAddLoadingScreen(onBackClick = onBackClick)
+        ExerciseSelectUiState.Loading -> {
+            ExerciseSelectLoadingScreen(onBackClick = onBackClick)
         }
-        DetailExerciseAddUiState.Failed -> {
-            DetailExerciseAddFailedScreen(onBackClick = onBackClick)
+        ExerciseSelectUiState.Failed -> {
+            ExerciseSelectFailedScreen(onBackClick = onBackClick)
         }
-        is DetailExerciseAddUiState.Success -> {
-            DetailExerciseAddScreen(
+        is ExerciseSelectUiState.Success -> {
+            ExerciseSelectScreen(
                 selectedDate = selectedDate,
                 onBackClick = onBackClick,
                 onCompleteClick = onCompleteClick,
@@ -112,7 +112,7 @@ fun DetailExerciseAddScreen(
 }
 
 @Composable
-fun DetailExerciseAddScreen(
+fun ExerciseSelectScreen(
     selectedDate: LocalDate,
     onBackClick: () -> Unit,
     onCompleteClick: (Set<Long>) -> Unit,
@@ -193,7 +193,7 @@ fun DetailExerciseAddScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailExerciseAddList(
+            ExerciseSelectList(
                 favoriteExercises = favoriteExercises,
                 exercises = filteredExercises,
                 selectedExerciseIds = selectedExerciseIds,
@@ -212,7 +212,7 @@ fun DetailExerciseAddScreen(
 }
 
 @Composable
-private fun DetailExerciseAddLoadingScreen(
+private fun ExerciseSelectLoadingScreen(
     onBackClick: () -> Unit,
 ) {
     Scaffold(
@@ -239,7 +239,7 @@ private fun DetailExerciseAddLoadingScreen(
 }
 
 @Composable
-private fun DetailExerciseAddFailedScreen(
+private fun ExerciseSelectFailedScreen(
     onBackClick: () -> Unit,
 ) {
     Scaffold(
@@ -266,7 +266,7 @@ private fun DetailExerciseAddFailedScreen(
 }
 
 @Composable
-private fun DetailExerciseAddList(
+private fun ExerciseSelectList(
     favoriteExercises: List<Exercise>,
     exercises: List<Exercise>,
     selectedExerciseIds: Set<Long>,
@@ -289,7 +289,7 @@ private fun DetailExerciseAddList(
                 items = favoriteExercises,
                 key = { "favorite-${it.id}" },
             ) { exercise ->
-                DetailExerciseAddItem(
+                ExerciseSelectItem(
                     exercise = exercise,
                     isSelected = selectedExerciseIds.contains(exercise.id),
                     isFavorite = favoriteExerciseIds.contains(exercise.id),
@@ -306,7 +306,7 @@ private fun DetailExerciseAddList(
             items = exercises,
             key = { "all-${it.id}" },
         ) { exercise ->
-            DetailExerciseAddItem(
+            ExerciseSelectItem(
                 exercise = exercise,
                 isSelected = selectedExerciseIds.contains(exercise.id),
                 isFavorite = favoriteExerciseIds.contains(exercise.id),
@@ -333,7 +333,7 @@ private fun SectionTitle(
 }
 
 @Composable
-private fun DetailExerciseAddItem(
+private fun ExerciseSelectItem(
     exercise: Exercise,
     isSelected: Boolean,
     isFavorite: Boolean,
@@ -438,9 +438,9 @@ private fun sampleExercises(): List<Exercise> {
 
 @Preview(showBackground = true)
 @Composable
-private fun DetailExerciseAddScreenPreview() {
+private fun ExerciseSelectScreenPreview() {
     FitzamTheme {
-        DetailExerciseAddScreen(
+        ExerciseSelectScreen(
             selectedDate = LocalDate.now(),
             onBackClick = {},
             onCompleteClick = {},

@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.screen.workoutseteditor
+﻿package com.jaemin.fitzam.ui.screen.workoutstart
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -55,8 +55,8 @@ import com.jaemin.fitzam.R
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
-import com.jaemin.fitzam.ui.screen.workoutadd.WorkoutAddViewModel
-import com.jaemin.fitzam.ui.screen.workoutadd.formatWeightText
+import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordViewModel
+import com.jaemin.fitzam.ui.screen.workoutrecord.formatWeightText
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
 
@@ -68,7 +68,7 @@ private val SuccessGreen = Color(0xFF4CAF50)
 
 @Composable
 @Suppress("UNUSED_PARAMETER")
-fun WorkoutSetEditorScreen(
+fun WorkoutStartScreen(
     selectedDate: LocalDate,
     exerciseId: Long,
     exerciseName: String,
@@ -76,7 +76,7 @@ fun WorkoutSetEditorScreen(
     onBackClick: () -> Unit,
     onCompleteClick: () -> Unit,
 ) {
-    val viewModel: WorkoutAddViewModel = hiltViewModel(
+    val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
     val initialValue = remember(exerciseId) {
@@ -142,7 +142,7 @@ fun WorkoutSetEditorScreen(
             }
         },
     ) { paddingValues ->
-        WorkoutSetEditorContent(
+        WorkoutStartContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
@@ -214,7 +214,7 @@ fun WorkoutSetEditorScreen(
 }
 
 @Composable
-private fun WorkoutSetEditorContent(
+private fun WorkoutStartContent(
     modifier: Modifier,
     weightKg: Double,
     reps: Int,
@@ -453,9 +453,9 @@ private fun formatWeightQuickLabel(value: Double): String {
 
 @Preview(showBackground = true)
 @Composable
-private fun WorkoutSetEditorPreview() {
+private fun WorkoutStartPreview() {
     FitzamTheme {
-        WorkoutSetEditorContent(
+        WorkoutStartContent(
             modifier = Modifier.fillMaxSize(),
             weightKg = 80.0,
             reps = 10,

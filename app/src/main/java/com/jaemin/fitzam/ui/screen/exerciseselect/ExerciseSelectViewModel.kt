@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.screen.detailexerciseadd
+﻿package com.jaemin.fitzam.ui.screen.exerciseselect
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,19 +17,19 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class DetailExerciseAddViewModel @Inject constructor(
+class ExerciseSelectViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
 ) : ViewModel() {
     companion object {
         private const val MIN_LOADING_DURATION_MS = 300L
     }
 
-    private val _uiState = MutableStateFlow<DetailExerciseAddUiState>(
-        DetailExerciseAddUiState.Loading,
+    private val _uiState = MutableStateFlow<ExerciseSelectUiState>(
+        ExerciseSelectUiState.Loading,
     )
     val uiState = _uiState.asStateFlow()
 
-    private val _event = MutableSharedFlow<DetailExerciseAddEvent>()
+    private val _event = MutableSharedFlow<ExerciseSelectEvent>()
     val event = _event.asSharedFlow()
     private val _selectedExerciseIds = MutableStateFlow<Set<Long>>(emptySet())
     val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
@@ -46,19 +46,19 @@ class DetailExerciseAddViewModel @Inject constructor(
     }
 
     fun loadExercises(selectedCategoryIds: Set<Long>) {
-        val shouldSkipReload = _uiState.value is DetailExerciseAddUiState.Success &&
+        val shouldSkipReload = _uiState.value is ExerciseSelectUiState.Success &&
             lastLoadedCategoryIds == selectedCategoryIds
         if (shouldSkipReload) return
 
         viewModelScope.launch {
-            _uiState.value = DetailExerciseAddUiState.Loading
+            _uiState.value = ExerciseSelectUiState.Loading
             val startedAt = System.currentTimeMillis()
 
             val result = runCatching {
                 withContext(Dispatchers.IO) {
                     val exercises = exerciseRepository.getExercisesByCategoryIds(selectedCategoryIds)
                     val favoriteIds = exerciseRepository.getFavoriteExerciseIds()
-                    DetailExerciseAddUiState.Success(
+                    ExerciseSelectUiState.Success(
                         exercises = exercises,
                         favoriteIds = favoriteIds,
                     )
@@ -71,10 +71,10 @@ class DetailExerciseAddViewModel @Inject constructor(
             }
 
             _uiState.value = result.getOrElse {
-                DetailExerciseAddUiState.Failed
+                ExerciseSelectUiState.Failed
             }
-            if (_uiState.value is DetailExerciseAddUiState.Success) {
-                val loadedExerciseIds = (_uiState.value as DetailExerciseAddUiState.Success)
+            if (_uiState.value is ExerciseSelectUiState.Success) {
+                val loadedExerciseIds = (_uiState.value as ExerciseSelectUiState.Success)
                     .exercises
                     .map { exercise -> exercise.id }
                     .toSet()
@@ -87,7 +87,7 @@ class DetailExerciseAddViewModel @Inject constructor(
     }
 
     fun toggleFavorite(exerciseId: Long) {
-        val currentState = _uiState.value as? DetailExerciseAddUiState.Success ?: return
+        val currentState = _uiState.value as? ExerciseSelectUiState.Success ?: return
         val wasFavorite = currentState.favoriteIds.contains(exerciseId)
         val updatedFavoriteIds = if (wasFavorite) {
             currentState.favoriteIds - exerciseId
@@ -96,7 +96,7 @@ class DetailExerciseAddViewModel @Inject constructor(
         }
 
         _uiState.update { state ->
-            if (state is DetailExerciseAddUiState.Success) {
+            if (state is ExerciseSelectUiState.Success) {
                 state.copy(favoriteIds = updatedFavoriteIds)
             } else {
                 state
@@ -116,29 +116,29 @@ class DetailExerciseAddViewModel @Inject constructor(
 
             if (saveResult.isFailure) {
                 _uiState.update { state ->
-                    if (state is DetailExerciseAddUiState.Success) {
+                    if (state is ExerciseSelectUiState.Success) {
                         state.copy(favoriteIds = currentState.favoriteIds)
                     } else {
                         state
                     }
                 }
-                _event.emit(DetailExerciseAddEvent.FavoriteSaveFailed)
+                _event.emit(ExerciseSelectEvent.FavoriteSaveFailed)
             }
         }
     }
 }
 
-sealed interface DetailExerciseAddEvent {
-    data object FavoriteSaveFailed : DetailExerciseAddEvent
+sealed interface ExerciseSelectEvent {
+    data object FavoriteSaveFailed : ExerciseSelectEvent
 }
 
-sealed interface DetailExerciseAddUiState {
-    data object Loading : DetailExerciseAddUiState
+sealed interface ExerciseSelectUiState {
+    data object Loading : ExerciseSelectUiState
 
-    data object Failed : DetailExerciseAddUiState
+    data object Failed : ExerciseSelectUiState
 
     data class Success(
         val exercises: List<Exercise>,
         val favoriteIds: Set<Long>,
-    ) : DetailExerciseAddUiState
+    ) : ExerciseSelectUiState
 }

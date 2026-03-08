@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.screen.workoutadd
+﻿package com.jaemin.fitzam.ui.screen.workoutrecord
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,29 +19,29 @@ data class EditableWorkoutSetUi(
     val repsText: String,
 )
 
-data class WorkoutAddExerciseUiModel(
+data class WorkoutRecordExerciseUiModel(
     val exercise: Exercise,
     val sets: List<EditableWorkoutSetUi>,
 )
 
-data class WorkoutSetEditorInitialValue(
+data class WorkoutStartInitialValue(
     val weightKg: Double,
     val reps: Int,
 )
 
 @HiltViewModel
-class WorkoutAddViewModel @Inject constructor(
+class WorkoutRecordViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<WorkoutAddUiState>(WorkoutAddUiState.Loading)
+    private val _uiState = MutableStateFlow<WorkoutRecordUiState>(WorkoutRecordUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    private val _exerciseItems = MutableStateFlow<List<WorkoutAddExerciseUiModel>>(emptyList())
+    private val _exerciseItems = MutableStateFlow<List<WorkoutRecordExerciseUiModel>>(emptyList())
     val exerciseItems = _exerciseItems.asStateFlow()
 
     fun loadExercises(selectedExerciseIds: Set<Long>) {
         viewModelScope.launch {
-            _uiState.value = WorkoutAddUiState.Loading
+            _uiState.value = WorkoutRecordUiState.Loading
             val result = runCatching {
                 withContext(Dispatchers.IO) {
                     exerciseRepository.getExercisesByIds(selectedExerciseIds)
@@ -51,16 +51,16 @@ class WorkoutAddViewModel @Inject constructor(
                 onSuccess = { exercises ->
                     val previousMap = _exerciseItems.value.associateBy { item -> item.exercise.id }
                     _exerciseItems.value = exercises.map { exercise ->
-                        previousMap[exercise.id] ?: WorkoutAddExerciseUiModel(
+                        previousMap[exercise.id] ?: WorkoutRecordExerciseUiModel(
                             exercise = exercise,
                             sets = emptyList(),
                         )
                     }
-                    WorkoutAddUiState.Success(exercises = exercises)
+                    WorkoutRecordUiState.Success(exercises = exercises)
                 },
                 onFailure = {
                     _exerciseItems.value = emptyList()
-                    WorkoutAddUiState.Failed
+                    WorkoutRecordUiState.Failed
                 },
             )
         }
@@ -129,14 +129,14 @@ class WorkoutAddViewModel @Inject constructor(
         }
     }
 
-    fun getEditorInitialValue(exerciseId: Long): WorkoutSetEditorInitialValue {
+    fun getEditorInitialValue(exerciseId: Long): WorkoutStartInitialValue {
         val lastSet = _exerciseItems.value.firstOrNull { item ->
             item.exercise.id == exerciseId
         }?.sets?.lastOrNull()
 
         val weight = lastSet?.weightText?.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
         val reps = lastSet?.repsText?.toIntOrNull()?.coerceAtLeast(0) ?: 0
-        return WorkoutSetEditorInitialValue(weightKg = weight, reps = reps)
+        return WorkoutStartInitialValue(weightKg = weight, reps = reps)
     }
 
     fun appendSet(exerciseId: Long, weightKg: Double, reps: Int) {
@@ -159,14 +159,14 @@ class WorkoutAddViewModel @Inject constructor(
     }
 }
 
-sealed interface WorkoutAddUiState {
-    data object Loading : WorkoutAddUiState
+sealed interface WorkoutRecordUiState {
+    data object Loading : WorkoutRecordUiState
 
-    data object Failed : WorkoutAddUiState
+    data object Failed : WorkoutRecordUiState
 
     data class Success(
         val exercises: List<Exercise>,
-    ) : WorkoutAddUiState
+    ) : WorkoutRecordUiState
 }
 
 fun formatWeightText(weightKg: Double): String {

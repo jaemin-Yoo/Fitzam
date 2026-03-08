@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui
+﻿package com.jaemin.fitzam.ui
 
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavKey
@@ -6,11 +6,11 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectScreen
-import com.jaemin.fitzam.ui.screen.detailexerciseadd.DetailExerciseAddScreen
+import com.jaemin.fitzam.ui.screen.exerciseselect.ExerciseSelectScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
 import com.jaemin.fitzam.ui.screen.settings.SettingsScreen
-import com.jaemin.fitzam.ui.screen.workoutadd.WorkoutAddScreen
-import com.jaemin.fitzam.ui.screen.workoutseteditor.WorkoutSetEditorScreen
+import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordScreen
+import com.jaemin.fitzam.ui.screen.workoutstart.WorkoutStartScreen
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
@@ -21,18 +21,18 @@ sealed interface Screen {
         val selectedDate: String,
         val sessionId: Long,
     ) : NavKey
-    @Serializable data class DetailExerciseAdd(
+    @Serializable data class ExerciseSelect(
         val selectedDate: String,
         val selectedCategoryIds: String,
         val sessionId: Long,
     ) : NavKey
-    @Serializable data class WorkoutAdd(
+    @Serializable data class WorkoutRecord(
         val selectedDate: String,
         val selectedExerciseIds: String,
         val selectedCategoryIds: String,
         val sessionId: Long,
     ) : NavKey
-    @Serializable data class WorkoutSetEditor(
+    @Serializable data class WorkoutStart(
         val selectedDate: String,
         val exerciseId: Long,
         val exerciseName: String,
@@ -73,7 +73,7 @@ fun FitzamApp() {
                     onBackClick = popBackStack,
                     onDetailAddClick = { selectedCategoryIds ->
                         backStack.add(
-                            Screen.DetailExerciseAdd(
+                            Screen.ExerciseSelect(
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = selectedCategoryIds.joinToString(","),
                                 sessionId = System.currentTimeMillis(),
@@ -83,8 +83,8 @@ fun FitzamApp() {
                     onCompleteClick = popBackStack,
                 )
             }
-            entry<Screen.DetailExerciseAdd> { screen ->
-                DetailExerciseAddScreen(
+            entry<Screen.ExerciseSelect> { screen ->
+                ExerciseSelectScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     selectedCategoryIds = screen.selectedCategoryIds
                         .split(",")
@@ -94,7 +94,7 @@ fun FitzamApp() {
                     onBackClick = popBackStack,
                     onCompleteClick = { selectedExerciseIds ->
                         backStack.add(
-                            Screen.WorkoutAdd(
+                            Screen.WorkoutRecord(
                                 selectedDate = screen.selectedDate,
                                 selectedExerciseIds = selectedExerciseIds.joinToString(","),
                                 selectedCategoryIds = screen.selectedCategoryIds,
@@ -104,8 +104,8 @@ fun FitzamApp() {
                     },
                 )
             }
-            entry<Screen.WorkoutAdd> { screen ->
-                WorkoutAddScreen(
+            entry<Screen.WorkoutRecord> { screen ->
+                WorkoutRecordScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     selectedExerciseIds = screen.selectedExerciseIds
                         .split(",")
@@ -115,7 +115,7 @@ fun FitzamApp() {
                     onBackClick = popBackStack,
                     onDetailAddClick = {
                         backStack.add(
-                            Screen.DetailExerciseAdd(
+                            Screen.ExerciseSelect(
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = screen.selectedCategoryIds,
                                 sessionId = System.currentTimeMillis(),
@@ -129,7 +129,7 @@ fun FitzamApp() {
                     },
                     onExerciseStartClick = { exercise ->
                         backStack.add(
-                            Screen.WorkoutSetEditor(
+                            Screen.WorkoutStart(
                                 selectedDate = screen.selectedDate,
                                 exerciseId = exercise.id,
                                 exerciseName = exercise.name,
@@ -139,8 +139,8 @@ fun FitzamApp() {
                     },
                 )
             }
-            entry<Screen.WorkoutSetEditor> { screen ->
-                WorkoutSetEditorScreen(
+            entry<Screen.WorkoutStart> { screen ->
+                WorkoutStartScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     exerciseId = screen.exerciseId,
                     exerciseName = screen.exerciseName,

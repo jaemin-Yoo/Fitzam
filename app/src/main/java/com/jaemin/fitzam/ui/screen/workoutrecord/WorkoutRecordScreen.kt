@@ -1,4 +1,4 @@
-package com.jaemin.fitzam.ui.screen.workoutadd
+﻿package com.jaemin.fitzam.ui.screen.workoutrecord
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -64,14 +64,14 @@ import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import java.time.LocalDate
 
-private data class WorkoutAddExerciseUiState(
+private data class WorkoutRecordExerciseUiState(
     val exercise: Exercise,
     val sets: List<EditableWorkoutSetUi>,
     val isEditing: Boolean = false,
 )
 
 @Composable
-fun WorkoutAddScreen(
+fun WorkoutRecordScreen(
     selectedDate: LocalDate,
     selectedExerciseIds: Set<Long>,
     sessionId: Long,
@@ -80,7 +80,7 @@ fun WorkoutAddScreen(
     onCompleteClick: () -> Unit,
     onExerciseStartClick: (Exercise) -> Unit,
 ) {
-    val viewModel: WorkoutAddViewModel = hiltViewModel(
+    val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,29 +91,29 @@ fun WorkoutAddScreen(
     }
 
     when (uiState) {
-        WorkoutAddUiState.Loading -> {
-            WorkoutAddLoadingScreen(onBackClick = onBackClick)
+        WorkoutRecordUiState.Loading -> {
+            WorkoutRecordLoadingScreen(onBackClick = onBackClick)
         }
 
-        WorkoutAddUiState.Failed -> {
-            WorkoutAddFailedScreen(onBackClick = onBackClick)
+        WorkoutRecordUiState.Failed -> {
+            WorkoutRecordFailedScreen(onBackClick = onBackClick)
         }
 
-        is WorkoutAddUiState.Success -> {
+        is WorkoutRecordUiState.Success -> {
             var editingExerciseIds by remember {
                 mutableStateOf(emptySet<Long>())
             }
             val availableIds = exerciseItemsFromViewModel.map { item -> item.exercise.id }.toSet()
             editingExerciseIds = editingExerciseIds.intersect(availableIds)
             val exerciseItems = exerciseItemsFromViewModel.map { item ->
-                WorkoutAddExerciseUiState(
+                WorkoutRecordExerciseUiState(
                     exercise = item.exercise,
                     sets = item.sets,
                     isEditing = editingExerciseIds.contains(item.exercise.id),
                 )
             }
 
-            WorkoutAddContent(
+            WorkoutRecordContent(
                 selectedDate = selectedDate,
                 exerciseItems = exerciseItems,
                 onBackClick = onBackClick,
@@ -148,9 +148,9 @@ fun WorkoutAddScreen(
 }
 
 @Composable
-private fun WorkoutAddContent(
+private fun WorkoutRecordContent(
     selectedDate: LocalDate,
-    exerciseItems: List<WorkoutAddExerciseUiState>,
+    exerciseItems: List<WorkoutRecordExerciseUiState>,
     onBackClick: () -> Unit,
     onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
@@ -260,7 +260,7 @@ private fun WorkoutAddContent(
 }
 
 @Composable
-private fun WorkoutAddLoadingScreen(
+private fun WorkoutRecordLoadingScreen(
     onBackClick: () -> Unit,
 ) {
     Scaffold(
@@ -287,7 +287,7 @@ private fun WorkoutAddLoadingScreen(
 }
 
 @Composable
-private fun WorkoutAddFailedScreen(
+private fun WorkoutRecordFailedScreen(
     onBackClick: () -> Unit,
 ) {
     Scaffold(
@@ -315,7 +315,7 @@ private fun WorkoutAddFailedScreen(
 
 @Composable
 private fun WorkoutExerciseCard(
-    exerciseItem: WorkoutAddExerciseUiState,
+    exerciseItem: WorkoutRecordExerciseUiState,
     onEditClick: () -> Unit,
     onStartClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -564,7 +564,7 @@ private fun TableInputCell(
 private val WEIGHT_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
 private val REPS_INPUT_REGEX = Regex("^\\d*$")
 
-private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseUiModel> {
+private fun sampleWorkoutRecordItems(): List<WorkoutRecordExerciseUiModel> {
     val chest = ExerciseCategory(
         id = 0,
         name = "가슴",
@@ -581,7 +581,7 @@ private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseUiModel> {
     )
 
     return listOf(
-        WorkoutAddExerciseUiModel(
+        WorkoutRecordExerciseUiModel(
             exercise = Exercise(
                 id = 1,
                 name = "숄더 프레스 (바벨)",
@@ -594,7 +594,7 @@ private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseUiModel> {
                 EditableWorkoutSetUi(index = 3, weightText = "90", repsText = "8"),
             ),
         ),
-        WorkoutAddExerciseUiModel(
+        WorkoutRecordExerciseUiModel(
             exercise = Exercise(
                 id = 2,
                 name = "밀리터리 프레스 (바벨)",
@@ -608,12 +608,12 @@ private fun sampleWorkoutAddItems(): List<WorkoutAddExerciseUiModel> {
 
 @Preview(showBackground = true)
 @Composable
-private fun WorkoutAddScreenPreview() {
+private fun WorkoutRecordScreenPreview() {
     FitzamTheme {
-        WorkoutAddContent(
+        WorkoutRecordContent(
             selectedDate = LocalDate.now(),
-            exerciseItems = sampleWorkoutAddItems().map { item ->
-                WorkoutAddExerciseUiState(
+            exerciseItems = sampleWorkoutRecordItems().map { item ->
+                WorkoutRecordExerciseUiState(
                     exercise = item.exercise,
                     sets = item.sets,
                 )
