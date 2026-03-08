@@ -122,7 +122,7 @@ fun ExerciseCategorySelectScreen(
                         trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
                     DZamButton(
                         text = "완료",
                         onClick = onCompleteClick,

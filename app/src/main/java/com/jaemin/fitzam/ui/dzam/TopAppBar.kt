@@ -3,6 +3,7 @@ package com.jaemin.fitzam.ui.dzam
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -120,7 +121,10 @@ private fun TopAppBarActionItem(
 
     when (val icon = item.icon) {
         is IconSource.Vector -> {
-            IconButton(onClick = item.onClick) {
+            IconButton(
+                onClick = item.onClick,
+                modifier = Modifier.size(40.dp),
+            ) {
                 Icon(
                     imageVector = icon.imageVector,
                     contentDescription = item.contentDescription,
@@ -130,7 +134,10 @@ private fun TopAppBarActionItem(
         }
 
         is IconSource.Drawable -> {
-            IconButton(onClick = item.onClick) {
+            IconButton(
+                onClick = item.onClick,
+                modifier = Modifier.size(40.dp),
+            ) {
                 Icon(
                     painter = painterResource(id = icon.resId),
                     contentDescription = item.contentDescription,
