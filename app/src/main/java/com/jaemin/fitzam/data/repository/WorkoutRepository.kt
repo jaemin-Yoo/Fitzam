@@ -110,13 +110,47 @@ class WorkoutRepository @Inject constructor(
         categoryIds: List<Long>,
         date: LocalDate,
     ) {
-        if (categoryIds.isEmpty()) {
-            deleteWorkout(date)
-        } else {
-            upsertWorkout(
-                date = date,
-                categoryIds = categoryIds,
+        database.withTransaction {
+            if (categoryIds.isEmpty()) {
+                deleteWorkout(date)
+                return@withTransaction
+            }
+
+            val dateString = date.toString()
+            val selectedCategoryIdSet = categoryIds.toSet()
+
+            workoutRecordDao.insert(
+                WorkoutRecordEntity(date = dateString),
             )
+
+            val exerciseRecords = workoutRecordExerciseDao.getWorkoutRecordExerciseEntitiesOnce(dateString)
+            if (exerciseRecords.isNotEmpty()) {
+                val exerciseIds = exerciseRecords.map { entry -> entry.exerciseId }.distinct()
+                val exerciseCategoryByExerciseId = exerciseDao.getExerciseEntitiesByIds(exerciseIds)
+                    .associate { entity -> entity.id to entity.categoryId }
+
+                val deleteTargetIds = exerciseRecords.mapNotNull { entry ->
+                    val categoryId = exerciseCategoryByExerciseId[entry.exerciseId]
+                    if (categoryId == null || categoryId !in selectedCategoryIdSet) {
+                        entry.id
+                    } else {
+                        null
+                    }
+                }
+                if (deleteTargetIds.isNotEmpty()) {
+                    workoutRecordExerciseDao.deleteByIds(deleteTargetIds)
+                }
+            }
+
+            workoutRecordExerciseCategoryDao.deleteByDate(dateString)
+            categoryIds.forEach { categoryId ->
+                workoutRecordExerciseCategoryDao.insert(
+                    WorkoutRecordExerciseCategoryEntity(
+                        workoutRecordDate = dateString,
+                        exerciseCategoryId = categoryId,
+                    ),
+                )
+            }
         }
     }
 
@@ -188,20 +222,4 @@ class WorkoutRepository @Inject constructor(
         workoutRecordDao.deleteByDate(date.toString())
     }
 
-    private suspend fun upsertWorkout(date: LocalDate, categoryIds: List<Long>) {
-        val workoutRecord = WorkoutRecordEntity(
-            date = date.toString(),
-        )
-        workoutRecordDao.insert(workoutRecord)
-
-        // 매핑 데이터 삭제 후 추가
-        workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
-        categoryIds.forEach { id ->
-            val workoutRecordExerciseCategory = WorkoutRecordExerciseCategoryEntity(
-                workoutRecordDate = date.toString(),
-                exerciseCategoryId = id,
-            )
-            workoutRecordExerciseCategoryDao.insert(workoutRecordExerciseCategory)
-        }
-    }
 }

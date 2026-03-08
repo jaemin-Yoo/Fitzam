@@ -18,6 +18,15 @@ interface WorkoutRecordExerciseDao {
     )
     fun getWorkoutRecordExerciseEntities(date: String): Flow<List<WorkoutRecordExerciseEntity>>
 
+    @Query(
+        """
+        SELECT * FROM workout_record_exercise
+        WHERE workoutRecordDate = :date
+        ORDER BY orderIndex
+    """
+    )
+    suspend fun getWorkoutRecordExerciseEntitiesOnce(date: String): List<WorkoutRecordExerciseEntity>
+
     @Insert
     suspend fun insert(entry: WorkoutRecordExerciseEntity): Long
 
@@ -26,4 +35,7 @@ interface WorkoutRecordExerciseDao {
 
     @Query("DELETE FROM workout_record_exercise WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM workout_record_exercise WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 }
