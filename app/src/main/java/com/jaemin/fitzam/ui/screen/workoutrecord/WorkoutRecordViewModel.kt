@@ -145,6 +145,14 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
+    fun moveExerciseUp(exerciseId: Long) {
+        moveExerciseBy(exerciseId = exerciseId, offset = -1)
+    }
+
+    fun moveExerciseDown(exerciseId: Long) {
+        moveExerciseBy(exerciseId = exerciseId, offset = 1)
+    }
+
     fun getEditorInitialValue(exerciseId: Long): WorkoutStartInitialValue {
         val item = _exerciseItems.value.firstOrNull { exerciseItem ->
             exerciseItem.exercise.id == exerciseId
@@ -268,6 +276,27 @@ class WorkoutRecordViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun moveExerciseBy(exerciseId: Long, offset: Int) {
+        val currentItems = _exerciseItems.value
+        val currentIndex = currentItems.indexOfFirst { item ->
+            item.exercise.id == exerciseId
+        }
+        if (currentIndex < 0) {
+            return
+        }
+
+        val targetIndex = currentIndex + offset
+        if (targetIndex !in currentItems.indices) {
+            return
+        }
+
+        val mutableItems = currentItems.toMutableList()
+        val targetItem = mutableItems[targetIndex]
+        mutableItems[targetIndex] = mutableItems[currentIndex]
+        mutableItems[currentIndex] = targetItem
+        _exerciseItems.value = mutableItems.toList()
     }
 
 }

@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -144,6 +145,12 @@ fun WorkoutRecordScreen(
                     editingExerciseIds = editingExerciseIds - exerciseId
                     viewModel.deleteExercise(exerciseId)
                 },
+                onExerciseMoveUpClick = { exerciseId ->
+                    viewModel.moveExerciseUp(exerciseId)
+                },
+                onExerciseMoveDownClick = { exerciseId ->
+                    viewModel.moveExerciseDown(exerciseId)
+                },
                 onSetFirstMetricChange = { exerciseId, setIndex, value ->
                     viewModel.updateSetFirstMetric(exerciseId, setIndex, value)
                 },
@@ -168,6 +175,8 @@ private fun WorkoutRecordContent(
     onExerciseToggleEditClick: (Long) -> Unit,
     onExerciseStartClick: (Exercise) -> Unit,
     onExerciseDeleteClick: (Long) -> Unit,
+    onExerciseMoveUpClick: (Long) -> Unit,
+    onExerciseMoveDownClick: (Long) -> Unit,
     onSetFirstMetricChange: (Long, Int, String) -> Unit,
     onSetSecondMetricChange: (Long, Int, String) -> Unit,
     onSetDeleteClick: (Long, Int) -> Unit,
@@ -235,15 +244,19 @@ private fun WorkoutRecordContent(
                 }
             }
 
-            items(
+            itemsIndexed(
                 items = exerciseItems,
-                key = { it.exercise.id },
-            ) { item ->
+                key = { _, item -> item.exercise.id },
+            ) { index, item ->
                 WorkoutExerciseCard(
                     exerciseItem = item,
+                    canMoveUp = index > 0,
+                    canMoveDown = index < exerciseItems.lastIndex,
                     onEditClick = { onExerciseToggleEditClick(item.exercise.id) },
                     onStartClick = { onExerciseStartClick(item.exercise) },
                     onDeleteClick = { onExerciseDeleteClick(item.exercise.id) },
+                    onMoveUpClick = { onExerciseMoveUpClick(item.exercise.id) },
+                    onMoveDownClick = { onExerciseMoveDownClick(item.exercise.id) },
                     onSetFirstMetricChange = { setIndex, value ->
                         onSetFirstMetricChange(item.exercise.id, setIndex, value)
                     },
@@ -320,9 +333,13 @@ private fun WorkoutRecordFailedScreen(
 @Composable
 private fun WorkoutExerciseCard(
     exerciseItem: WorkoutRecordExerciseUiState,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
     onEditClick: () -> Unit,
     onStartClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onMoveUpClick: () -> Unit,
+    onMoveDownClick: () -> Unit,
     onSetFirstMetricChange: (Int, String) -> Unit,
     onSetSecondMetricChange: (Int, String) -> Unit,
     onSetDeleteClick: (Int) -> Unit,
@@ -364,16 +381,44 @@ private fun WorkoutExerciseCard(
                             borderColor = Color(exercise.category.colorHex),
                         )
                     }
-                    IconButton(onClick = onEditClick) {
-                        Icon(
-                            imageVector = if (exerciseItem.isEditing) {
-                                ImageVector.vectorResource(id = R.drawable.ic_check)
-                            } else {
-                                ImageVector.vectorResource(id = R.drawable.ic_edit)
-                            },
-                            contentDescription = if (exerciseItem.isEditing) "편집 완료" else "운동 편집",
-                            tint = if (exerciseItem.isEditing) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (exerciseItem.isEditing) {
+                            IconButton(
+                                onClick = onMoveUpClick,
+                                enabled = canMoveUp,
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_up),
+                                    contentDescription = "운동 위로 이동",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.alpha(if (canMoveUp) 1f else 0.35f),
+                                )
+                            }
+                            IconButton(
+                                onClick = onMoveDownClick,
+                                enabled = canMoveDown,
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_down),
+                                    contentDescription = "운동 아래로 이동",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.alpha(if (canMoveDown) 1f else 0.35f),
+                                )
+                            }
+                        }
+                        IconButton(onClick = onEditClick) {
+                            Icon(
+                                imageVector = if (exerciseItem.isEditing) {
+                                    ImageVector.vectorResource(id = R.drawable.ic_check)
+                                } else {
+                                    ImageVector.vectorResource(id = R.drawable.ic_edit)
+                                },
+                                contentDescription = if (exerciseItem.isEditing) "편집 완료" else "운동 편집",
+                                tint = if (exerciseItem.isEditing) SuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -747,6 +792,8 @@ private fun WorkoutRecordScreenPreview() {
             onExerciseToggleEditClick = {},
             onExerciseStartClick = {},
             onExerciseDeleteClick = {},
+            onExerciseMoveUpClick = {},
+            onExerciseMoveDownClick = {},
             onSetFirstMetricChange = { _, _, _ -> },
             onSetSecondMetricChange = { _, _, _ -> },
             onSetDeleteClick = { _, _ -> },
