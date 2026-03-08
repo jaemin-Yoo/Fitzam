@@ -140,6 +140,7 @@ fun HomeScreen(
                         Locale.KOREAN
                     )
                 })",
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
             Spacer(Modifier.height(8.dp))
 
