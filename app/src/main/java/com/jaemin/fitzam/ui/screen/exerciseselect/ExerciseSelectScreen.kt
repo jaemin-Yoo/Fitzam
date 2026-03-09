@@ -97,7 +97,18 @@ fun ExerciseSelectScreen(
 
     when (val value = uiState) {
         ExerciseSelectUiState.Loading -> {
-            ExerciseSelectLoadingScreen(onBackClick = onBackClick)
+            ExerciseSelectScreen(
+                selectedDate = selectedDate,
+                onBackClick = onBackClick,
+                onCompleteClick = onCompleteClick,
+                exercises = emptyList(),
+                selectedExerciseIds = selectedExerciseIds,
+                onToggleSelected = viewModel::toggleSelectedExercise,
+                favoriteExerciseIds = emptySet(),
+                onToggleFavorite = viewModel::toggleFavorite,
+                snackbarHostState = snackbarHostState,
+                isLoading = true,
+            )
         }
         ExerciseSelectUiState.Failed -> {
             ExerciseSelectFailedScreen(onBackClick = onBackClick)
@@ -113,6 +124,7 @@ fun ExerciseSelectScreen(
                 favoriteExerciseIds = value.favoriteIds,
                 onToggleFavorite = viewModel::toggleFavorite,
                 snackbarHostState = snackbarHostState,
+                isLoading = false,
             )
         }
     }
@@ -129,6 +141,7 @@ fun ExerciseSelectScreen(
     favoriteExerciseIds: Set<Long>,
     onToggleFavorite: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
+    isLoading: Boolean = false,
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
@@ -154,7 +167,7 @@ fun ExerciseSelectScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(Color.White)
                     .padding(
                         start = 16.dp,
                         end = 16.dp,
@@ -212,39 +225,13 @@ fun ExerciseSelectScreen(
                 favoriteExerciseIds = favoriteExerciseIds,
                 onToggleSelected = onToggleSelected,
                 onToggleFavorite = onToggleFavorite,
+                isLoading = isLoading,
                 contentPadding = PaddingValues(
                     horizontal = 16.dp,
                     vertical = 16.dp,
                 ),
                 modifier = Modifier.weight(1f),
             )
-        }
-    }
-}
-
-@Composable
-private fun ExerciseSelectLoadingScreen(
-    onBackClick: () -> Unit,
-) {
-    Scaffold(
-        topBar = {
-            FitzamTopAppBar(
-                title = "운동 선택",
-                navigation = TopAppBarItem(
-                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
-                    contentDescription = "뒤로 가기",
-                    onClick = onBackClick,
-                )
-            )
-        },
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
         }
     }
 }
@@ -284,27 +271,67 @@ private fun ExerciseSelectList(
     favoriteExerciseIds: Set<Long>,
     onToggleSelected: (Long) -> Unit,
     onToggleFavorite: (Long) -> Unit,
+    isLoading: Boolean,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(
+                RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                    bottomStart = 0.dp,
+                    bottomEnd = 0.dp,
+                )
+            )
             .background(MaterialTheme.colorScheme.surface),
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            if (favoriteExercises.isNotEmpty()) {
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = contentPadding,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (favoriteExercises.isNotEmpty()) {
+                    item {
+                        SectionTitle(text = "즐겨찾는 운동")
+                    }
+                    items(
+                        items = favoriteExercises,
+                        key = { "favorite-${it.id}" },
+                    ) { exercise ->
+                        ExerciseSelectItem(
+                            exercise = exercise,
+                            isSelected = selectedExerciseIds.contains(exercise.id),
+                            isFavorite = favoriteExerciseIds.contains(exercise.id),
+                            onToggleSelected = { onToggleSelected(exercise.id) },
+                            onToggleFavorite = { onToggleFavorite(exercise.id) },
+                        )
+                    }
+                }
+
                 item {
-                    SectionTitle(text = "즐겨찾는 운동")
+                    SectionTitle(
+                        text = "전체 보기",
+                        modifier = if (favoriteExercises.isNotEmpty()) {
+                            Modifier.padding(top = 16.dp)
+                        } else {
+                            Modifier
+                        },
+                    )
                 }
                 items(
-                    items = favoriteExercises,
-                    key = { "favorite-${it.id}" },
+                    items = exercises,
+                    key = { "all-${it.id}" },
                 ) { exercise ->
                     ExerciseSelectItem(
                         exercise = exercise,
@@ -314,32 +341,9 @@ private fun ExerciseSelectList(
                         onToggleFavorite = { onToggleFavorite(exercise.id) },
                     )
                 }
-            }
-
-            item {
-                SectionTitle(
-                    text = "전체 보기",
-                    modifier = if (favoriteExercises.isNotEmpty()) {
-                        Modifier.padding(top = 16.dp)
-                    } else {
-                        Modifier
-                    },
-                )
-            }
-            items(
-                items = exercises,
-                key = { "all-${it.id}" },
-            ) { exercise ->
-                ExerciseSelectItem(
-                    exercise = exercise,
-                    isSelected = selectedExerciseIds.contains(exercise.id),
-                    isFavorite = favoriteExerciseIds.contains(exercise.id),
-                    onToggleSelected = { onToggleSelected(exercise.id) },
-                    onToggleFavorite = { onToggleFavorite(exercise.id) },
-                )
-            }
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
     }
