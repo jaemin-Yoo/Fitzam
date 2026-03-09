@@ -1,10 +1,15 @@
 package com.jaemin.fitzam.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigationevent.NavigationEvent
 import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectScreen
 import com.jaemin.fitzam.ui.screen.exerciseselect.ExerciseSelectScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
@@ -44,6 +49,8 @@ sealed interface Screen {
 @Composable
 fun FitzamApp() {
     val backStack = rememberNavBackStack(Screen.Home)
+    val pushSlideDurationMillis = 300
+    val popSlideDurationMillis = 380
     val popBackStack: () -> Unit = {
         if (backStack.size > 1) {
             backStack.removeLastOrNull()
@@ -53,6 +60,43 @@ fun FitzamApp() {
     NavDisplay(
         backStack = backStack,
         onBack = popBackStack,
+        transitionSpec = {
+            ContentTransform(
+                targetContentEnter = slideInHorizontally(
+                    animationSpec = tween(durationMillis = pushSlideDurationMillis),
+                    initialOffsetX = { fullWidth -> fullWidth },
+                ),
+                initialContentExit = slideOutHorizontally(
+                    animationSpec = tween(durationMillis = pushSlideDurationMillis),
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                ),
+            )
+        },
+        popTransitionSpec = {
+            ContentTransform(
+                targetContentEnter = slideInHorizontally(
+                    animationSpec = tween(durationMillis = popSlideDurationMillis),
+                    initialOffsetX = { fullWidth -> -fullWidth },
+                ),
+                initialContentExit = slideOutHorizontally(
+                    animationSpec = tween(durationMillis = popSlideDurationMillis),
+                    targetOffsetX = { fullWidth -> fullWidth },
+                ),
+            )
+        },
+        predictivePopTransitionSpec = { swipeEdge ->
+            val isRightEdgeSwipe = swipeEdge == NavigationEvent.EDGE_RIGHT
+            ContentTransform(
+                targetContentEnter = slideInHorizontally(
+                    animationSpec = tween(durationMillis = popSlideDurationMillis),
+                    initialOffsetX = { fullWidth -> if (isRightEdgeSwipe) fullWidth else -fullWidth },
+                ),
+                initialContentExit = slideOutHorizontally(
+                    animationSpec = tween(durationMillis = popSlideDurationMillis),
+                    targetOffsetX = { fullWidth -> if (isRightEdgeSwipe) -fullWidth else fullWidth },
+                ),
+            )
+        },
         entryProvider = entryProvider {
             entry<Screen.Home> {
                 HomeScreen(
