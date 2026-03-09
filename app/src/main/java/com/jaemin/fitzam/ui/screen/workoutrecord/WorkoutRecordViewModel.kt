@@ -49,9 +49,19 @@ class WorkoutRecordViewModel @Inject constructor(
     private val _exerciseItems = MutableStateFlow<List<WorkoutRecordExerciseUiModel>>(emptyList())
     val exerciseItems = _exerciseItems.asStateFlow()
     private var initializedDate: LocalDate? = null
+    private var initializedCategoryIds: Set<Long>? = null
+    private var initializedExerciseIds: Set<Long>? = null
 
-    fun loadExercises(selectedDate: LocalDate, selectedExerciseIds: Set<Long>) {
-        if (initializedDate == selectedDate) {
+    fun loadExercises(
+        selectedDate: LocalDate,
+        selectedCategoryIds: Set<Long>,
+        selectedExerciseIds: Set<Long>,
+    ) {
+        if (
+            initializedDate == selectedDate &&
+            initializedCategoryIds == selectedCategoryIds &&
+            initializedExerciseIds == selectedExerciseIds
+        ) {
             _uiState.value = WorkoutRecordUiState.Success(
                 exercises = _exerciseItems.value.map { item -> item.exercise },
             )
@@ -64,6 +74,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 withContext(Dispatchers.IO) {
                     buildInitialItems(
                         selectedDate = selectedDate,
+                        selectedCategoryIds = selectedCategoryIds,
                         selectedExerciseIds = selectedExerciseIds,
                     )
                 }
@@ -72,10 +83,15 @@ class WorkoutRecordViewModel @Inject constructor(
                 onSuccess = { items ->
                     _exerciseItems.value = items
                     initializedDate = selectedDate
+                    initializedCategoryIds = selectedCategoryIds
+                    initializedExerciseIds = selectedExerciseIds
                     WorkoutRecordUiState.Success(exercises = items.map { item -> item.exercise })
                 },
                 onFailure = {
                     _exerciseItems.value = emptyList()
+                    initializedDate = null
+                    initializedCategoryIds = null
+                    initializedExerciseIds = null
                     WorkoutRecordUiState.Failed
                 },
             )
@@ -241,17 +257,25 @@ class WorkoutRecordViewModel @Inject constructor(
 
     private suspend fun buildInitialItems(
         selectedDate: LocalDate,
+        selectedCategoryIds: Set<Long>,
         selectedExerciseIds: Set<Long>,
     ): List<WorkoutRecordExerciseUiModel> {
         val savedWorkoutExercises = workoutRepository.getWorkoutExercises(selectedDate).first()
+            .filter { workoutExercise ->
+                workoutExercise.exercise.category.id in selectedCategoryIds
+            }
         val savedExerciseMap = savedWorkoutExercises.associateBy { workoutExercise ->
             workoutExercise.exercise.id
         }
 
         val mergedExerciseIds = (savedExerciseMap.keys + selectedExerciseIds).toSet()
-        val exercisesById = exerciseRepository.getExercisesByIds(mergedExerciseIds).associateBy { exercise ->
-            exercise.id
-        }
+        val exercisesById = exerciseRepository.getExercisesByIds(mergedExerciseIds)
+            .filter { exercise ->
+                exercise.category.id in selectedCategoryIds
+            }
+            .associateBy { exercise ->
+                exercise.id
+            }
 
         val mergedOrderedIds = buildList {
             addAll(savedWorkoutExercises.map { savedExercise -> savedExercise.exercise.id })
@@ -261,20 +285,21 @@ class WorkoutRecordViewModel @Inject constructor(
         return mergedOrderedIds.mapNotNull { exerciseId ->
             val savedExercise = savedExerciseMap[exerciseId]
             val exercise = savedExercise?.exercise ?: exercisesById[exerciseId]
+            if (exercise == null || exercise.category.id !in selectedCategoryIds) {
+                return@mapNotNull null
+            }
             val recordSchema = savedExercise?.exercise?.recordSchema
                 ?: workoutRepository.getLatestRecordSchema(exerciseId)
                 ?: exercise?.recordSchema
                 ?: ExerciseRecordSchema.WEIGHT_REPS
-            exercise?.let { existingExercise ->
-                WorkoutRecordExerciseUiModel(
-                    exercise = existingExercise.copy(recordSchema = recordSchema),
-                    sets = savedExercise?.sets
-                        ?.map { set ->
-                            set.toEditableSet(recordSchema)
-                        }
-                        .orEmpty(),
-                )
-            }
+            WorkoutRecordExerciseUiModel(
+                exercise = exercise.copy(recordSchema = recordSchema),
+                sets = savedExercise?.sets
+                    ?.map { set ->
+                        set.toEditableSet(recordSchema)
+                    }
+                    .orEmpty(),
+            )
         }
     }
 

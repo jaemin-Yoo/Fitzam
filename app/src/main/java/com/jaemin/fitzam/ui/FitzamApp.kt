@@ -157,6 +157,10 @@ fun FitzamApp() {
             entry<Screen.WorkoutRecord> { screen ->
                 WorkoutRecordScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
+                    selectedCategoryIds = screen.selectedCategoryIds
+                        .split(",")
+                        .mapNotNull { value -> value.toLongOrNull() }
+                        .toSet(),
                     selectedExerciseIds = screen.selectedExerciseIds
                         .split(",")
                         .mapNotNull { value -> value.toLongOrNull() }

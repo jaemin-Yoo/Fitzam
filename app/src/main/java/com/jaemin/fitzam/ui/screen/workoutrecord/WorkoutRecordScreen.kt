@@ -89,6 +89,7 @@ private data class WorkoutRecordExerciseUiState(
 @Composable
 fun WorkoutRecordScreen(
     selectedDate: LocalDate,
+    selectedCategoryIds: Set<Long>,
     selectedExerciseIds: Set<Long>,
     sessionId: Long,
     onBackClick: () -> Unit,
@@ -102,9 +103,10 @@ fun WorkoutRecordScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val exerciseItemsFromViewModel by viewModel.exerciseItems.collectAsStateWithLifecycle()
 
-    LaunchedEffect(selectedDate, selectedExerciseIds) {
+    LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds) {
         viewModel.loadExercises(
             selectedDate = selectedDate,
+            selectedCategoryIds = selectedCategoryIds,
             selectedExerciseIds = selectedExerciseIds,
         )
     }
