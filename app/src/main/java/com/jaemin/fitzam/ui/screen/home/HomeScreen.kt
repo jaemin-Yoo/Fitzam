@@ -57,6 +57,7 @@ import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.dzam.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.util.drawableResIdByName
+import com.jaemin.fitzam.ui.util.formatDurationInMinutesAndSeconds
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -282,11 +283,17 @@ private fun HomeWorkoutSetTable(
                 ExerciseRecordSchema.WEIGHT_REPS -> set.metrics[WorkoutMetricType.REPS] ?: 0.0
                 ExerciseRecordSchema.DISTANCE_DURATION -> set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0
             }
+            val secondMetricText = when (recordSchema) {
+                ExerciseRecordSchema.WEIGHT_REPS -> formatMetricValue(secondMetric)
+                ExerciseRecordSchema.DISTANCE_DURATION -> {
+                    formatDurationInMinutesAndSeconds(secondMetric.toInt())
+                }
+            }
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 HomeTableValueCell(text = set.index.toString(), modifier = Modifier.weight(1f))
                 HomeTableValueCell(text = formatMetricValue(firstMetric), modifier = Modifier.weight(1f))
-                HomeTableValueCell(text = formatMetricValue(secondMetric), modifier = Modifier.weight(1f))
+                HomeTableValueCell(text = secondMetricText, modifier = Modifier.weight(1f))
             }
         }
     }

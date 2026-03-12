@@ -77,6 +77,7 @@ import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
+import com.jaemin.fitzam.ui.util.formatDurationInMinutesAndSeconds
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 
@@ -811,13 +812,6 @@ private val REPS_INPUT_REGEX = Regex("^\\d*$")
 private val DISTANCE_INPUT_REGEX = Regex("^\\d*(\\.\\d{0,2})?$")
 private val DURATION_INPUT_REGEX = Regex("^\\d*$")
 private val MINUTES_INPUT_REGEX = Regex("^\\d*$")
-
-private fun formatDurationInMinutesAndSeconds(secondsText: String): String {
-    val totalSeconds = secondsText.toIntOrNull() ?: return secondsText
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "${minutes.toString().padStart(2, '0')}분 ${seconds.toString().padStart(2, '0')}초"
-}
 
 private data class WorkoutSetTableConfig(
     val firstHeader: String,
