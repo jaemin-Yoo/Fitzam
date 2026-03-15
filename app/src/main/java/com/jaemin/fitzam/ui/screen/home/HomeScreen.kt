@@ -1,23 +1,31 @@
 package com.jaemin.fitzam.ui.screen.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -25,6 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +59,8 @@ import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.CalendarDayItem
+import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
+import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.FitzamCalendar
 import com.jaemin.fitzam.ui.dzam.FitzamCalendarDayList
 import com.jaemin.fitzam.ui.dzam.FitzamCalendarState
@@ -57,11 +70,14 @@ import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.dzam.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
+import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import com.jaemin.fitzam.ui.util.formatDurationInMinutesAndSeconds
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
+
+private const val NO_DELETE_TARGET = -1L
 
 @Composable
 fun HomeScreen(
@@ -72,6 +88,7 @@ fun HomeScreen(
 ) {
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
     val selectedDateWorkoutExercises by viewModel.selectedDateWorkoutExercises.collectAsStateWithLifecycle()
+    val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
     val calendarState = rememberFitzamCalendarState()
 
     LaunchedEffect(calendarState.displayedYearMonth) {
@@ -85,11 +102,22 @@ fun HomeScreen(
     HomeScreen(
         workouts = workouts,
         selectedDateWorkoutExercises = selectedDateWorkoutExercises,
+        isEditMode = isEditMode,
         calendarState = calendarState,
         onAddOrEditWorkout = onAddOrEditWorkout,
-        onSettingsClick = onSettingsClick,
+        onSettingsClick = {
+            viewModel.discardExerciseEdit()
+            onSettingsClick()
+        },
         onWorkoutExerciseClick = { exerciseId ->
             onWorkoutDetailClick(calendarState.selectedDate, exerciseId)
+        },
+        onWorkoutExerciseLongClick = viewModel::enterExerciseEdit,
+        onMoveExerciseUp = viewModel::moveExerciseUp,
+        onMoveExerciseDown = viewModel::moveExerciseDown,
+        onDeleteExercise = viewModel::deleteExercise,
+        onEditComplete = {
+            viewModel.saveExerciseEdit(onSuccess = {})
         },
     )
 }
@@ -99,11 +127,22 @@ fun HomeScreen(
 fun HomeScreen(
     workouts: List<Workout>,
     selectedDateWorkoutExercises: List<WorkoutExercise>,
+    isEditMode: Boolean,
     calendarState: FitzamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
     onSettingsClick: () -> Unit,
     onWorkoutExerciseClick: (Long) -> Unit,
+    onWorkoutExerciseLongClick: () -> Unit,
+    onMoveExerciseUp: (Long) -> Unit,
+    onMoveExerciseDown: (Long) -> Unit,
+    onDeleteExercise: (Long) -> Unit,
+    onEditComplete: () -> Unit,
 ) {
+    var deleteConfirmExerciseId by rememberSaveable { mutableLongStateOf(NO_DELETE_TARGET) }
+    val deleteConfirmTarget = selectedDateWorkoutExercises.firstOrNull { workoutExercise ->
+        workoutExercise.exercise.id == deleteConfirmExerciseId
+    }
+
     Scaffold(
         topBar = {
             FitzamTopAppBar(
@@ -124,14 +163,43 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FitzamFloatingActionButton(
-                icon = if (workouts.any { it.date == calendarState.selectedDate }) {
-                    ImageVector.vectorResource(R.drawable.ic_edit)
-                } else {
-                    ImageVector.vectorResource(R.drawable.ic_plus)
-                },
-                onClick = { onAddOrEditWorkout(calendarState.selectedDate) },
-            )
+            if (!isEditMode) {
+                FitzamFloatingActionButton(
+                    icon = if (workouts.any { it.date == calendarState.selectedDate }) {
+                        ImageVector.vectorResource(R.drawable.ic_edit)
+                    } else {
+                        ImageVector.vectorResource(R.drawable.ic_plus)
+                    },
+                    onClick = { onAddOrEditWorkout(calendarState.selectedDate) },
+                )
+            }
+        },
+        bottomBar = {
+            if (isEditMode) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 12.dp,
+                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
+                        ),
+                ) {
+                    DZamButton(
+                        text = "완료",
+                        onClick = onEditComplete,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SuccessGreen,
+                            contentColor = Color.White,
+                            disabledContainerColor = SuccessGreen,
+                            disabledContentColor = Color.White,
+                        ),
+                    )
+                }
+            }
         },
     ) { paddingValues ->
         Column(
@@ -194,68 +262,173 @@ fun HomeScreen(
             if (selectedDateWorkoutExercises.isNotEmpty()) {
                 Spacer(Modifier.height(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    selectedDateWorkoutExercises.forEach { workoutExercise ->
+                    selectedDateWorkoutExercises.forEachIndexed { index, workoutExercise ->
                         HomeWorkoutExerciseCard(
                             workoutExercise = workoutExercise,
+                            isEditMode = isEditMode,
+                            canMoveUp = index > 0,
+                            canMoveDown = index < selectedDateWorkoutExercises.lastIndex,
                             onClick = { onWorkoutExerciseClick(workoutExercise.exercise.id) },
+                            onLongClick = onWorkoutExerciseLongClick,
+                            onMoveUp = { onMoveExerciseUp(workoutExercise.exercise.id) },
+                            onMoveDown = { onMoveExerciseDown(workoutExercise.exercise.id) },
+                            onDelete = {
+                                if (workoutExercise.sets.isEmpty()) {
+                                    onDeleteExercise(workoutExercise.exercise.id)
+                                } else {
+                                    deleteConfirmExerciseId = workoutExercise.exercise.id
+                                }
+                            },
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(88.dp))
+            Spacer(Modifier.height(if (isEditMode) 104.dp else 88.dp))
+        }
+    }
+
+    if (deleteConfirmTarget != null) {
+        DZamAlertDialog(
+            title = "운동 삭제",
+            text = "세트 기록이 있는 운동입니다.\n운동을 정말 삭제할까요?",
+            onConfirm = {
+                onDeleteExercise(deleteConfirmTarget.exercise.id)
+                deleteConfirmExerciseId = NO_DELETE_TARGET
+            },
+            onCancel = {
+                deleteConfirmExerciseId = NO_DELETE_TARGET
+            },
+            confirmText = "삭제",
+            cancelText = "취소",
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HomeWorkoutExerciseCard(
+    workoutExercise: WorkoutExercise,
+    isEditMode: Boolean,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Surface(
+        color = Color.White,
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.then(
+            if (isEditMode) {
+                Modifier
+            } else {
+                Modifier.combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+            },
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (isEditMode) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    EditMoveButton(
+                        iconResId = R.drawable.ic_up,
+                        contentDescription = "위로 이동",
+                        enabled = canMoveUp,
+                        onClick = onMoveUp,
+                    )
+                    EditMoveButton(
+                        iconResId = R.drawable.ic_down,
+                        contentDescription = "아래로 이동",
+                        enabled = canMoveDown,
+                        onClick = onMoveDown,
+                    )
+                }
+            }
+
+            Image(
+                painter = painterResource(drawableResIdByName(workoutExercise.exercise.imageName)),
+                contentDescription = workoutExercise.exercise.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape),
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = workoutExercise.exercise.name,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                ExerciseCategoryTag(
+                    name = workoutExercise.exercise.category.name,
+                    borderColor = Color(workoutExercise.exercise.category.colorHex),
+                )
+
+                if (!isEditMode && workoutExercise.sets.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HomeWorkoutSetTable(
+                        recordSchema = workoutExercise.exercise.recordSchema,
+                        sets = workoutExercise.sets,
+                    )
+                }
+            }
+
+            if (isEditMode) {
+                IconButton(
+                    onClick = onDelete,
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_trash),
+                        contentDescription = "운동 삭제",
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun HomeWorkoutExerciseCard(
-    workoutExercise: WorkoutExercise,
+private fun EditMoveButton(
+    iconResId: Int,
+    contentDescription: String,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     Surface(
-        color = Color.White,
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.background,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.size(44.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(drawableResIdByName(workoutExercise.exercise.imageName)),
-                    contentDescription = workoutExercise.exercise.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape),
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Column {
-                    Text(
-                        text = workoutExercise.exercise.name,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    ExerciseCategoryTag(
-                        name = workoutExercise.exercise.category.name,
-                        borderColor = Color(workoutExercise.exercise.category.colorHex),
-                    )
-                }
-            }
-
-            if (workoutExercise.sets.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                HomeWorkoutSetTable(
-                    recordSchema = workoutExercise.exercise.recordSchema,
-                    sets = workoutExercise.sets,
-                )
-            }
+            Icon(
+                imageVector = ImageVector.vectorResource(iconResId),
+                contentDescription = contentDescription,
+                tint = if (enabled) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                },
+            )
         }
     }
 }
@@ -442,10 +615,16 @@ fun HomeScreenPreview() {
         HomeScreen(
             workouts = workouts,
             selectedDateWorkoutExercises = selectedDateWorkoutExercises,
+            isEditMode = true,
             calendarState = rememberFitzamCalendarState(),
             onAddOrEditWorkout = {},
             onSettingsClick = {},
             onWorkoutExerciseClick = {},
+            onWorkoutExerciseLongClick = {},
+            onMoveExerciseUp = {},
+            onMoveExerciseDown = {},
+            onDeleteExercise = {},
+            onEditComplete = {},
         )
     }
 }
