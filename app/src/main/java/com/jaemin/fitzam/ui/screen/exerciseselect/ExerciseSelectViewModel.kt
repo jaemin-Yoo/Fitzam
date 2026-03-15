@@ -59,6 +59,7 @@ class ExerciseSelectViewModel @Inject constructor(
         selectedDate: LocalDate,
         selectedCategoryIds: Set<Long>,
         incomingSelectedExerciseIds: Set<Long>,
+        preselectSavedExercises: Boolean,
     ) {
         if (lastLoadedDate != selectedDate) {
             hasInitializedSelection = false
@@ -108,6 +109,13 @@ class ExerciseSelectViewModel @Inject constructor(
                     .map { exercise -> exercise.id }
                     .toSet()
                 val initialSelectedExerciseIds = (loadResult.savedExerciseIds + incomingSelectedExerciseIds)
+                    .let { candidateIds ->
+                        if (preselectSavedExercises) {
+                            candidateIds
+                        } else {
+                            incomingSelectedExerciseIds
+                        }
+                    }
                     .intersect(loadedExerciseIds)
                 _selectedExerciseIds.update { currentSelectedIds ->
                     if (!hasInitializedSelection) {

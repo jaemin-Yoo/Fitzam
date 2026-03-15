@@ -74,6 +74,7 @@ fun ExerciseSelectScreen(
     selectedDate: LocalDate,
     selectedCategoryIds: Set<Long>,
     selectedExerciseIds: Set<Long>,
+    preselectSavedExercises: Boolean,
     sessionId: Long,
     onBackClick: () -> Unit,
     onCompleteClick: () -> Unit,
@@ -85,11 +86,12 @@ fun ExerciseSelectScreen(
     val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds) {
+    LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds, preselectSavedExercises) {
         viewModel.loadExercises(
             selectedDate = selectedDate,
             selectedCategoryIds = selectedCategoryIds,
             incomingSelectedExerciseIds = selectedExerciseIds,
+            preselectSavedExercises = preselectSavedExercises,
         )
     }
 

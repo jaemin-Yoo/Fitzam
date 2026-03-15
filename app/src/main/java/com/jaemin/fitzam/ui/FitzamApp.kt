@@ -30,6 +30,8 @@ sealed interface Screen {
         val selectedDate: String,
         val selectedCategoryIds: String,
         val selectedExerciseIds: String = "",
+        val preselectSavedExercises: Boolean = true,
+        val closeScreenCount: Int = 2,
         val sessionId: Long,
     ) : NavKey
     @Serializable data class WorkoutDetail(
@@ -107,6 +109,18 @@ fun FitzamApp() {
                             )
                         )
                     },
+                    onAddWorkout = { selectedDate, selectedCategoryIds ->
+                        backStack.add(
+                            Screen.ExerciseSelect(
+                                selectedDate = selectedDate.toString(),
+                                selectedCategoryIds = selectedCategoryIds.joinToString(","),
+                                selectedExerciseIds = "",
+                                preselectSavedExercises = false,
+                                closeScreenCount = 1,
+                                sessionId = System.currentTimeMillis(),
+                            )
+                        )
+                    },
                     onWorkoutDetailClick = { selectedDate, exerciseId ->
                         backStack.add(
                             Screen.WorkoutDetail(
@@ -130,6 +144,8 @@ fun FitzamApp() {
                                 selectedDate = screen.selectedDate,
                                 selectedCategoryIds = selectedCategoryIds.joinToString(","),
                                 selectedExerciseIds = "",
+                                preselectSavedExercises = true,
+                                closeScreenCount = 2,
                                 sessionId = System.currentTimeMillis(),
                             )
                         )
@@ -148,11 +164,13 @@ fun FitzamApp() {
                         .split(",")
                         .mapNotNull { value -> value.toLongOrNull() }
                         .toSet(),
+                    preselectSavedExercises = screen.preselectSavedExercises,
                     sessionId = screen.sessionId,
                     onBackClick = popBackStack,
                     onCompleteClick = {
-                        popBackStack()
-                        popBackStack()
+                        repeat(screen.closeScreenCount) {
+                            popBackStack()
+                        }
                     },
                 )
             }

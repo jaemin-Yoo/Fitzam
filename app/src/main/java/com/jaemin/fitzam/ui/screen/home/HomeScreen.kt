@@ -82,6 +82,7 @@ private const val NO_DELETE_TARGET = -1L
 @Composable
 fun HomeScreen(
     onAddOrEditWorkout: (LocalDate) -> Unit,
+    onAddWorkout: (LocalDate, Set<Long>) -> Unit,
     onWorkoutDetailClick: (LocalDate, Long) -> Unit,
     onSettingsClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -105,6 +106,7 @@ fun HomeScreen(
         isEditMode = isEditMode,
         calendarState = calendarState,
         onAddOrEditWorkout = onAddOrEditWorkout,
+        onAddWorkout = onAddWorkout,
         onSettingsClick = {
             viewModel.discardExerciseEdit()
             onSettingsClick()
@@ -130,6 +132,7 @@ fun HomeScreen(
     isEditMode: Boolean,
     calendarState: FitzamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
+    onAddWorkout: (LocalDate, Set<Long>) -> Unit,
     onSettingsClick: () -> Unit,
     onWorkoutExerciseClick: (Long) -> Unit,
     onWorkoutExerciseLongClick: () -> Unit,
@@ -142,6 +145,13 @@ fun HomeScreen(
     val deleteConfirmTarget = selectedDateWorkoutExercises.firstOrNull { workoutExercise ->
         workoutExercise.exercise.id == deleteConfirmExerciseId
     }
+    val selectedDateWorkout = workouts.firstOrNull { it.date == calendarState.selectedDate }
+    val hasRecordedCategories = selectedDateWorkout?.exerciseCategories?.isNotEmpty() == true
+    val hasWorkoutExercises = selectedDateWorkoutExercises.isNotEmpty()
+    val selectedCategoryIds = selectedDateWorkout?.exerciseCategories
+        ?.map { category -> category.id }
+        ?.toSet()
+        .orEmpty()
 
     Scaffold(
         topBar = {
@@ -249,9 +259,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val workoutOfSelectedDate =
-                    workouts.firstOrNull { it.date == calendarState.selectedDate }
-                workoutOfSelectedDate?.exerciseCategories?.forEach { category ->
+                selectedDateWorkout?.exerciseCategories?.forEach { category ->
                     ExerciseCategoryTag(
                         name = category.name,
                         borderColor = Color(category.colorHex),
@@ -259,7 +267,7 @@ fun HomeScreen(
                 }
             }
 
-            if (selectedDateWorkoutExercises.isNotEmpty()) {
+            if (hasWorkoutExercises) {
                 Spacer(Modifier.height(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     selectedDateWorkoutExercises.forEachIndexed { index, workoutExercise ->
@@ -281,7 +289,31 @@ fun HomeScreen(
                             },
                         )
                     }
+                    if (!isEditMode) {
+                        HomeAddWorkoutButton(
+                            onClick = {
+                                onAddWorkout(
+                                    calendarState.selectedDate,
+                                    selectedCategoryIds,
+                                )
+                            },
+                        )
+                    }
                 }
+            } else if (hasRecordedCategories && !isEditMode) {
+                HomeAddWorkoutButton(
+                    onClick = {
+                        onAddWorkout(
+                            calendarState.selectedDate,
+                            selectedCategoryIds,
+                        )
+                    },
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            } else {
+                HomeEmptyRecordState(
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
 
             Spacer(Modifier.height(if (isEditMode) 104.dp else 88.dp))
@@ -401,6 +433,42 @@ private fun HomeWorkoutExerciseCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HomeAddWorkoutButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DZamButton(
+        text = "운동 추가",
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun HomeEmptyRecordState(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_memo),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(52.dp),
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "운동을 기록하세요.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -618,6 +686,7 @@ fun HomeScreenPreview() {
             isEditMode = true,
             calendarState = rememberFitzamCalendarState(),
             onAddOrEditWorkout = {},
+            onAddWorkout = { _, _ -> },
             onSettingsClick = {},
             onWorkoutExerciseClick = {},
             onWorkoutExerciseLongClick = {},
