@@ -27,6 +27,7 @@ data class EditableWorkoutSetUi(
 )
 
 data class WorkoutRecordExerciseUiModel(
+    val workoutExerciseId: Long,
     val exercise: Exercise,
     val sets: List<EditableWorkoutSetUi>,
 )
@@ -62,6 +63,7 @@ class WorkoutRecordViewModel @Inject constructor(
                         .map { workoutExercise ->
                             val recordSchema = workoutExercise.exercise.recordSchema
                             WorkoutRecordExerciseUiModel(
+                                workoutExerciseId = workoutExercise.id,
                                 exercise = workoutExercise.exercise,
                                 sets = workoutExercise.sets.map { set ->
                                     set.toEditableSet(recordSchema)
@@ -135,15 +137,15 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
-    fun getExercise(exerciseId: Long): Exercise? {
+    fun getExercise(workoutExerciseId: Long): Exercise? {
         return _exerciseItems.value.firstOrNull { item ->
-            item.exercise.id == exerciseId
+            item.workoutExerciseId == workoutExerciseId
         }?.exercise
     }
 
-    fun updateSetFirstMetric(exerciseId: Long, setIndex: Int, value: String) {
+    fun updateSetFirstMetric(workoutExerciseId: Long, setIndex: Int, value: String) {
         _exerciseItems.value = _exerciseItems.value.map { item ->
-            if (item.exercise.id != exerciseId) {
+            if (item.workoutExerciseId != workoutExerciseId) {
                 item
             } else {
                 item.copy(
@@ -159,9 +161,9 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
-    fun updateSetSecondMetric(exerciseId: Long, setIndex: Int, value: String) {
+    fun updateSetSecondMetric(workoutExerciseId: Long, setIndex: Int, value: String) {
         _exerciseItems.value = _exerciseItems.value.map { item ->
-            if (item.exercise.id != exerciseId) {
+            if (item.workoutExerciseId != workoutExerciseId) {
                 item
             } else {
                 item.copy(
@@ -177,9 +179,9 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
-    fun deleteSet(exerciseId: Long, setIndex: Int) {
+    fun deleteSet(workoutExerciseId: Long, setIndex: Int) {
         _exerciseItems.value = _exerciseItems.value.map { item ->
-            if (item.exercise.id != exerciseId) {
+            if (item.workoutExerciseId != workoutExerciseId) {
                 item
             } else {
                 val reindexedSets = item.sets
@@ -192,23 +194,23 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
-    fun deleteExercise(exerciseId: Long) {
+    fun deleteExercise(workoutExerciseId: Long) {
         _exerciseItems.value = _exerciseItems.value.filterNot { item ->
-            item.exercise.id == exerciseId
+            item.workoutExerciseId == workoutExerciseId
         }
     }
 
-    fun moveExerciseUp(exerciseId: Long) {
-        moveExerciseBy(exerciseId = exerciseId, offset = -1)
+    fun moveExerciseUp(workoutExerciseId: Long) {
+        moveExerciseBy(workoutExerciseId = workoutExerciseId, offset = -1)
     }
 
-    fun moveExerciseDown(exerciseId: Long) {
-        moveExerciseBy(exerciseId = exerciseId, offset = 1)
+    fun moveExerciseDown(workoutExerciseId: Long) {
+        moveExerciseBy(workoutExerciseId = workoutExerciseId, offset = 1)
     }
 
-    fun getEditorInitialValue(exerciseId: Long): WorkoutStartInitialValue {
+    fun getEditorInitialValue(workoutExerciseId: Long): WorkoutStartInitialValue {
         val item = _exerciseItems.value.firstOrNull { exerciseItem ->
-            exerciseItem.exercise.id == exerciseId
+            exerciseItem.workoutExerciseId == workoutExerciseId
         }
         val lastSet = item?.sets?.lastOrNull()
         val recordSchema = item?.exercise?.recordSchema ?: ExerciseRecordSchema.WEIGHT_REPS
@@ -223,7 +225,7 @@ class WorkoutRecordViewModel @Inject constructor(
     }
 
     fun appendSet(
-        exerciseId: Long,
+        workoutExerciseId: Long,
         firstValue: Double,
         secondValue: Int,
         recordSchema: ExerciseRecordSchema,
@@ -232,7 +234,7 @@ class WorkoutRecordViewModel @Inject constructor(
         val normalizedSecond = secondValue.coerceAtLeast(0)
 
         _exerciseItems.value = _exerciseItems.value.map { item ->
-            if (item.exercise.id != exerciseId) {
+            if (item.workoutExerciseId != workoutExerciseId) {
                 item
             } else {
                 val nextIndex = item.sets.size + 1
@@ -330,6 +332,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 ?: exercise?.recordSchema
                 ?: ExerciseRecordSchema.WEIGHT_REPS
             WorkoutRecordExerciseUiModel(
+                workoutExerciseId = savedExercise?.id ?: -(exerciseId + 1),
                 exercise = exercise.copy(recordSchema = recordSchema),
                 sets = savedExercise?.sets
                     ?.map { set ->
@@ -340,10 +343,10 @@ class WorkoutRecordViewModel @Inject constructor(
         }
     }
 
-    private fun moveExerciseBy(exerciseId: Long, offset: Int) {
+    private fun moveExerciseBy(workoutExerciseId: Long, offset: Int) {
         val currentItems = _exerciseItems.value
         val currentIndex = currentItems.indexOfFirst { item ->
-            item.exercise.id == exerciseId
+            item.workoutExerciseId == workoutExerciseId
         }
         if (currentIndex < 0) {
             return

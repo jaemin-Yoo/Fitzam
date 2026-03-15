@@ -81,26 +81,26 @@ class HomeViewModel @Inject constructor(
         _selectedDateWorkoutExercises.value = latestLoadedWorkoutExercises
     }
 
-    fun moveExerciseUp(exerciseId: Long) {
+    fun moveExerciseUp(workoutExerciseId: Long) {
         if (!_isEditMode.value) {
             return
         }
-        moveExercise(exerciseId = exerciseId, offset = -1)
+        moveExercise(workoutExerciseId = workoutExerciseId, offset = -1)
     }
 
-    fun moveExerciseDown(exerciseId: Long) {
+    fun moveExerciseDown(workoutExerciseId: Long) {
         if (!_isEditMode.value) {
             return
         }
-        moveExercise(exerciseId = exerciseId, offset = 1)
+        moveExercise(workoutExerciseId = workoutExerciseId, offset = 1)
     }
 
-    fun deleteExercise(exerciseId: Long) {
+    fun deleteExercise(workoutExerciseId: Long) {
         if (!_isEditMode.value) {
             return
         }
         _selectedDateWorkoutExercises.value = _selectedDateWorkoutExercises.value.filterNot { workoutExercise ->
-            workoutExercise.exercise.id == exerciseId
+            workoutExercise.id == workoutExerciseId
         }
     }
 
@@ -150,10 +150,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun moveExercise(exerciseId: Long, offset: Int) {
+    private fun moveExercise(workoutExerciseId: Long, offset: Int) {
         val currentExercises = _selectedDateWorkoutExercises.value
         val currentIndex = currentExercises.indexOfFirst { workoutExercise ->
-            workoutExercise.exercise.id == exerciseId
+            workoutExercise.id == workoutExerciseId
         }
         if (currentIndex < 0) {
             return

@@ -121,6 +121,7 @@ fun ExerciseSelectScreen(
                     viewModel.completeSelection(
                         selectedDate = selectedDate,
                         selectedCategoryIds = selectedCategoryIds,
+                        preselectSavedExercises = preselectSavedExercises,
                         onSuccess = onCompleteClick,
                     )
                 },
@@ -146,6 +147,7 @@ fun ExerciseSelectScreen(
                     viewModel.completeSelection(
                         selectedDate = selectedDate,
                         selectedCategoryIds = selectedCategoryIds,
+                        preselectSavedExercises = preselectSavedExercises,
                         onSuccess = onCompleteClick,
                     )
                 },

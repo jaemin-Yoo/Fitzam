@@ -175,6 +175,7 @@ class ExerciseSelectViewModel @Inject constructor(
     fun completeSelection(
         selectedDate: LocalDate,
         selectedCategoryIds: Set<Long>,
+        preselectSavedExercises: Boolean,
         onSuccess: () -> Unit,
     ) {
         val selectedIds = _selectedExerciseIds.value
@@ -186,55 +187,65 @@ class ExerciseSelectViewModel @Inject constructor(
                         .filter { workoutExercise ->
                             workoutExercise.exercise.category.id in selectedCategoryIds
                         }
-                    val savedExerciseMap = savedExercises.associateBy { workoutExercise ->
+                    val savedExerciseIds = savedExercises.map { workoutExercise ->
                         workoutExercise.exercise.id
                     }
-                    val mergedExerciseIds = (savedExerciseMap.keys + selectedIds).toSet()
-                    val exercisesById = exerciseRepository.getExercisesByIds(mergedExerciseIds)
+                    val lookupExerciseIds = (savedExerciseIds + selectedIds).toSet()
+                    val exercisesById = exerciseRepository.getExercisesByIds(lookupExerciseIds)
                         .filter { exercise ->
                             exercise.category.id in selectedCategoryIds
                         }
                         .associateBy { exercise ->
                             exercise.id
                         }
-                    val mergedOrderedIds = buildList {
-                        addAll(savedExercises.map { workoutExercise -> workoutExercise.exercise.id })
-                        addAll(selectedIds.filterNot { exerciseId -> exerciseId in savedExerciseMap })
-                    }
+                    val drafts = buildList {
+                        savedExercises.forEachIndexed { index, savedExercise ->
+                            val recordSchema = savedExercise.exercise.recordSchema
+                            add(
+                                WorkoutExerciseDraft(
+                                    exerciseId = savedExercise.exercise.id,
+                                    categoryId = savedExercise.exercise.category.id,
+                                    orderIndex = index,
+                                    recordSchema = recordSchema,
+                                    sets = savedExercise.sets.map { set ->
+                                        WorkoutSetDraft(
+                                            setIndex = set.index,
+                                            metrics = when (recordSchema) {
+                                                ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
+                                                    WorkoutMetricType.WEIGHT_KG to (set.metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0),
+                                                    WorkoutMetricType.REPS to (set.metrics[WorkoutMetricType.REPS] ?: 0.0),
+                                                )
 
-                    val drafts = mergedOrderedIds.mapIndexedNotNull { index, exerciseId ->
-                        val savedExercise = savedExerciseMap[exerciseId]
-                        val exercise = savedExercise?.exercise ?: exercisesById[exerciseId]
-                        if (exercise == null) {
-                            return@mapIndexedNotNull null
+                                                ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
+                                                    WorkoutMetricType.DISTANCE_KM to (set.metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0),
+                                                    WorkoutMetricType.DURATION_SEC to (set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0),
+                                                )
+                                            },
+                                        )
+                                    },
+                                )
+                            )
                         }
-                        val recordSchema = savedExercise?.exercise?.recordSchema
-                            ?: workoutRepository.getLatestRecordSchema(exerciseId)
-                            ?: exercise.recordSchema
-                        WorkoutExerciseDraft(
-                            exerciseId = exercise.id,
-                            categoryId = exercise.category.id,
-                            orderIndex = index,
-                            recordSchema = recordSchema,
-                            sets = savedExercise?.sets
-                                ?.map { set ->
-                                    WorkoutSetDraft(
-                                        setIndex = set.index,
-                                        metrics = when (recordSchema) {
-                                            ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
-                                                WorkoutMetricType.WEIGHT_KG to (set.metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0),
-                                                WorkoutMetricType.REPS to (set.metrics[WorkoutMetricType.REPS] ?: 0.0),
-                                            )
 
-                                            ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
-                                                WorkoutMetricType.DISTANCE_KM to (set.metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0),
-                                                WorkoutMetricType.DURATION_SEC to (set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0),
-                                            )
-                                        },
-                                    )
-                                }
-                                .orEmpty(),
-                        )
+                        val appendedIds = if (preselectSavedExercises) {
+                            selectedIds.filterNot { exerciseId -> exerciseId in savedExerciseIds }
+                        } else {
+                            selectedIds.toList()
+                        }
+                        appendedIds.forEachIndexed { appendIndex, exerciseId ->
+                            val exercise = exercisesById[exerciseId] ?: return@forEachIndexed
+                            val recordSchema = workoutRepository.getLatestRecordSchema(exerciseId)
+                                ?: exercise.recordSchema
+                            add(
+                                WorkoutExerciseDraft(
+                                    exerciseId = exercise.id,
+                                    categoryId = exercise.category.id,
+                                    orderIndex = savedExercises.size + appendIndex,
+                                    recordSchema = recordSchema,
+                                    sets = emptyList(),
+                                )
+                            )
+                        }
                     }
 
                     workoutRepository.replaceWorkoutExercises(

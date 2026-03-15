@@ -59,10 +59,10 @@ private val INT_INPUT_REGEX = Regex("^\\d*$")
 @Composable
 fun WorkoutDetailScreen(
     selectedDate: LocalDate,
-    exerciseId: Long,
+    workoutExerciseId: Long,
     sessionId: Long,
     onDismissRequest: () -> Unit,
-    onWorkoutStartClick: (Long, String) -> Unit,
+    onWorkoutStartClick: (Long, Long, String) -> Unit,
 ) {
     val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
@@ -74,7 +74,7 @@ fun WorkoutDetailScreen(
     }
 
     val selectedWorkoutExercise = exerciseItems.firstOrNull { item ->
-        item.exercise.id == exerciseId
+        item.workoutExerciseId == workoutExerciseId
     }
 
     if (selectedWorkoutExercise == null) {
@@ -93,26 +93,27 @@ fun WorkoutDetailScreen(
             onDismissRequest = onDismissRequest,
             onFirstMetricChange = { setIndex, value ->
                 viewModel.updateSetFirstMetric(
-                    exerciseId = selectedWorkoutExercise.exercise.id,
+                    workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
                     setIndex = setIndex,
                     value = value,
                 )
             },
             onSecondMetricChange = { setIndex, value ->
                 viewModel.updateSetSecondMetric(
-                    exerciseId = selectedWorkoutExercise.exercise.id,
+                    workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
                     setIndex = setIndex,
                     value = value,
                 )
             },
             onSetDeleteClick = { setIndex ->
                 viewModel.deleteSet(
-                    exerciseId = selectedWorkoutExercise.exercise.id,
+                    workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
                     setIndex = setIndex,
                 )
             },
             onStartClick = {
                 onWorkoutStartClick(
+                    selectedWorkoutExercise.workoutExerciseId,
                     selectedWorkoutExercise.exercise.id,
                     selectedWorkoutExercise.exercise.name,
                 )

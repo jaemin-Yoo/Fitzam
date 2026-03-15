@@ -111,8 +111,8 @@ fun HomeScreen(
             viewModel.discardExerciseEdit()
             onSettingsClick()
         },
-        onWorkoutExerciseClick = { exerciseId ->
-            onWorkoutDetailClick(calendarState.selectedDate, exerciseId)
+        onWorkoutExerciseClick = { workoutExerciseId ->
+            onWorkoutDetailClick(calendarState.selectedDate, workoutExerciseId)
         },
         onWorkoutExerciseLongClick = viewModel::enterExerciseEdit,
         onMoveExerciseUp = viewModel::moveExerciseUp,
@@ -143,7 +143,7 @@ fun HomeScreen(
 ) {
     var deleteConfirmExerciseId by rememberSaveable { mutableLongStateOf(NO_DELETE_TARGET) }
     val deleteConfirmTarget = selectedDateWorkoutExercises.firstOrNull { workoutExercise ->
-        workoutExercise.exercise.id == deleteConfirmExerciseId
+        workoutExercise.id == deleteConfirmExerciseId
     }
     val selectedDateWorkout = workouts.firstOrNull { it.date == calendarState.selectedDate }
     val hasRecordedCategories = selectedDateWorkout?.exerciseCategories?.isNotEmpty() == true
@@ -276,15 +276,15 @@ fun HomeScreen(
                             isEditMode = isEditMode,
                             canMoveUp = index > 0,
                             canMoveDown = index < selectedDateWorkoutExercises.lastIndex,
-                            onClick = { onWorkoutExerciseClick(workoutExercise.exercise.id) },
+                            onClick = { onWorkoutExerciseClick(workoutExercise.id) },
                             onLongClick = onWorkoutExerciseLongClick,
-                            onMoveUp = { onMoveExerciseUp(workoutExercise.exercise.id) },
-                            onMoveDown = { onMoveExerciseDown(workoutExercise.exercise.id) },
+                            onMoveUp = { onMoveExerciseUp(workoutExercise.id) },
+                            onMoveDown = { onMoveExerciseDown(workoutExercise.id) },
                             onDelete = {
                                 if (workoutExercise.sets.isEmpty()) {
-                                    onDeleteExercise(workoutExercise.exercise.id)
+                                    onDeleteExercise(workoutExercise.id)
                                 } else {
-                                    deleteConfirmExerciseId = workoutExercise.exercise.id
+                                    deleteConfirmExerciseId = workoutExercise.id
                                 }
                             },
                         )
@@ -325,7 +325,7 @@ fun HomeScreen(
             title = "운동 삭제",
             text = "세트 기록이 있는 운동입니다.\n운동을 정말 삭제할까요?",
             onConfirm = {
-                onDeleteExercise(deleteConfirmTarget.exercise.id)
+                onDeleteExercise(deleteConfirmTarget.id)
                 deleteConfirmExerciseId = NO_DELETE_TARGET
             },
             onCancel = {

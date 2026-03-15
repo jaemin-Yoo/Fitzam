@@ -76,6 +76,7 @@ private val SuccessGreen = Color(0xFF4CAF50)
 @Suppress("UNUSED_PARAMETER")
 fun WorkoutStartScreen(
     selectedDate: LocalDate,
+    workoutExerciseId: Long,
     exerciseId: Long,
     exerciseName: String,
     sessionId: Long,
@@ -92,19 +93,19 @@ fun WorkoutStartScreen(
     }
 
     val sourceItem = exerciseItems.firstOrNull { item ->
-        item.exercise.id == exerciseId
+        item.workoutExerciseId == workoutExerciseId
     }
     val initialValue = remember(
-        exerciseId,
+        workoutExerciseId,
         sourceItem?.exercise?.recordSchema,
         sourceItem?.sets?.size,
         sourceItem?.sets?.lastOrNull()?.firstMetricText,
         sourceItem?.sets?.lastOrNull()?.secondMetricText,
     ) {
-        viewModel.getEditorInitialValue(exerciseId)
+        viewModel.getEditorInitialValue(workoutExerciseId)
     }
     var recordSchema by rememberSaveable(
-        exerciseId,
+        workoutExerciseId,
         sourceItem?.exercise?.recordSchema?.name,
         sourceItem?.sets?.size,
         sourceItem?.sets?.lastOrNull()?.firstMetricText,
@@ -113,27 +114,27 @@ fun WorkoutStartScreen(
     val config = remember(recordSchema) { metricConfig(recordSchema) }
 
     var firstValue by rememberSaveable(
-        exerciseId,
+        workoutExerciseId,
         sourceItem?.sets?.size,
         sourceItem?.sets?.lastOrNull()?.firstMetricText,
     ) { mutableStateOf(initialValue.firstValue) }
     var secondValue by rememberSaveable(
-        exerciseId,
+        workoutExerciseId,
         sourceItem?.sets?.size,
         sourceItem?.sets?.lastOrNull()?.secondMetricText,
     ) { mutableStateOf(initialValue.secondValue) }
     var firstInputText by rememberSaveable(
-        exerciseId,
+        workoutExerciseId,
         sourceItem?.sets?.size,
         sourceItem?.sets?.lastOrNull()?.firstMetricText,
     ) { mutableStateOf(formatWeightText(initialValue.firstValue)) }
     var secondInputText by rememberSaveable(
-        exerciseId,
+        workoutExerciseId,
         sourceItem?.sets?.size,
         sourceItem?.sets?.lastOrNull()?.secondMetricText,
     ) { mutableStateOf(initialValue.secondValue.toString()) }
-    var isFirstEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
-    var isSecondEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
+    var isFirstEditing by rememberSaveable(workoutExerciseId) { mutableStateOf(false) }
+    var isSecondEditing by rememberSaveable(workoutExerciseId) { mutableStateOf(false) }
 
     val commitFirstEdit = {
         val parsed = firstInputText.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
@@ -188,7 +189,7 @@ fun WorkoutStartScreen(
                         commitFirstEdit()
                         commitSecondEdit()
                         viewModel.appendSet(
-                            exerciseId = exerciseId,
+                            workoutExerciseId = workoutExerciseId,
                             firstValue = firstValue,
                             secondValue = secondValue,
                             recordSchema = recordSchema,
