@@ -13,8 +13,8 @@ import androidx.navigationevent.NavigationEvent
 import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectScreen
 import com.jaemin.fitzam.ui.screen.exerciseselect.ExerciseSelectScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
+import com.jaemin.fitzam.ui.screen.home.WorkoutDetailScreen
 import com.jaemin.fitzam.ui.screen.settings.SettingsScreen
-import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordScreen
 import com.jaemin.fitzam.ui.screen.workoutstart.WorkoutStartScreen
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
@@ -32,10 +32,9 @@ sealed interface Screen {
         val selectedExerciseIds: String = "",
         val sessionId: Long,
     ) : NavKey
-    @Serializable data class WorkoutRecord(
+    @Serializable data class WorkoutDetail(
         val selectedDate: String,
-        val selectedExerciseIds: String,
-        val selectedCategoryIds: String,
+        val exerciseId: Long,
         val sessionId: Long,
     ) : NavKey
     @Serializable data class WorkoutStart(
@@ -108,6 +107,15 @@ fun FitzamApp() {
                             )
                         )
                     },
+                    onWorkoutDetailClick = { selectedDate, exerciseId ->
+                        backStack.add(
+                            Screen.WorkoutDetail(
+                                selectedDate = selectedDate.toString(),
+                                exerciseId = exerciseId,
+                                sessionId = System.currentTimeMillis(),
+                            )
+                        )
+                    },
                     onSettingsClick = { backStack.add(Screen.Settings) },
                 )
             }
@@ -142,52 +150,24 @@ fun FitzamApp() {
                         .toSet(),
                     sessionId = screen.sessionId,
                     onBackClick = popBackStack,
-                    onCompleteClick = { selectedExerciseIds ->
-                        backStack.add(
-                            Screen.WorkoutRecord(
-                                selectedDate = screen.selectedDate,
-                                selectedExerciseIds = selectedExerciseIds.joinToString(","),
-                                selectedCategoryIds = screen.selectedCategoryIds,
-                                sessionId = System.currentTimeMillis(),
-                            )
-                        )
-                    },
-                )
-            }
-            entry<Screen.WorkoutRecord> { screen ->
-                WorkoutRecordScreen(
-                    selectedDate = LocalDate.parse(screen.selectedDate),
-                    selectedCategoryIds = screen.selectedCategoryIds
-                        .split(",")
-                        .mapNotNull { value -> value.toLongOrNull() }
-                        .toSet(),
-                    selectedExerciseIds = screen.selectedExerciseIds
-                        .split(",")
-                        .mapNotNull { value -> value.toLongOrNull() }
-                        .toSet(),
-                    sessionId = screen.sessionId,
-                    onBackClick = popBackStack,
-                    onDetailAddClick = {
-                        backStack.add(
-                            Screen.ExerciseSelect(
-                                selectedDate = screen.selectedDate,
-                                selectedCategoryIds = screen.selectedCategoryIds,
-                                selectedExerciseIds = screen.selectedExerciseIds,
-                                sessionId = System.currentTimeMillis(),
-                            )
-                        )
-                    },
                     onCompleteClick = {
                         popBackStack()
                         popBackStack()
-                        popBackStack()
                     },
-                    onExerciseStartClick = { exercise ->
+                )
+            }
+            entry<Screen.WorkoutDetail> { screen ->
+                WorkoutDetailScreen(
+                    selectedDate = LocalDate.parse(screen.selectedDate),
+                    exerciseId = screen.exerciseId,
+                    sessionId = screen.sessionId,
+                    onDismissRequest = popBackStack,
+                    onWorkoutStartClick = { exerciseId, exerciseName ->
                         backStack.add(
                             Screen.WorkoutStart(
                                 selectedDate = screen.selectedDate,
-                                exerciseId = exercise.id,
-                                exerciseName = exercise.name,
+                                exerciseId = exerciseId,
+                                exerciseName = exerciseName,
                                 sessionId = screen.sessionId,
                             )
                         )

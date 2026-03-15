@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.ui.dzam.DZamButton
@@ -83,16 +85,53 @@ fun WorkoutStartScreen(
     val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
-    val initialValue = remember(exerciseId) {
+    val exerciseItems by viewModel.exerciseItems.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedDate) {
+        viewModel.loadWorkoutForDate(selectedDate)
+    }
+
+    val sourceItem = exerciseItems.firstOrNull { item ->
+        item.exercise.id == exerciseId
+    }
+    val initialValue = remember(
+        exerciseId,
+        sourceItem?.exercise?.recordSchema,
+        sourceItem?.sets?.size,
+        sourceItem?.sets?.lastOrNull()?.firstMetricText,
+        sourceItem?.sets?.lastOrNull()?.secondMetricText,
+    ) {
         viewModel.getEditorInitialValue(exerciseId)
     }
-    var recordSchema by rememberSaveable(exerciseId) { mutableStateOf(initialValue.recordSchema) }
+    var recordSchema by rememberSaveable(
+        exerciseId,
+        sourceItem?.exercise?.recordSchema?.name,
+        sourceItem?.sets?.size,
+        sourceItem?.sets?.lastOrNull()?.firstMetricText,
+        sourceItem?.sets?.lastOrNull()?.secondMetricText,
+    ) { mutableStateOf(initialValue.recordSchema) }
     val config = remember(recordSchema) { metricConfig(recordSchema) }
 
-    var firstValue by rememberSaveable(exerciseId) { mutableStateOf(initialValue.firstValue) }
-    var secondValue by rememberSaveable(exerciseId) { mutableStateOf(initialValue.secondValue) }
-    var firstInputText by rememberSaveable(exerciseId) { mutableStateOf(formatWeightText(initialValue.firstValue)) }
-    var secondInputText by rememberSaveable(exerciseId) { mutableStateOf(initialValue.secondValue.toString()) }
+    var firstValue by rememberSaveable(
+        exerciseId,
+        sourceItem?.sets?.size,
+        sourceItem?.sets?.lastOrNull()?.firstMetricText,
+    ) { mutableStateOf(initialValue.firstValue) }
+    var secondValue by rememberSaveable(
+        exerciseId,
+        sourceItem?.sets?.size,
+        sourceItem?.sets?.lastOrNull()?.secondMetricText,
+    ) { mutableStateOf(initialValue.secondValue) }
+    var firstInputText by rememberSaveable(
+        exerciseId,
+        sourceItem?.sets?.size,
+        sourceItem?.sets?.lastOrNull()?.firstMetricText,
+    ) { mutableStateOf(formatWeightText(initialValue.firstValue)) }
+    var secondInputText by rememberSaveable(
+        exerciseId,
+        sourceItem?.sets?.size,
+        sourceItem?.sets?.lastOrNull()?.secondMetricText,
+    ) { mutableStateOf(initialValue.secondValue.toString()) }
     var isFirstEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
     var isSecondEditing by rememberSaveable(exerciseId) { mutableStateOf(false) }
 
@@ -154,7 +193,10 @@ fun WorkoutStartScreen(
                             secondValue = secondValue,
                             recordSchema = recordSchema,
                         )
-                        onCompleteClick()
+                        viewModel.saveWorkout(
+                            selectedDate = selectedDate,
+                            onSuccess = onCompleteClick,
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )

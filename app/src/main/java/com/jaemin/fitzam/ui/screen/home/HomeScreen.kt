@@ -1,6 +1,7 @@
 package com.jaemin.fitzam.ui.screen.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +66,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     onAddOrEditWorkout: (LocalDate) -> Unit,
+    onWorkoutDetailClick: (LocalDate, Long) -> Unit,
     onSettingsClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -72,7 +74,6 @@ fun HomeScreen(
     val selectedDateWorkoutExercises by viewModel.selectedDateWorkoutExercises.collectAsStateWithLifecycle()
     val calendarState = rememberFitzamCalendarState()
 
-    // 캘린더 월 이동 시 운동 기록 가져오기
     LaunchedEffect(calendarState.displayedYearMonth) {
         viewModel.loadWorkoutsForYearMonth(calendarState.displayedYearMonth)
     }
@@ -87,6 +88,9 @@ fun HomeScreen(
         calendarState = calendarState,
         onAddOrEditWorkout = onAddOrEditWorkout,
         onSettingsClick = onSettingsClick,
+        onWorkoutExerciseClick = { exerciseId ->
+            onWorkoutDetailClick(calendarState.selectedDate, exerciseId)
+        },
     )
 }
 
@@ -98,6 +102,7 @@ fun HomeScreen(
     calendarState: FitzamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
     onSettingsClick: () -> Unit,
+    onWorkoutExerciseClick: (Long) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -127,7 +132,7 @@ fun HomeScreen(
                 },
                 onClick = { onAddOrEditWorkout(calendarState.selectedDate) },
             )
-        }
+        },
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -156,7 +161,7 @@ fun HomeScreen(
                             )
                         }
                     }
-                }
+                },
             )
             Spacer(Modifier.height(8.dp))
 
@@ -164,10 +169,10 @@ fun HomeScreen(
                 text = "${calendarState.selectedDate.monthValue}월 ${calendarState.selectedDate.dayOfMonth}일 (${
                     calendarState.selectedDate.dayOfWeek.getDisplayName(
                         TextStyle.NARROW,
-                        Locale.KOREAN
+                        Locale.KOREAN,
                     )
                 })",
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
             Spacer(Modifier.height(8.dp))
 
@@ -190,7 +195,10 @@ fun HomeScreen(
                 Spacer(Modifier.height(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     selectedDateWorkoutExercises.forEach { workoutExercise ->
-                        HomeWorkoutExerciseCard(workoutExercise = workoutExercise)
+                        HomeWorkoutExerciseCard(
+                            workoutExercise = workoutExercise,
+                            onClick = { onWorkoutExerciseClick(workoutExercise.exercise.id) },
+                        )
                     }
                 }
             }
@@ -203,10 +211,12 @@ fun HomeScreen(
 @Composable
 private fun HomeWorkoutExerciseCard(
     workoutExercise: WorkoutExercise,
+    onClick: () -> Unit,
 ) {
     Surface(
         color = Color.White,
         shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.clickable(onClick = onClick),
     ) {
         Column(
             modifier = Modifier
@@ -251,7 +261,7 @@ private fun HomeWorkoutExerciseCard(
 }
 
 @Composable
-private fun HomeWorkoutSetTable(
+internal fun HomeWorkoutSetTable(
     recordSchema: ExerciseRecordSchema,
     sets: List<WorkoutSet>,
 ) {
@@ -300,7 +310,7 @@ private fun HomeWorkoutSetTable(
 }
 
 @Composable
-private fun HomeTableHeaderCell(
+internal fun HomeTableHeaderCell(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -314,7 +324,7 @@ private fun HomeTableHeaderCell(
 }
 
 @Composable
-private fun HomeTableValueCell(
+internal fun HomeTableValueCell(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -330,7 +340,7 @@ private fun HomeTableValueCell(
     }
 }
 
-private fun formatMetricValue(value: Double): String {
+internal fun formatMetricValue(value: Double): String {
     return if (value % 1.0 == 0.0) {
         value.toInt().toString()
     } else {
@@ -435,6 +445,7 @@ fun HomeScreenPreview() {
             calendarState = rememberFitzamCalendarState(),
             onAddOrEditWorkout = {},
             onSettingsClick = {},
+            onWorkoutExerciseClick = {},
         )
     }
 }

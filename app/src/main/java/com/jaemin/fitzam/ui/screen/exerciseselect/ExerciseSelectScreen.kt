@@ -76,7 +76,7 @@ fun ExerciseSelectScreen(
     selectedExerciseIds: Set<Long>,
     sessionId: Long,
     onBackClick: () -> Unit,
-    onCompleteClick: (Set<Long>) -> Unit,
+    onCompleteClick: () -> Unit,
 ) {
     val viewModel: ExerciseSelectViewModel = hiltViewModel(
         key = "detail-exercise-add-$sessionId",
@@ -105,6 +105,7 @@ fun ExerciseSelectScreen(
         ExerciseSelectUiState.Loading -> {
             ExerciseSelectScreen(
                 selectedDate = selectedDate,
+                selectedCategoryIds = selectedCategoryIds,
                 onBackClick = onBackClick,
                 onCompleteClick = onCompleteClick,
                 exercises = emptyList(),
@@ -114,6 +115,13 @@ fun ExerciseSelectScreen(
                 onToggleFavorite = viewModel::toggleFavorite,
                 snackbarHostState = snackbarHostState,
                 isLoading = true,
+                onSelectionComplete = {
+                    viewModel.completeSelection(
+                        selectedDate = selectedDate,
+                        selectedCategoryIds = selectedCategoryIds,
+                        onSuccess = onCompleteClick,
+                    )
+                },
             )
         }
         ExerciseSelectUiState.Failed -> {
@@ -122,6 +130,7 @@ fun ExerciseSelectScreen(
         is ExerciseSelectUiState.Success -> {
             ExerciseSelectScreen(
                 selectedDate = selectedDate,
+                selectedCategoryIds = selectedCategoryIds,
                 onBackClick = onBackClick,
                 onCompleteClick = onCompleteClick,
                 exercises = value.exercises,
@@ -131,6 +140,13 @@ fun ExerciseSelectScreen(
                 onToggleFavorite = viewModel::toggleFavorite,
                 snackbarHostState = snackbarHostState,
                 isLoading = false,
+                onSelectionComplete = {
+                    viewModel.completeSelection(
+                        selectedDate = selectedDate,
+                        selectedCategoryIds = selectedCategoryIds,
+                        onSuccess = onCompleteClick,
+                    )
+                },
             )
         }
     }
@@ -139,8 +155,9 @@ fun ExerciseSelectScreen(
 @Composable
 fun ExerciseSelectScreen(
     selectedDate: LocalDate,
+    selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
-    onCompleteClick: (Set<Long>) -> Unit,
+    onCompleteClick: () -> Unit,
     exercises: List<Exercise>,
     selectedExerciseIds: Set<Long>,
     onToggleSelected: (Long) -> Unit,
@@ -148,6 +165,7 @@ fun ExerciseSelectScreen(
     onToggleFavorite: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
     isLoading: Boolean = false,
+    onSelectionComplete: () -> Unit,
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
@@ -188,7 +206,7 @@ fun ExerciseSelectScreen(
             ) {
                 DZamButton(
                     text = "${selectedExerciseIds.size}개 선택 완료",
-                    onClick = { onCompleteClick(selectedExerciseIds) },
+                    onClick = onSelectionComplete,
                     enabled = selectedExerciseIds.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -551,6 +569,7 @@ private fun ExerciseSelectScreenPreview() {
     FitzamTheme {
         ExerciseSelectScreen(
             selectedDate = LocalDate.now(),
+            selectedCategoryIds = setOf(1L, 2L),
             onBackClick = {},
             onCompleteClick = {},
             exercises = sampleExercises(),
@@ -559,6 +578,7 @@ private fun ExerciseSelectScreenPreview() {
             onToggleFavorite = {},
             snackbarHostState = remember { SnackbarHostState() },
             favoriteExerciseIds = sampleFavoriteIds,
+            onSelectionComplete = {},
         )
     }
 }

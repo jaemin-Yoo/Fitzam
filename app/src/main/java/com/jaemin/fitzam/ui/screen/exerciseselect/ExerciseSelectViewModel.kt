@@ -3,8 +3,12 @@ package com.jaemin.fitzam.ui.screen.exerciseselect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseRepository
+import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
 import com.jaemin.fitzam.data.repository.WorkoutRepository
+import com.jaemin.fitzam.data.repository.WorkoutSetDraft
 import com.jaemin.fitzam.model.Exercise
+import com.jaemin.fitzam.model.ExerciseRecordSchema
+import com.jaemin.fitzam.model.WorkoutMetricType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -159,9 +163,85 @@ class ExerciseSelectViewModel @Inject constructor(
             }
         }
     }
+
+    fun completeSelection(
+        selectedDate: LocalDate,
+        selectedCategoryIds: Set<Long>,
+        onSuccess: () -> Unit,
+    ) {
+        val selectedIds = _selectedExerciseIds.value
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val savedExercises = workoutRepository.getWorkoutExercises(selectedDate)
+                        .first()
+                        .filter { workoutExercise ->
+                            workoutExercise.exercise.category.id in selectedCategoryIds
+                        }
+                    val savedExerciseMap = savedExercises.associateBy { workoutExercise ->
+                        workoutExercise.exercise.id
+                    }
+                    val mergedExerciseIds = (savedExerciseMap.keys + selectedIds).toSet()
+                    val exercisesById = exerciseRepository.getExercisesByIds(mergedExerciseIds)
+                        .filter { exercise ->
+                            exercise.category.id in selectedCategoryIds
+                        }
+                        .associateBy { exercise ->
+                            exercise.id
+                        }
+                    val mergedOrderedIds = buildList {
+                        addAll(savedExercises.map { workoutExercise -> workoutExercise.exercise.id })
+                        addAll(selectedIds.filterNot { exerciseId -> exerciseId in savedExerciseMap })
+                    }
+
+                    val drafts = mergedOrderedIds.mapIndexedNotNull { index, exerciseId ->
+                        val savedExercise = savedExerciseMap[exerciseId]
+                        val exercise = savedExercise?.exercise ?: exercisesById[exerciseId]
+                        if (exercise == null) {
+                            return@mapIndexedNotNull null
+                        }
+                        val recordSchema = savedExercise?.exercise?.recordSchema
+                            ?: workoutRepository.getLatestRecordSchema(exerciseId)
+                            ?: exercise.recordSchema
+                        WorkoutExerciseDraft(
+                            exerciseId = exercise.id,
+                            categoryId = exercise.category.id,
+                            orderIndex = index,
+                            recordSchema = recordSchema,
+                            sets = savedExercise?.sets
+                                ?.map { set ->
+                                    WorkoutSetDraft(
+                                        setIndex = set.index,
+                                        metrics = when (recordSchema) {
+                                            ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
+                                                WorkoutMetricType.WEIGHT_KG to (set.metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0),
+                                                WorkoutMetricType.REPS to (set.metrics[WorkoutMetricType.REPS] ?: 0.0),
+                                            )
+
+                                            ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
+                                                WorkoutMetricType.DISTANCE_KM to (set.metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0),
+                                                WorkoutMetricType.DURATION_SEC to (set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0),
+                                            )
+                                        },
+                                    )
+                                }
+                                .orEmpty(),
+                        )
+                    }
+
+                    workoutRepository.replaceWorkoutExercises(
+                        date = selectedDate,
+                        exercises = drafts,
+                    )
+                }
+            }.onSuccess {
+                onSuccess()
+            }
+        }
+    }
 }
 
-private data class ExerciseLoadResult(
+data class ExerciseLoadResult(
     val uiState: ExerciseSelectUiState.Success,
     val savedExerciseIds: Set<Long>,
 )

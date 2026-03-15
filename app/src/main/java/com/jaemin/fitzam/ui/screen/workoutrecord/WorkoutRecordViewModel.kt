@@ -52,6 +52,43 @@ class WorkoutRecordViewModel @Inject constructor(
     private var initializedCategoryIds: Set<Long>? = null
     private var initializedExerciseIds: Set<Long>? = null
 
+    fun loadWorkoutForDate(selectedDate: LocalDate) {
+        viewModelScope.launch {
+            _uiState.value = WorkoutRecordUiState.Loading
+            val result = runCatching {
+                withContext(Dispatchers.IO) {
+                    workoutRepository.getWorkoutExercises(selectedDate)
+                        .first()
+                        .map { workoutExercise ->
+                            val recordSchema = workoutExercise.exercise.recordSchema
+                            WorkoutRecordExerciseUiModel(
+                                exercise = workoutExercise.exercise,
+                                sets = workoutExercise.sets.map { set ->
+                                    set.toEditableSet(recordSchema)
+                                },
+                            )
+                        }
+                }
+            }
+            _uiState.value = result.fold(
+                onSuccess = { items ->
+                    _exerciseItems.value = items
+                    initializedDate = selectedDate
+                    initializedCategoryIds = items.map { item -> item.exercise.category.id }.toSet()
+                    initializedExerciseIds = items.map { item -> item.exercise.id }.toSet()
+                    WorkoutRecordUiState.Success(exercises = items.map { item -> item.exercise })
+                },
+                onFailure = {
+                    _exerciseItems.value = emptyList()
+                    initializedDate = null
+                    initializedCategoryIds = null
+                    initializedExerciseIds = null
+                    WorkoutRecordUiState.Failed
+                },
+            )
+        }
+    }
+
     fun loadExercises(
         selectedDate: LocalDate,
         selectedCategoryIds: Set<Long>,
@@ -323,7 +360,6 @@ class WorkoutRecordViewModel @Inject constructor(
         mutableItems[currentIndex] = targetItem
         _exerciseItems.value = mutableItems.toList()
     }
-
 }
 
 sealed interface WorkoutRecordUiState {
