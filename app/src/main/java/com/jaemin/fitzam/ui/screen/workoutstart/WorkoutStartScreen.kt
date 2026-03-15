@@ -194,10 +194,7 @@ fun WorkoutStartScreen(
                             secondValue = secondValue,
                             recordSchema = recordSchema,
                         )
-                        viewModel.saveWorkout(
-                            selectedDate = selectedDate,
-                            onSuccess = onCompleteClick,
-                        )
+                        onCompleteClick()
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )

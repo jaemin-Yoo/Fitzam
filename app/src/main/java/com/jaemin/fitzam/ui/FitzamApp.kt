@@ -37,6 +37,7 @@ sealed interface Screen {
     @Serializable data class WorkoutDetail(
         val selectedDate: String,
         val workoutExerciseId: Long,
+        val exerciseId: Long,
         val sessionId: Long,
     ) : NavKey
     @Serializable data class WorkoutStart(
@@ -122,11 +123,12 @@ fun FitzamApp() {
                             )
                         )
                     },
-                    onWorkoutDetailClick = { selectedDate, workoutExerciseId ->
+                    onWorkoutDetailClick = { selectedDate, workoutExerciseId, exerciseId ->
                         backStack.add(
                             Screen.WorkoutDetail(
                                 selectedDate = selectedDate.toString(),
                                 workoutExerciseId = workoutExerciseId,
+                                exerciseId = exerciseId,
                                 sessionId = System.currentTimeMillis(),
                             )
                         )
@@ -179,6 +181,7 @@ fun FitzamApp() {
                 WorkoutDetailScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
                     workoutExerciseId = screen.workoutExerciseId,
+                    exerciseId = screen.exerciseId,
                     sessionId = screen.sessionId,
                     onDismissRequest = popBackStack,
                     onWorkoutStartClick = { workoutExerciseId, exerciseId, exerciseName ->

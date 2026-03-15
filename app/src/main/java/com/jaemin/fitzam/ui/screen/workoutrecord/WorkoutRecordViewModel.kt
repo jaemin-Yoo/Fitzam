@@ -49,11 +49,22 @@ class WorkoutRecordViewModel @Inject constructor(
 
     private val _exerciseItems = MutableStateFlow<List<WorkoutRecordExerciseUiModel>>(emptyList())
     val exerciseItems = _exerciseItems.asStateFlow()
+    private val _hasUnsavedChanges = MutableStateFlow(false)
+    val hasUnsavedChanges = _hasUnsavedChanges.asStateFlow()
     private var initializedDate: LocalDate? = null
     private var initializedCategoryIds: Set<Long>? = null
     private var initializedExerciseIds: Set<Long>? = null
+    private var originalExerciseItems: List<WorkoutRecordExerciseUiModel> = emptyList()
+    private var isWorkoutLoaded = false
 
     fun loadWorkoutForDate(selectedDate: LocalDate) {
+        if (initializedDate == selectedDate && isWorkoutLoaded) {
+            _uiState.value = WorkoutRecordUiState.Success(
+                exercises = _exerciseItems.value.map { item -> item.exercise },
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = WorkoutRecordUiState.Loading
             val result = runCatching {
@@ -75,16 +86,22 @@ class WorkoutRecordViewModel @Inject constructor(
             _uiState.value = result.fold(
                 onSuccess = { items ->
                     _exerciseItems.value = items
+                    originalExerciseItems = items
+                    _hasUnsavedChanges.value = false
                     initializedDate = selectedDate
                     initializedCategoryIds = items.map { item -> item.exercise.category.id }.toSet()
                     initializedExerciseIds = items.map { item -> item.exercise.id }.toSet()
+                    isWorkoutLoaded = true
                     WorkoutRecordUiState.Success(exercises = items.map { item -> item.exercise })
                 },
                 onFailure = {
                     _exerciseItems.value = emptyList()
+                    originalExerciseItems = emptyList()
+                    _hasUnsavedChanges.value = false
                     initializedDate = null
                     initializedCategoryIds = null
                     initializedExerciseIds = null
+                    isWorkoutLoaded = false
                     WorkoutRecordUiState.Failed
                 },
             )
@@ -121,6 +138,8 @@ class WorkoutRecordViewModel @Inject constructor(
             _uiState.value = result.fold(
                 onSuccess = { items ->
                     _exerciseItems.value = items
+                    originalExerciseItems = items
+                    _hasUnsavedChanges.value = false
                     initializedDate = selectedDate
                     initializedCategoryIds = selectedCategoryIds
                     initializedExerciseIds = selectedExerciseIds
@@ -128,6 +147,8 @@ class WorkoutRecordViewModel @Inject constructor(
                 },
                 onFailure = {
                     _exerciseItems.value = emptyList()
+                    originalExerciseItems = emptyList()
+                    _hasUnsavedChanges.value = false
                     initializedDate = null
                     initializedCategoryIds = null
                     initializedExerciseIds = null
@@ -159,6 +180,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 )
             }
         }
+        updateDirtyState()
     }
 
     fun updateSetSecondMetric(workoutExerciseId: Long, setIndex: Int, value: String) {
@@ -177,6 +199,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 )
             }
         }
+        updateDirtyState()
     }
 
     fun deleteSet(workoutExerciseId: Long, setIndex: Int) {
@@ -192,12 +215,14 @@ class WorkoutRecordViewModel @Inject constructor(
                 item.copy(sets = reindexedSets)
             }
         }
+        updateDirtyState()
     }
 
     fun deleteExercise(workoutExerciseId: Long) {
         _exerciseItems.value = _exerciseItems.value.filterNot { item ->
             item.workoutExerciseId == workoutExerciseId
         }
+        updateDirtyState()
     }
 
     fun moveExerciseUp(workoutExerciseId: Long) {
@@ -249,6 +274,7 @@ class WorkoutRecordViewModel @Inject constructor(
                 )
             }
         }
+        updateDirtyState()
     }
 
     fun saveWorkout(
@@ -289,9 +315,20 @@ class WorkoutRecordViewModel @Inject constructor(
                     )
                 }
             }.onSuccess {
+                originalExerciseItems = _exerciseItems.value
+                _hasUnsavedChanges.value = false
+                isWorkoutLoaded = true
                 onSuccess()
             }
         }
+    }
+
+    fun discardDraftChanges() {
+        _exerciseItems.value = originalExerciseItems
+        _hasUnsavedChanges.value = false
+        _uiState.value = WorkoutRecordUiState.Success(
+            exercises = originalExerciseItems.map { item -> item.exercise },
+        )
     }
 
     private suspend fun buildInitialItems(
@@ -362,6 +399,11 @@ class WorkoutRecordViewModel @Inject constructor(
         mutableItems[targetIndex] = mutableItems[currentIndex]
         mutableItems[currentIndex] = targetItem
         _exerciseItems.value = mutableItems.toList()
+        updateDirtyState()
+    }
+
+    private fun updateDirtyState() {
+        _hasUnsavedChanges.value = _exerciseItems.value != originalExerciseItems
     }
 }
 

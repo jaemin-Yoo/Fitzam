@@ -83,7 +83,7 @@ private const val NO_DELETE_TARGET = -1L
 fun HomeScreen(
     onAddOrEditWorkout: (LocalDate) -> Unit,
     onAddWorkout: (LocalDate, Set<Long>) -> Unit,
-    onWorkoutDetailClick: (LocalDate, Long) -> Unit,
+    onWorkoutDetailClick: (LocalDate, Long, Long) -> Unit,
     onSettingsClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -111,8 +111,8 @@ fun HomeScreen(
             viewModel.discardExerciseEdit()
             onSettingsClick()
         },
-        onWorkoutExerciseClick = { workoutExerciseId ->
-            onWorkoutDetailClick(calendarState.selectedDate, workoutExerciseId)
+        onWorkoutExerciseClick = { workoutExerciseId, exerciseId ->
+            onWorkoutDetailClick(calendarState.selectedDate, workoutExerciseId, exerciseId)
         },
         onWorkoutExerciseLongClick = viewModel::enterExerciseEdit,
         onMoveExerciseUp = viewModel::moveExerciseUp,
@@ -134,7 +134,7 @@ fun HomeScreen(
     onAddOrEditWorkout: (LocalDate) -> Unit,
     onAddWorkout: (LocalDate, Set<Long>) -> Unit,
     onSettingsClick: () -> Unit,
-    onWorkoutExerciseClick: (Long) -> Unit,
+    onWorkoutExerciseClick: (Long, Long) -> Unit,
     onWorkoutExerciseLongClick: () -> Unit,
     onMoveExerciseUp: (Long) -> Unit,
     onMoveExerciseDown: (Long) -> Unit,
@@ -276,7 +276,12 @@ fun HomeScreen(
                             isEditMode = isEditMode,
                             canMoveUp = index > 0,
                             canMoveDown = index < selectedDateWorkoutExercises.lastIndex,
-                            onClick = { onWorkoutExerciseClick(workoutExercise.id) },
+                            onClick = {
+                                onWorkoutExerciseClick(
+                                    workoutExercise.id,
+                                    workoutExercise.exercise.id,
+                                )
+                            },
                             onLongClick = onWorkoutExerciseLongClick,
                             onMoveUp = { onMoveExerciseUp(workoutExercise.id) },
                             onMoveDown = { onMoveExerciseDown(workoutExercise.id) },
@@ -688,7 +693,7 @@ fun HomeScreenPreview() {
             onAddOrEditWorkout = {},
             onAddWorkout = { _, _ -> },
             onSettingsClick = {},
-            onWorkoutExerciseClick = {},
+            onWorkoutExerciseClick = { _, _ -> },
             onWorkoutExerciseLongClick = {},
             onMoveExerciseUp = {},
             onMoveExerciseDown = {},

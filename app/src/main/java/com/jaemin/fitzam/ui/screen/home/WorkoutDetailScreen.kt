@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.ui.screen.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,9 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,17 +23,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,8 +57,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
+import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
+import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
+import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.screen.workoutrecord.EditableWorkoutSetUi
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordExerciseUiModel
+import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordUiState
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordViewModel
 import com.jaemin.fitzam.ui.theme.ErrorRed
 import com.jaemin.fitzam.ui.util.drawableResIdByName
@@ -60,6 +76,7 @@ private val INT_INPUT_REGEX = Regex("^\\d*$")
 fun WorkoutDetailScreen(
     selectedDate: LocalDate,
     workoutExerciseId: Long,
+    exerciseId: Long,
     sessionId: Long,
     onDismissRequest: () -> Unit,
     onWorkoutStartClick: (Long, Long, String) -> Unit,
@@ -67,7 +84,10 @@ fun WorkoutDetailScreen(
     val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val exerciseItems by viewModel.exerciseItems.collectAsStateWithLifecycle()
+    val hasUnsavedChanges by viewModel.hasUnsavedChanges.collectAsStateWithLifecycle()
+    var showDiscardDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedDate) {
         viewModel.loadWorkoutForDate(selectedDate)
@@ -75,22 +95,73 @@ fun WorkoutDetailScreen(
 
     val selectedWorkoutExercise = exerciseItems.firstOrNull { item ->
         item.workoutExerciseId == workoutExerciseId
+    } ?: exerciseItems.firstOrNull { item ->
+        item.exercise.id == exerciseId
     }
 
-    if (selectedWorkoutExercise == null) {
+    if (uiState is WorkoutRecordUiState.Loading) {
+        WorkoutDetailLoadingScreen(onDismissRequest = onDismissRequest)
         return
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.28f))
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        WorkoutDetailCard(
+    if (selectedWorkoutExercise == null) {
+        LaunchedEffect(selectedDate, workoutExerciseId) {
+            onDismissRequest()
+        }
+        return
+    }
+
+    val handleDismissRequest = {
+        if (hasUnsavedChanges) {
+            showDiscardDialog = true
+        } else {
+            onDismissRequest()
+        }
+    }
+
+    BackHandler {
+        handleDismissRequest()
+    }
+
+    Scaffold(
+        topBar = {
+            FitzamTopAppBar(
+                title = selectedWorkoutExercise.exercise.name,
+                navigation = TopAppBarItem(
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
+                    contentDescription = "뒤로 가기",
+                    onClick = handleDismissRequest,
+                ),
+            )
+        },
+        bottomBar = {
+            WorkoutDetailBottomBar(
+                onStartClick = {
+                    onWorkoutStartClick(
+                        selectedWorkoutExercise.workoutExerciseId,
+                        selectedWorkoutExercise.exercise.id,
+                        selectedWorkoutExercise.exercise.name,
+                    )
+                },
+                onCompleteClick = {
+                    viewModel.saveWorkout(
+                        selectedDate = selectedDate,
+                        onSuccess = onDismissRequest,
+                    )
+                },
+            )
+        },
+    ) { paddingValues ->
+        WorkoutDetailContent(
             exerciseItem = selectedWorkoutExercise,
-            onDismissRequest = onDismissRequest,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = paddingValues.calculateBottomPadding(),
+                    start = 16.dp,
+                    end = 16.dp,
+                ),
             onFirstMetricChange = { setIndex, value ->
                 viewModel.updateSetFirstMetric(
                     workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
@@ -111,102 +182,137 @@ fun WorkoutDetailScreen(
                     setIndex = setIndex,
                 )
             },
-            onStartClick = {
-                onWorkoutStartClick(
-                    selectedWorkoutExercise.workoutExerciseId,
-                    selectedWorkoutExercise.exercise.id,
-                    selectedWorkoutExercise.exercise.name,
-                )
+        )
+    }
+
+    if (showDiscardDialog) {
+        DZamAlertDialog(
+            title = "저장되지 않은 변경사항",
+            text = "변경된 내용이 있는데 나가면 저장이 안 됩니다.\n정말 나갈까요?",
+            onConfirm = {
+                viewModel.discardDraftChanges()
+                showDiscardDialog = false
+                onDismissRequest()
             },
-            onCompleteClick = {
-                viewModel.saveWorkout(
-                    selectedDate = selectedDate,
-                    onSuccess = onDismissRequest,
-                )
+            onCancel = {
+                showDiscardDialog = false
             },
+            confirmText = "나가기",
+            cancelText = "취소",
         )
     }
 }
 
 @Composable
-private fun WorkoutDetailCard(
-    exerciseItem: WorkoutRecordExerciseUiModel,
+private fun WorkoutDetailLoadingScreen(
     onDismissRequest: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            FitzamTopAppBar(
+                title = "운동 상세",
+                navigation = TopAppBarItem(
+                    icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
+                    contentDescription = "뒤로 가기",
+                    onClick = onDismissRequest,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun WorkoutDetailContent(
+    exerciseItem: WorkoutRecordExerciseUiModel,
+    modifier: Modifier = Modifier,
     onFirstMetricChange: (Int, String) -> Unit,
     onSecondMetricChange: (Int, String) -> Unit,
     onSetDeleteClick: (Int) -> Unit,
-    onStartClick: () -> Unit,
-    onCompleteClick: () -> Unit,
 ) {
-    androidx.compose.material3.Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        Spacer(modifier = Modifier.height(8.dp))
+
+        androidx.compose.material3.Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Image(
-                            painter = painterResource(drawableResIdByName(exerciseItem.exercise.imageName)),
-                            contentDescription = exerciseItem.exercise.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(52.dp)
-                                .clip(CircleShape),
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = exerciseItem.exercise.name,
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            ExerciseCategoryTag(
-                                name = exerciseItem.exercise.category.name,
-                                borderColor = Color(exerciseItem.exercise.category.colorHex),
-                            )
-                        }
-                    }
-                    IconButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.size(24.dp),
-                    ) {
-                        Text(
-                            text = "×",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
+                Image(
+                    painter = painterResource(drawableResIdByName(exerciseItem.exercise.imageName)),
+                    contentDescription = exerciseItem.exercise.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = exerciseItem.exercise.name,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    ExerciseCategoryTag(
+                        name = exerciseItem.exercise.category.name,
+                        borderColor = Color(exerciseItem.exercise.category.colorHex),
+                    )
+                    Text(
+                        text = if (exerciseItem.sets.isEmpty()) {
+                            "아직 기록된 세트가 없습니다."
+                        } else {
+                            "총 ${exerciseItem.sets.size}세트 기록됨"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
+            }
+        }
 
-                Spacer(modifier = Modifier.height(16.dp))
+        androidx.compose.material3.Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = "운동 기록",
+                    style = MaterialTheme.typography.titleMedium,
+                )
 
                 if (exerciseItem.sets.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(140.dp)
+                            .height(180.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.background,
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(12.dp),
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "운동을 시작하면 세트가 추가됩니다.",
+                            text = "운동 시작 버튼을 눌러 첫 세트를 기록해 주세요.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -221,55 +327,69 @@ private fun WorkoutDetailCard(
                     )
                 }
             }
+        }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun WorkoutDetailBottomBar(
+    onStartClick: () -> Unit,
+    onCompleteClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 12.dp,
+                bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
+            ),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        OutlinedButton(
+            onClick = onStartClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(8.dp),
+            border = BorderStroke(1.dp, ErrorRed),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = Color.White,
+                contentColor = ErrorRed,
+            ),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                OutlinedButton(
-                    onClick = onStartClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, ErrorRed),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor = ErrorRed,
-                    ),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "운동 시작",
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_play),
-                            contentDescription = "운동 시작",
-                            tint = ErrorRed,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-                Button(
-                    onClick = onCompleteClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                ) {
-                    Text(
-                        text = "완료",
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
+                Text(
+                    text = "운동 시작",
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_play),
+                    contentDescription = "운동 시작",
+                    tint = ErrorRed,
+                    modifier = Modifier.size(18.dp),
+                )
             }
+        }
+        Button(
+            onClick = onCompleteClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        ) {
+            Text(
+                text = "완료",
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
     }
 }
