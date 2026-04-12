@@ -359,25 +359,27 @@ private fun HomeWorkoutExerciseCard(
     Surface(
         color = Color.White,
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.then(
-            if (isEditMode) {
-                Modifier
-            } else {
-                Modifier.combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                )
-            },
-        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isEditMode) {
+                    Modifier
+                } else {
+                    Modifier.combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick,
+                    )
+                },
+            ),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (isEditMode) {
+        if (isEditMode) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -394,40 +396,13 @@ private fun HomeWorkoutExerciseCard(
                         onClick = onMoveDown,
                     )
                 }
-            }
 
-            Image(
-                painter = painterResource(drawableResIdByName(workoutExercise.exercise.imageName)),
-                contentDescription = workoutExercise.exercise.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape),
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(
-                    text = workoutExercise.exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                ExerciseCategoryTag(
-                    name = workoutExercise.exercise.category.name,
-                    borderColor = Color(workoutExercise.exercise.category.colorHex),
+                HomeWorkoutExerciseCardContent(
+                    workoutExercise = workoutExercise,
+                    showSets = false,
+                    modifier = Modifier.weight(1f),
                 )
 
-                if (!isEditMode && workoutExercise.sets.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HomeWorkoutSetTable(
-                        metricTypes = workoutExercise.exercise.metricTypes,
-                        sets = workoutExercise.sets,
-                    )
-                }
-            }
-
-            if (isEditMode) {
                 IconButton(
                     onClick = onDelete,
                 ) {
@@ -438,6 +413,62 @@ private fun HomeWorkoutExerciseCard(
                     )
                 }
             }
+        } else {
+            HomeWorkoutExerciseCardContent(
+                workoutExercise = workoutExercise,
+                showSets = workoutExercise.sets.isNotEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeWorkoutExerciseCardContent(
+    workoutExercise: WorkoutExercise,
+    showSets: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(drawableResIdByName(workoutExercise.exercise.imageName)),
+                contentDescription = workoutExercise.exercise.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape),
+            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(
+                    text = workoutExercise.exercise.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                ExerciseCategoryTag(
+                    name = workoutExercise.exercise.category.name,
+                    borderColor = Color(workoutExercise.exercise.category.colorHex),
+                )
+            }
+        }
+
+        if (showSets) {
+            HomeWorkoutSetTable(
+                metricTypes = workoutExercise.exercise.metricTypes,
+                sets = workoutExercise.sets,
+            )
         }
     }
 }
@@ -516,7 +547,11 @@ internal fun HomeWorkoutSetTable(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             HomeTableHeaderCell(text = "세트", modifier = Modifier.weight(1f))
             metricTypes.forEach { metricType ->
                 HomeTableHeaderCell(
@@ -527,7 +562,11 @@ internal fun HomeWorkoutSetTable(
         }
 
         sets.forEach { set ->
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 HomeTableValueCell(text = set.index.toString(), modifier = Modifier.weight(1f))
                 metricTypes.forEach { metricType ->
                     val metricValue = set.metrics[metricType] ?: 0.0
@@ -550,7 +589,7 @@ internal fun HomeTableHeaderCell(
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Color(0xFF808080),
         textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth(),
     )
