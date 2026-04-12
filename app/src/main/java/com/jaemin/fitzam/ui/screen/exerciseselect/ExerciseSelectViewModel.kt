@@ -7,8 +7,6 @@ import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
 import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.data.repository.WorkoutSetDraft
 import com.jaemin.fitzam.model.Exercise
-import com.jaemin.fitzam.model.ExerciseRecordSchema
-import com.jaemin.fitzam.model.WorkoutMetricType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -200,26 +198,18 @@ class ExerciseSelectViewModel @Inject constructor(
                         }
                     val drafts = buildList {
                         savedExercises.forEachIndexed { index, savedExercise ->
-                            val recordSchema = savedExercise.exercise.recordSchema
+                            val metricTypes = savedExercise.exercise.metricTypes
                             add(
                                 WorkoutExerciseDraft(
                                     exerciseId = savedExercise.exercise.id,
                                     categoryId = savedExercise.exercise.category.id,
                                     orderIndex = index,
-                                    recordSchema = recordSchema,
+                                    metricTypes = metricTypes,
                                     sets = savedExercise.sets.map { set ->
                                         WorkoutSetDraft(
                                             setIndex = set.index,
-                                            metrics = when (recordSchema) {
-                                                ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
-                                                    WorkoutMetricType.WEIGHT_KG to (set.metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0),
-                                                    WorkoutMetricType.REPS to (set.metrics[WorkoutMetricType.REPS] ?: 0.0),
-                                                )
-
-                                                ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
-                                                    WorkoutMetricType.DISTANCE_KM to (set.metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0),
-                                                    WorkoutMetricType.DURATION_SEC to (set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0),
-                                                )
+                                            metrics = set.metrics.filterKeys { metricType ->
+                                                metricType in metricTypes
                                             },
                                         )
                                     },
@@ -234,14 +224,14 @@ class ExerciseSelectViewModel @Inject constructor(
                         }
                         appendedIds.forEachIndexed { appendIndex, exerciseId ->
                             val exercise = exercisesById[exerciseId] ?: return@forEachIndexed
-                            val recordSchema = workoutRepository.getLatestRecordSchema(exerciseId)
-                                ?: exercise.recordSchema
+                            val metricTypes = workoutRepository.getLatestMetricTypes(exerciseId)
+                                ?: exercise.metricTypes
                             add(
                                 WorkoutExerciseDraft(
                                     exerciseId = exercise.id,
                                     categoryId = exercise.category.id,
                                     orderIndex = savedExercises.size + appendIndex,
-                                    recordSchema = recordSchema,
+                                    metricTypes = metricTypes,
                                     sets = emptyList(),
                                 )
                             )

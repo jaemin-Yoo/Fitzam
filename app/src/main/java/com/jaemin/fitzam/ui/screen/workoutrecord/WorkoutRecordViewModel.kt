@@ -7,8 +7,9 @@ import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
 import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.data.repository.WorkoutSetDraft
 import com.jaemin.fitzam.model.Exercise
-import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.WorkoutMetricType
+import com.jaemin.fitzam.model.defaultMetricTypesForExercise
+import com.jaemin.fitzam.ui.util.formatMetricValue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -18,12 +19,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
-import java.util.Locale
 
 data class EditableWorkoutSetUi(
     val index: Int,
-    val firstMetricText: String,
-    val secondMetricText: String,
+    val metricValues: Map<WorkoutMetricType, String>,
 )
 
 data class WorkoutRecordExerciseUiModel(
@@ -33,10 +32,8 @@ data class WorkoutRecordExerciseUiModel(
 )
 
 data class WorkoutStartInitialValue(
-    val firstValue: Double,
-    val secondValue: Int,
-    val recordSchema: ExerciseRecordSchema,
-    val isSchemaLocked: Boolean,
+    val metricValues: Map<WorkoutMetricType, String>,
+    val metricTypes: List<WorkoutMetricType>,
 )
 
 @HiltViewModel
@@ -72,12 +69,12 @@ class WorkoutRecordViewModel @Inject constructor(
                     workoutRepository.getWorkoutExercises(selectedDate)
                         .first()
                         .map { workoutExercise ->
-                            val recordSchema = workoutExercise.exercise.recordSchema
+                            val metricTypes = workoutExercise.exercise.metricTypes
                             WorkoutRecordExerciseUiModel(
                                 workoutExerciseId = workoutExercise.id,
                                 exercise = workoutExercise.exercise,
                                 sets = workoutExercise.sets.map { set ->
-                                    set.toEditableSet(recordSchema)
+                                    set.toEditableSet(metricTypes)
                                 },
                             )
                         }
@@ -164,7 +161,12 @@ class WorkoutRecordViewModel @Inject constructor(
         }?.exercise
     }
 
-    fun updateSetFirstMetric(workoutExerciseId: Long, setIndex: Int, value: String) {
+    fun updateSetMetric(
+        workoutExerciseId: Long,
+        setIndex: Int,
+        metricType: WorkoutMetricType,
+        value: String,
+    ) {
         _exerciseItems.value = _exerciseItems.value.map { item ->
             if (item.workoutExerciseId != workoutExerciseId) {
                 item
@@ -172,26 +174,9 @@ class WorkoutRecordViewModel @Inject constructor(
                 item.copy(
                     sets = item.sets.map { set ->
                         if (set.index == setIndex) {
-                            set.copy(firstMetricText = value)
-                        } else {
-                            set
-                        }
-                    },
-                )
-            }
-        }
-        updateDirtyState()
-    }
-
-    fun updateSetSecondMetric(workoutExerciseId: Long, setIndex: Int, value: String) {
-        _exerciseItems.value = _exerciseItems.value.map { item ->
-            if (item.workoutExerciseId != workoutExerciseId) {
-                item
-            } else {
-                item.copy(
-                    sets = item.sets.map { set ->
-                        if (set.index == setIndex) {
-                            set.copy(secondMetricText = value)
+                            set.copy(
+                                metricValues = set.metricValues + (metricType to value),
+                            )
                         } else {
                             set
                         }
@@ -238,25 +223,23 @@ class WorkoutRecordViewModel @Inject constructor(
             exerciseItem.workoutExerciseId == workoutExerciseId
         }
         val lastSet = item?.sets?.lastOrNull()
-        val recordSchema = item?.exercise?.recordSchema ?: ExerciseRecordSchema.WEIGHT_REPS
-        val firstValue = lastSet?.firstMetricText?.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
-        val secondValue = lastSet?.secondMetricText?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+        val metricTypes = item?.exercise?.metricTypes ?: defaultMetricTypesForExercise(item?.exercise?.name)
         return WorkoutStartInitialValue(
-            firstValue = firstValue,
-            secondValue = secondValue,
-            recordSchema = recordSchema,
-            isSchemaLocked = !item?.sets.isNullOrEmpty(),
+            metricValues = metricTypes.associateWith { metricType ->
+                lastSet?.metricValues?.get(metricType).orEmpty()
+            },
+            metricTypes = metricTypes,
         )
     }
 
     fun appendSet(
         workoutExerciseId: Long,
-        firstValue: Double,
-        secondValue: Int,
-        recordSchema: ExerciseRecordSchema,
+        metricTypes: List<WorkoutMetricType>,
+        metricValues: Map<WorkoutMetricType, String>,
     ) {
-        val normalizedFirst = firstValue.coerceAtLeast(0.0)
-        val normalizedSecond = secondValue.coerceAtLeast(0)
+        val exerciseId = _exerciseItems.value.firstOrNull { item ->
+            item.workoutExerciseId == workoutExerciseId
+        }?.exercise?.id
 
         _exerciseItems.value = _exerciseItems.value.map { item ->
             if (item.workoutExerciseId != workoutExerciseId) {
@@ -265,16 +248,29 @@ class WorkoutRecordViewModel @Inject constructor(
                 val nextIndex = item.sets.size + 1
                 val appendedSet = EditableWorkoutSetUi(
                     index = nextIndex,
-                    firstMetricText = formatMetricFirstText(recordSchema, normalizedFirst),
-                    secondMetricText = normalizedSecond.toString(),
+                    metricValues = metricTypes.associateWith { metricType ->
+                        sanitizeMetricInput(
+                            metricType = metricType,
+                            value = metricValues[metricType].orEmpty(),
+                        )
+                    },
                 )
                 item.copy(
-                    exercise = item.exercise.copy(recordSchema = recordSchema),
+                    exercise = item.exercise.copy(metricTypes = metricTypes),
                     sets = item.sets + appendedSet,
                 )
             }
         }
         updateDirtyState()
+
+        if (exerciseId != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                exerciseRepository.updateExerciseMetricTypes(
+                    exerciseId = exerciseId,
+                    metricTypes = metricTypes,
+                )
+            }
+        }
     }
 
     fun saveWorkout(
@@ -287,19 +283,14 @@ class WorkoutRecordViewModel @Inject constructor(
                     exerciseId = item.exercise.id,
                     categoryId = item.exercise.category.id,
                     orderIndex = index,
-                    recordSchema = item.exercise.recordSchema,
+                    metricTypes = item.exercise.metricTypes,
                     sets = item.sets.map { set ->
                         WorkoutSetDraft(
                             setIndex = set.index,
-                            metrics = when (item.exercise.recordSchema) {
-                                ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
-                                    WorkoutMetricType.WEIGHT_KG to (set.firstMetricText.toDoubleOrNull() ?: 0.0),
-                                    WorkoutMetricType.REPS to (set.secondMetricText.toDoubleOrNull() ?: 0.0),
-                                )
-
-                                ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
-                                    WorkoutMetricType.DISTANCE_KM to (set.firstMetricText.toDoubleOrNull() ?: 0.0),
-                                    WorkoutMetricType.DURATION_SEC to (set.secondMetricText.toDoubleOrNull() ?: 0.0),
+                            metrics = item.exercise.metricTypes.associateWith { metricType ->
+                                parseMetricInput(
+                                    metricType = metricType,
+                                    value = set.metricValues[metricType].orEmpty(),
                                 )
                             },
                         )
@@ -364,16 +355,15 @@ class WorkoutRecordViewModel @Inject constructor(
             if (exercise == null || exercise.category.id !in selectedCategoryIds) {
                 return@mapNotNull null
             }
-            val recordSchema = savedExercise?.exercise?.recordSchema
-                ?: workoutRepository.getLatestRecordSchema(exerciseId)
-                ?: exercise?.recordSchema
-                ?: ExerciseRecordSchema.WEIGHT_REPS
+            val metricTypes = savedExercise?.exercise?.metricTypes
+                ?: workoutRepository.getLatestMetricTypes(exerciseId)
+                ?: exercise.metricTypes
             WorkoutRecordExerciseUiModel(
                 workoutExerciseId = savedExercise?.id ?: -(exerciseId + 1),
-                exercise = exercise.copy(recordSchema = recordSchema),
+                exercise = exercise.copy(metricTypes = metricTypes),
                 sets = savedExercise?.sets
                     ?.map { set ->
-                        set.toEditableSet(recordSchema)
+                        set.toEditableSet(metricTypes)
                     }
                     .orEmpty(),
             )
@@ -417,35 +407,42 @@ sealed interface WorkoutRecordUiState {
     ) : WorkoutRecordUiState
 }
 
-fun formatWeightText(weightKg: Double): String {
-    return if (weightKg % 1.0 == 0.0) {
-        weightKg.toInt().toString()
-    } else {
-        String.format(Locale.US, "%.2f", weightKg).trimEnd('0').trimEnd('.')
-    }
-}
-
-private fun formatMetricFirstText(recordSchema: ExerciseRecordSchema, value: Double): String {
-    return when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> formatWeightText(value)
-        ExerciseRecordSchema.DISTANCE_DURATION -> formatWeightText(value)
-    }
-}
-
 private fun com.jaemin.fitzam.model.WorkoutSet.toEditableSet(
-    recordSchema: ExerciseRecordSchema,
+    metricTypes: List<WorkoutMetricType>,
 ): EditableWorkoutSetUi {
-    val firstValue = when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0
-        ExerciseRecordSchema.DISTANCE_DURATION -> metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0
-    }
-    val secondValue = when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> metrics[WorkoutMetricType.REPS] ?: 0.0
-        ExerciseRecordSchema.DISTANCE_DURATION -> metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0
-    }
     return EditableWorkoutSetUi(
         index = index,
-        firstMetricText = formatMetricFirstText(recordSchema, firstValue),
-        secondMetricText = secondValue.toInt().toString(),
+        metricValues = metricTypes.associateWith { metricType ->
+            when (metricType) {
+                WorkoutMetricType.DURATION_SEC,
+                WorkoutMetricType.REPS -> (metrics[metricType] ?: 0.0).toInt().toString()
+                WorkoutMetricType.WEIGHT_KG,
+                WorkoutMetricType.DISTANCE_KM -> formatMetricValue(metrics[metricType] ?: 0.0)
+            }
+        },
     )
+}
+
+private fun sanitizeMetricInput(
+    metricType: WorkoutMetricType,
+    value: String,
+): String {
+    return when (metricType) {
+        WorkoutMetricType.DURATION_SEC,
+        WorkoutMetricType.REPS -> (value.toIntOrNull() ?: 0).coerceAtLeast(0).toString()
+        WorkoutMetricType.WEIGHT_KG,
+        WorkoutMetricType.DISTANCE_KM -> formatMetricValue((value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0))
+    }
+}
+
+private fun parseMetricInput(
+    metricType: WorkoutMetricType,
+    value: String,
+): Double {
+    return when (metricType) {
+        WorkoutMetricType.DURATION_SEC,
+        WorkoutMetricType.REPS -> (value.toIntOrNull() ?: 0).coerceAtLeast(0).toDouble()
+        WorkoutMetricType.WEIGHT_KG,
+        WorkoutMetricType.DISTANCE_KM -> (value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
+    }
 }

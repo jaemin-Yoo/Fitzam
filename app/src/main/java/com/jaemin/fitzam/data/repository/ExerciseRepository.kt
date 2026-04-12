@@ -6,6 +6,8 @@ import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
 import com.jaemin.fitzam.data.source.local.entity.FavoriteExerciseEntity
 import com.jaemin.fitzam.model.Exercise
+import com.jaemin.fitzam.model.WorkoutMetricType
+import com.jaemin.fitzam.model.serializeMetricTypes
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -62,5 +64,15 @@ class ExerciseRepository @Inject constructor(
 
     suspend fun removeFavoriteExercise(exerciseId: Long) {
         favoriteExerciseDao.deleteByExerciseId(exerciseId)
+    }
+
+    suspend fun updateExerciseMetricTypes(
+        exerciseId: Long,
+        metricTypes: List<WorkoutMetricType>,
+    ) {
+        exerciseDao.updateRecordSchema(
+            exerciseId = exerciseId,
+            recordSchema = serializeMetricTypes(metricTypes),
+        )
     }
 }

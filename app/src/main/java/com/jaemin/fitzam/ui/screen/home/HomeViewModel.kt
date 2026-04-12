@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
 import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.data.repository.WorkoutSetDraft
-import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
-import com.jaemin.fitzam.model.WorkoutMetricType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -120,20 +118,12 @@ class HomeViewModel @Inject constructor(
                                 exerciseId = workoutExercise.exercise.id,
                                 categoryId = workoutExercise.exercise.category.id,
                                 orderIndex = index,
-                                recordSchema = workoutExercise.exercise.recordSchema,
+                                metricTypes = workoutExercise.exercise.metricTypes,
                                 sets = workoutExercise.sets.map { set ->
                                     WorkoutSetDraft(
                                         setIndex = set.index,
-                                        metrics = when (workoutExercise.exercise.recordSchema) {
-                                            ExerciseRecordSchema.WEIGHT_REPS -> mapOf(
-                                                WorkoutMetricType.WEIGHT_KG to (set.metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0),
-                                                WorkoutMetricType.REPS to (set.metrics[WorkoutMetricType.REPS] ?: 0.0),
-                                            )
-
-                                            ExerciseRecordSchema.DISTANCE_DURATION -> mapOf(
-                                                WorkoutMetricType.DISTANCE_KM to (set.metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0),
-                                                WorkoutMetricType.DURATION_SEC to (set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0),
-                                            )
+                                        metrics = set.metrics.filterKeys { metricType ->
+                                            metricType in workoutExercise.exercise.metricTypes
                                         },
                                     )
                                 },

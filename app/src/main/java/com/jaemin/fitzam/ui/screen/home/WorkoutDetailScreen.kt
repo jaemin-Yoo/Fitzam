@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
-import com.jaemin.fitzam.model.ExerciseRecordSchema
+import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
@@ -66,6 +66,7 @@ import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordExerciseUiModel
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordUiState
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordViewModel
 import com.jaemin.fitzam.ui.theme.ErrorRed
+import com.jaemin.fitzam.ui.util.metricHeader
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import java.time.LocalDate
 
@@ -162,17 +163,11 @@ fun WorkoutDetailScreen(
                     start = 16.dp,
                     end = 16.dp,
                 ),
-            onFirstMetricChange = { setIndex, value ->
-                viewModel.updateSetFirstMetric(
+            onMetricChange = { setIndex, metricType, value ->
+                viewModel.updateSetMetric(
                     workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
                     setIndex = setIndex,
-                    value = value,
-                )
-            },
-            onSecondMetricChange = { setIndex, value ->
-                viewModel.updateSetSecondMetric(
-                    workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
-                    setIndex = setIndex,
+                    metricType = metricType,
                     value = value,
                 )
             },
@@ -234,8 +229,7 @@ private fun WorkoutDetailLoadingScreen(
 private fun WorkoutDetailContent(
     exerciseItem: WorkoutRecordExerciseUiModel,
     modifier: Modifier = Modifier,
-    onFirstMetricChange: (Int, String) -> Unit,
-    onSecondMetricChange: (Int, String) -> Unit,
+    onMetricChange: (Int, WorkoutMetricType, String) -> Unit,
     onSetDeleteClick: (Int) -> Unit,
 ) {
     Column(
@@ -319,10 +313,9 @@ private fun WorkoutDetailContent(
                     }
                 } else {
                     EditableWorkoutSetTable(
-                        recordSchema = exerciseItem.exercise.recordSchema,
+                        metricTypes = exerciseItem.exercise.metricTypes,
                         sets = exerciseItem.sets,
-                        onFirstMetricChange = onFirstMetricChange,
-                        onSecondMetricChange = onSecondMetricChange,
+                        onMetricChange = onMetricChange,
                         onRemoveSet = onSetDeleteClick,
                     )
                 }
@@ -396,21 +389,11 @@ private fun WorkoutDetailBottomBar(
 
 @Composable
 private fun EditableWorkoutSetTable(
-    recordSchema: ExerciseRecordSchema,
+    metricTypes: List<WorkoutMetricType>,
     sets: List<EditableWorkoutSetUi>,
-    onFirstMetricChange: (Int, String) -> Unit,
-    onSecondMetricChange: (Int, String) -> Unit,
+    onMetricChange: (Int, WorkoutMetricType, String) -> Unit,
     onRemoveSet: (Int) -> Unit,
 ) {
-    val firstHeader = when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> "무게(KG)"
-        ExerciseRecordSchema.DISTANCE_DURATION -> "거리(KM)"
-    }
-    val secondHeader = when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> "횟수"
-        ExerciseRecordSchema.DISTANCE_DURATION -> "시간(초)"
-    }
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -420,8 +403,12 @@ private fun EditableWorkoutSetTable(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             HomeTableHeaderCell(text = "세트", modifier = Modifier.weight(1f))
-            HomeTableHeaderCell(text = firstHeader, modifier = Modifier.weight(1f))
-            HomeTableHeaderCell(text = secondHeader, modifier = Modifier.weight(1f))
+            metricTypes.forEach { metricType ->
+                HomeTableHeaderCell(
+                    text = metricHeader(metricType),
+                    modifier = Modifier.weight(1f),
+                )
+            }
             Spacer(modifier = Modifier.width(24.dp))
         }
 
@@ -431,37 +418,40 @@ private fun EditableWorkoutSetTable(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 HomeTableValueCell(text = set.index.toString(), modifier = Modifier.weight(1f))
-                TableInputCell(
-                    value = set.firstMetricText,
-                    onValueChange = { nextValue ->
-                        if (nextValue.matches(DECIMAL_INPUT_REGEX)) {
-                            onFirstMetricChange(set.index, nextValue)
-                        }
-                    },
-                    keyboardType = KeyboardType.Decimal,
-                    modifier = Modifier.weight(1f),
-                )
-                if (recordSchema == ExerciseRecordSchema.DISTANCE_DURATION) {
-                    DurationInputCell(
-                        totalSecondsText = set.secondMetricText,
-                        onValueChange = { nextValue ->
-                            if (nextValue.matches(INT_INPUT_REGEX)) {
-                                onSecondMetricChange(set.index, nextValue)
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                } else {
-                    TableInputCell(
-                        value = set.secondMetricText,
-                        onValueChange = { nextValue ->
-                            if (nextValue.matches(INT_INPUT_REGEX)) {
-                                onSecondMetricChange(set.index, nextValue)
-                            }
-                        },
-                        keyboardType = KeyboardType.Number,
-                        modifier = Modifier.weight(1f),
-                    )
+                metricTypes.forEach { metricType ->
+                    if (metricType == WorkoutMetricType.DURATION_SEC) {
+                        DurationInputCell(
+                            totalSecondsText = set.metricValues[metricType].orEmpty(),
+                            onValueChange = { nextValue ->
+                                if (nextValue.matches(INT_INPUT_REGEX)) {
+                                    onMetricChange(set.index, metricType, nextValue)
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    } else {
+                        TableInputCell(
+                            value = set.metricValues[metricType].orEmpty(),
+                            onValueChange = { nextValue ->
+                                val isValid = when (metricType) {
+                                    WorkoutMetricType.WEIGHT_KG,
+                                    WorkoutMetricType.DISTANCE_KM -> nextValue.matches(DECIMAL_INPUT_REGEX)
+                                    WorkoutMetricType.REPS -> nextValue.matches(INT_INPUT_REGEX)
+                                    WorkoutMetricType.DURATION_SEC -> true
+                                }
+                                if (isValid) {
+                                    onMetricChange(set.index, metricType, nextValue)
+                                }
+                            },
+                            keyboardType = when (metricType) {
+                                WorkoutMetricType.WEIGHT_KG,
+                                WorkoutMetricType.DISTANCE_KM -> KeyboardType.Decimal
+                                WorkoutMetricType.REPS,
+                                WorkoutMetricType.DURATION_SEC -> KeyboardType.Number
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
                 IconButton(
                     onClick = { onRemoveSet(set.index) },

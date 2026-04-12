@@ -52,7 +52,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
-import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
 import com.jaemin.fitzam.model.WorkoutMetricType
@@ -72,7 +71,9 @@ import com.jaemin.fitzam.ui.dzam.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
-import com.jaemin.fitzam.ui.util.formatDurationInMinutesAndSeconds
+import com.jaemin.fitzam.ui.util.formatDurationDisplayValue
+import com.jaemin.fitzam.ui.util.formatMetricValue
+import com.jaemin.fitzam.ui.util.metricHeader
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -420,7 +421,7 @@ private fun HomeWorkoutExerciseCard(
                 if (!isEditMode && workoutExercise.sets.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     HomeWorkoutSetTable(
-                        recordSchema = workoutExercise.exercise.recordSchema,
+                        metricTypes = workoutExercise.exercise.metricTypes,
                         sets = workoutExercise.sets,
                     )
                 }
@@ -508,48 +509,34 @@ private fun EditMoveButton(
 
 @Composable
 internal fun HomeWorkoutSetTable(
-    recordSchema: ExerciseRecordSchema,
+    metricTypes: List<WorkoutMetricType>,
     sets: List<WorkoutSet>,
 ) {
-    val firstHeader = when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> "무게(KG)"
-        ExerciseRecordSchema.DISTANCE_DURATION -> "거리(KM)"
-    }
-    val secondHeader = when (recordSchema) {
-        ExerciseRecordSchema.WEIGHT_REPS -> "횟수"
-        ExerciseRecordSchema.DISTANCE_DURATION -> "시간(초)"
-    }
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             HomeTableHeaderCell(text = "세트", modifier = Modifier.weight(1f))
-            HomeTableHeaderCell(text = firstHeader, modifier = Modifier.weight(1f))
-            HomeTableHeaderCell(text = secondHeader, modifier = Modifier.weight(1f))
+            metricTypes.forEach { metricType ->
+                HomeTableHeaderCell(
+                    text = metricHeader(metricType),
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
 
         sets.forEach { set ->
-            val firstMetric = when (recordSchema) {
-                ExerciseRecordSchema.WEIGHT_REPS -> set.metrics[WorkoutMetricType.WEIGHT_KG] ?: 0.0
-                ExerciseRecordSchema.DISTANCE_DURATION -> set.metrics[WorkoutMetricType.DISTANCE_KM] ?: 0.0
-            }
-            val secondMetric = when (recordSchema) {
-                ExerciseRecordSchema.WEIGHT_REPS -> set.metrics[WorkoutMetricType.REPS] ?: 0.0
-                ExerciseRecordSchema.DISTANCE_DURATION -> set.metrics[WorkoutMetricType.DURATION_SEC] ?: 0.0
-            }
-            val secondMetricText = when (recordSchema) {
-                ExerciseRecordSchema.WEIGHT_REPS -> formatMetricValue(secondMetric)
-                ExerciseRecordSchema.DISTANCE_DURATION -> {
-                    formatDurationInMinutesAndSeconds(secondMetric.toInt())
-                }
-            }
-
             Row(modifier = Modifier.fillMaxWidth()) {
                 HomeTableValueCell(text = set.index.toString(), modifier = Modifier.weight(1f))
-                HomeTableValueCell(text = formatMetricValue(firstMetric), modifier = Modifier.weight(1f))
-                HomeTableValueCell(text = secondMetricText, modifier = Modifier.weight(1f))
+                metricTypes.forEach { metricType ->
+                    val metricValue = set.metrics[metricType] ?: 0.0
+                    val metricText = when (metricType) {
+                        WorkoutMetricType.DURATION_SEC -> formatDurationDisplayValue(metricValue.toInt())
+                        else -> formatMetricValue(metricValue)
+                    }
+                    HomeTableValueCell(text = metricText, modifier = Modifier.weight(1f))
+                }
             }
         }
     }
@@ -583,14 +570,6 @@ internal fun HomeTableValueCell(
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
         )
-    }
-}
-
-internal fun formatMetricValue(value: Double): String {
-    return if (value % 1.0 == 0.0) {
-        value.toInt().toString()
-    } else {
-        String.format(Locale.US, "%.2f", value).trimEnd('0').trimEnd('.')
     }
 }
 

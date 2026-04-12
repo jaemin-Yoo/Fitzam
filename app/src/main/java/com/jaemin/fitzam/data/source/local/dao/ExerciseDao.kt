@@ -32,4 +32,16 @@ interface ExerciseDao {
         """
     )
     fun getExerciseEntity(id: Long): ExerciseEntity
+
+    @Query(
+        """
+        UPDATE exercise
+        SET recordSchema = :recordSchema
+        WHERE id = :exerciseId
+    """
+    )
+    suspend fun updateRecordSchema(
+        exerciseId: Long,
+        recordSchema: String,
+    )
 }

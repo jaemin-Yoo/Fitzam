@@ -16,8 +16,9 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
-import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.WorkoutMetricType
+import com.jaemin.fitzam.model.parseMetricTypes
+import com.jaemin.fitzam.model.serializeMetricTypes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -38,7 +39,7 @@ data class WorkoutExerciseDraft(
     val exerciseId: Long,
     val categoryId: Long,
     val orderIndex: Int,
-    val recordSchema: ExerciseRecordSchema,
+    val metricTypes: List<WorkoutMetricType>,
     val sets: List<WorkoutSetDraft>,
 )
 
@@ -190,7 +191,7 @@ class WorkoutRepository @Inject constructor(
                         workoutRecordDate = date.toString(),
                         exerciseId = exercise.exerciseId,
                         orderIndex = exercise.orderIndex,
-                        recordSchema = exercise.recordSchema.name,
+                        recordSchema = serializeMetricTypes(exercise.metricTypes),
                     ),
                 )
 
@@ -225,9 +226,9 @@ class WorkoutRepository @Inject constructor(
         workoutRecordDao.deleteByDate(date.toString())
     }
 
-    suspend fun getLatestRecordSchema(exerciseId: Long): ExerciseRecordSchema? {
+    suspend fun getLatestMetricTypes(exerciseId: Long): List<WorkoutMetricType>? {
         val rawSchema = workoutRecordExerciseDao.getLatestRecordSchemaByExerciseId(exerciseId) ?: return null
-        return runCatching { ExerciseRecordSchema.valueOf(rawSchema) }.getOrNull()
+        return parseMetricTypes(rawSchema)
     }
 
 }

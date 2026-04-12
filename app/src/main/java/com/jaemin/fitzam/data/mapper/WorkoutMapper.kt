@@ -8,11 +8,11 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
-import com.jaemin.fitzam.model.ExerciseRecordSchema
 import com.jaemin.fitzam.model.Workout
 import com.jaemin.fitzam.model.WorkoutExercise
 import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
+import com.jaemin.fitzam.model.parseMetricTypes
 import java.time.LocalDate
 
 fun WorkoutRecordEntity.toModel(exerciseCategories: List<ExerciseCategory>): Workout {
@@ -38,7 +38,7 @@ fun ExerciseEntity.toModel(category: ExerciseCategory): Exercise {
         name = name,
         category = category,
         imageName = imageName,
-        recordSchema = ExerciseRecordSchema.valueOf(recordSchema),
+        metricTypes = parseMetricTypes(recordSchema, exerciseName = name),
     )
 }
 
@@ -57,12 +57,11 @@ fun WorkoutRecordExerciseEntity.toModel(
     exercise: Exercise,
     sets: List<WorkoutSet>,
 ): WorkoutExercise {
-    val sessionRecordSchema = runCatching {
-        ExerciseRecordSchema.valueOf(recordSchema)
-    }.getOrDefault(exercise.recordSchema)
     return WorkoutExercise(
         id = id,
-        exercise = exercise.copy(recordSchema = sessionRecordSchema),
+        exercise = exercise.copy(
+            metricTypes = parseMetricTypes(recordSchema, exerciseName = exercise.name),
+        ),
         sets = sets,
     )
 }
