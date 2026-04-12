@@ -1,13 +1,11 @@
 package com.jaemin.fitzam.ui.screen.workoutstart
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,18 +16,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +35,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,17 +59,18 @@ import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordViewModel
 import com.jaemin.fitzam.ui.theme.ErrorRed
 import com.jaemin.fitzam.ui.theme.FitzamTheme
-import com.jaemin.fitzam.ui.theme.SuccessGreen
-import com.jaemin.fitzam.ui.util.formatDistanceDisplayValue
 import com.jaemin.fitzam.ui.util.formatDurationShortLabel
 import com.jaemin.fitzam.ui.util.formatMetricValue
 import com.jaemin.fitzam.ui.util.metricLabel
-import com.jaemin.fitzam.ui.util.metricQuickAdjustValues
 import com.jaemin.fitzam.ui.util.metricStep
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 private val DecimalInputRegex = Regex("^\\d*(\\.\\d{0,2})?$")
 private val IntInputRegex = Regex("^\\d*$")
+private const val MetricSelectionLimitErrorMessage = "최대 2개까지만 선택할 수 있습니다."
+private val WorkoutStartSurfaceVariant = Color(0xFFDFDFDF)
+private val WorkoutStartOnSurfaceVariant = Color(0xFF808080)
 
 @Composable
 fun WorkoutStartScreen(
@@ -117,8 +115,15 @@ fun WorkoutStartScreen(
     }
 
     val selectedMetricTypes = selectedMetricNames.map { name -> WorkoutMetricType.valueOf(name) }
+    val isMetricSelectionLimitExceeded = selectedMetricTypes.size > 2
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = {
+            SnackbarHost(snackbarHostState)
+        },
         topBar = {
             FitzamTopAppBar(
                 title = exerciseName,
@@ -143,6 +148,12 @@ fun WorkoutStartScreen(
                 DZamButton(
                     text = "완료",
                     onClick = {
+                        if (isMetricSelectionLimitExceeded) {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(MetricSelectionLimitErrorMessage)
+                            }
+                            return@DZamButton
+                        }
                         viewModel.appendSet(
                             workoutExerciseId = workoutExerciseId,
                             metricTypes = selectedMetricTypes,
@@ -167,27 +178,24 @@ fun WorkoutStartScreen(
                     end = 16.dp,
                 )
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(28.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             MetricTypeSelector(
                 selectedMetricTypes = selectedMetricTypes,
+                isError = isMetricSelectionLimitExceeded,
                 onToggle = { metricType ->
-                    when {
-                        metricType in selectedMetricTypes && selectedMetricTypes.size > 1 -> {
-                            selectedMetricNames.remove(metricType.name)
-                        }
-
-                        metricType !in selectedMetricTypes && selectedMetricTypes.size < 2 -> {
-                            selectedMetricNames.add(metricType.name)
-                        }
+                    if (metricType in selectedMetricTypes) {
+                        selectedMetricNames.remove(metricType.name)
+                    } else {
+                        selectedMetricNames.add(metricType.name)
                     }
                 },
             )
 
             selectedMetricTypes.forEach { metricType ->
-                MetricSection(
+                MetricControlSection(
                     metricType = metricType,
                     value = metricInputs[metricType].orZero(),
                     onValueChange = { nextValue ->
@@ -213,74 +221,73 @@ fun WorkoutStartScreen(
 @Composable
 private fun MetricTypeSelector(
     selectedMetricTypes: List<WorkoutMetricType>,
+    isError: Boolean,
     onToggle: (WorkoutMetricType) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = "기록 유형",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             WorkoutMetricType.entries.forEach { metricType ->
-                FilterChip(
-                    selected = metricType in selectedMetricTypes,
-                    onClick = { onToggle(metricType) },
-                    label = { Text(metricLabel(metricType)) },
-                )
+                val selected = metricType in selectedMetricTypes
+                Surface(
+                    color = if (selected) MaterialTheme.colorScheme.primary else WorkoutStartSurfaceVariant,
+                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else WorkoutStartOnSurfaceVariant,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onToggle(metricType) },
+                ) {
+                    Text(
+                        text = metricLabel(metricType),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
-        Text(
-            text = "최대 2개까지 선택할 수 있습니다.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (isError) {
+            Text(
+                text = MetricSelectionLimitErrorMessage,
+                modifier = Modifier.padding(horizontal = 8.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = ErrorRed,
+            )
+        }
     }
 }
 
 @Composable
-private fun MetricSection(
+private fun MetricControlSection(
     metricType: WorkoutMetricType,
     value: String,
     onValueChange: (String) -> Unit,
     onStepChange: (Double) -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text = metricLabel(metricType),
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                lineHeight = 28.sp,
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CircleAdjustButton(
-                isDecrease = true,
-                onClick = { onStepChange(-metricStep(metricType)) },
-            )
-            MetricValueDisplay(
-                metricType = metricType,
-                value = value,
-                onValueChange = onValueChange,
-            )
-            CircleAdjustButton(
-                isDecrease = false,
-                onClick = { onStepChange(metricStep(metricType)) },
-            )
-        }
+        MetricValueCard(
+            metricType = metricType,
+            value = value,
+            onValueChange = onValueChange,
+            onDecrease = { onStepChange(-workoutStartStep(metricType)) },
+            onIncrease = { onStepChange(workoutStartStep(metricType)) },
+        )
 
         MetricQuickAdjustButtons(
             metricType = metricType,
@@ -290,16 +297,69 @@ private fun MetricSection(
 }
 
 @Composable
+private fun MetricValueCard(
+    metricType: WorkoutMetricType,
+    value: String,
+    onValueChange: (String) -> Unit,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(129.dp)
+                .padding(horizontal = 28.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SquareAdjustButton(
+                text = "-",
+                contentDescription = "감소",
+                onClick = onDecrease,
+            )
+            MetricValueDisplay(
+                metricType = metricType,
+                value = value,
+                onValueChange = onValueChange,
+            )
+            SquareAdjustButton(
+                text = "+",
+                contentDescription = "증가",
+                onClick = onIncrease,
+            )
+        }
+    }
+}
+
+@Composable
 private fun MetricValueDisplay(
     metricType: WorkoutMetricType,
     value: String,
     onValueChange: (String) -> Unit,
 ) {
-    Surface(color = Color.Transparent) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier.width(if (metricType == WorkoutMetricType.DURATION_SEC) 156.dp else 128.dp),
+    ) {
+        if (metricType == WorkoutMetricType.DURATION_SEC) {
+            Text(
+                text = formatDurationClock(value.toIntOrNull() ?: 0),
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 36.sp,
+                    lineHeight = 44.sp,
+                    textAlign = TextAlign.Center,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        } else {
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -310,10 +370,12 @@ private fun MetricValueDisplay(
                 ),
                 textStyle = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Medium,
+                    fontSize = 36.sp,
+                    lineHeight = 44.sp,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
-                modifier = Modifier.widthIn(min = 84.dp),
+                modifier = Modifier.fillMaxWidth(),
                 decorationBox = { innerTextField ->
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -323,14 +385,14 @@ private fun MetricValueDisplay(
                     }
                 },
             )
-            val secondaryLabel = displaySecondaryValue(metricType, value)
-            if (secondaryLabel != null) {
-                Text(
-                    text = secondaryLabel,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 6.dp),
-                )
-            }
+        }
+        displaySecondaryValue(metricType, value)?.let { secondaryLabel ->
+            Text(
+                text = secondaryLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -340,33 +402,33 @@ private fun MetricQuickAdjustButtons(
     metricType: WorkoutMetricType,
     onAdjust: (Double) -> Unit,
 ) {
-    val values = metricQuickAdjustValues(metricType)
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val values = workoutStartQuickAdjustValues(metricType)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             values.forEach { quickValue ->
                 QuickAdjustButton(
-                    text = "+",
-                    caption = quickAdjustCaption(metricType, quickValue),
-                    backgroundColor = SuccessGreen,
+                    text = "+ ${quickAdjustCaption(metricType, quickValue)}",
+                    backgroundColor = MaterialTheme.colorScheme.surface,
                     onClick = { onAdjust(quickValue) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             values.forEach { quickValue ->
                 QuickAdjustButton(
-                    text = "-",
-                    caption = quickAdjustCaption(metricType, quickValue),
-                    backgroundColor = ErrorRed,
+                    text = "- ${quickAdjustCaption(metricType, quickValue)}",
+                    backgroundColor = WorkoutStartSurfaceVariant,
                     onClick = { onAdjust(-quickValue) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -376,72 +438,57 @@ private fun MetricQuickAdjustButtons(
 @Composable
 private fun QuickAdjustButton(
     text: String,
-    caption: String,
     backgroundColor: Color,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        color = backgroundColor,
+        shape = RoundedCornerShape(16.dp),
     ) {
-        OutlinedButton(
-            onClick = onClick,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(0.dp, Color.Transparent),
-            contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.size(52.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundColor, RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
         Text(
-            text = caption,
+            text = text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
     }
 }
 
 @Composable
-private fun CircleAdjustButton(
-    isDecrease: Boolean,
+private fun SquareAdjustButton(
+    text: String,
+    contentDescription: String,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = Modifier.size(40.dp),
-        shape = CircleShape,
-        contentPadding = PaddingValues(0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+    Surface(
+        modifier = Modifier.size(52.dp),
+        color = WorkoutStartSurfaceVariant,
+        shape = RoundedCornerShape(16.dp),
     ) {
-        if (isDecrease) {
-            Icon(
-                imageVector = ImageVector.vectorResource(id = R.drawable.ic_minus_circle),
-                contentDescription = "감소",
-                tint = Color.Unspecified,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    onClickLabel = contentDescription,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    lineHeight = 28.sp,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
             )
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_plus),
-                    contentDescription = "증가",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
         }
     }
 }
@@ -455,17 +502,25 @@ private fun displaySecondaryValue(
         WorkoutMetricType.WEIGHT_KG -> "KG"
         WorkoutMetricType.REPS -> "개"
         WorkoutMetricType.DISTANCE_KM -> {
-            val totalMeters = (numericValue * 1000).toInt()
-            val km = totalMeters / 1000
-            val meters = totalMeters % 1000
-            if (km > 0 && meters > 0) "KM ${meters} M" else if (km > 0) "KM" else "M"
+            "KM"
         }
-        WorkoutMetricType.DURATION_SEC -> {
-            val totalSeconds = numericValue.toInt()
-            val minutes = totalSeconds / 60
-            val seconds = totalSeconds % 60
-            if (minutes > 0 && seconds > 0) "분 ${seconds}초" else if (minutes > 0) "분" else "초"
-        }
+        WorkoutMetricType.DURATION_SEC -> null
+    }
+}
+
+private fun workoutStartStep(metricType: WorkoutMetricType): Double {
+    return when (metricType) {
+        WorkoutMetricType.DURATION_SEC -> 1.0
+        else -> metricStep(metricType)
+    }
+}
+
+private fun workoutStartQuickAdjustValues(metricType: WorkoutMetricType): List<Double> {
+    return when (metricType) {
+        WorkoutMetricType.WEIGHT_KG -> listOf(2.5, 5.0, 10.0, 15.0, 20.0)
+        WorkoutMetricType.REPS -> listOf(5.0, 10.0, 50.0)
+        WorkoutMetricType.DISTANCE_KM -> listOf(0.5, 1.0, 3.0)
+        WorkoutMetricType.DURATION_SEC -> listOf(10.0, 60.0, 300.0)
     }
 }
 
@@ -476,7 +531,7 @@ private fun quickAdjustCaption(
     return when (metricType) {
         WorkoutMetricType.WEIGHT_KG,
         WorkoutMetricType.REPS -> formatMetricValue(value)
-        WorkoutMetricType.DISTANCE_KM -> formatDistanceDisplayValue(value)
+        WorkoutMetricType.DISTANCE_KM -> formatMetricValue(value)
         WorkoutMetricType.DURATION_SEC -> formatDurationShortLabel(value.toInt())
     }
 }
@@ -528,6 +583,13 @@ private fun keyboardTypeForMetric(metricType: WorkoutMetricType): KeyboardType {
     }
 }
 
+private fun formatDurationClock(totalSeconds: Int): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+}
+
 private fun String?.orZero(): String = if (this.isNullOrBlank()) "0" else this
 
 @Preview(showBackground = true)
@@ -539,24 +601,25 @@ private fun WorkoutStartPreview() {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(28.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             MetricTypeSelector(
                 selectedMetricTypes = listOf(
                     WorkoutMetricType.WEIGHT_KG,
                     WorkoutMetricType.REPS,
                 ),
+                isError = false,
                 onToggle = {},
             )
-            MetricSection(
+            MetricControlSection(
                 metricType = WorkoutMetricType.WEIGHT_KG,
                 value = "80",
                 onValueChange = {},
                 onStepChange = {},
             )
-            MetricSection(
+            MetricControlSection(
                 metricType = WorkoutMetricType.REPS,
-                value = "10",
+                value = "20",
                 onValueChange = {},
                 onStepChange = {},
             )
