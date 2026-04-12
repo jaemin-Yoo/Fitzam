@@ -1,245 +1,1400 @@
 [
   {
     "id": 1,
+    "name": "벤치 프레스 (바벨)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 2,
+    "name": "벤치 프레스 (덤벨)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 3,
     "name": "벤치 프레스 (머신)",
     "categoryId": 1,
     "imageName": "img_chest",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 2,
-    "name": "인클라인 덤벨 프레스",
+    "id": 4,
+    "name": "인클라인 벤치 프레스 (바벨)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 5,
+    "name": "인클라인 벤치 프레스 (덤벨)",
     "categoryId": 1,
     "imageName": "img_chest",
     "equipmentType": "DUMBBELL"
   },
   {
+    "id": 6,
+    "name": "인클라인 벤치 프레스 (머신)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 7,
+    "name": "디클라인 벤치 프레스 (바벨)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 8,
+    "name": "디클라인 벤치 프레스 (덤벨)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 9,
+    "name": "체스트 프레스 (머신)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 10,
+    "name": "펙덱 플라이 (머신)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 11,
+    "name": "덤벨 플라이",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 12,
+    "name": "인클라인 덤벨 플라이",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 13,
+    "name": "케이블 플라이",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 14,
+    "name": "인클라인 케이블 플라이",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 15,
+    "name": "로우 투 하이 케이블 플라이",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 16,
+    "name": "하이 투 로우 케이블 플라이",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
     "id": 17,
-    "name": "체스트 플라이 (머신)",
+    "name": "케이블 크로스오버",
     "categoryId": 1,
     "imageName": "img_chest",
     "equipmentType": "MACHINE"
   },
   {
     "id": 18,
-    "name": "푸시업",
+    "name": "푸쉬업",
     "categoryId": 1,
     "imageName": "img_chest",
     "equipmentType": "BODYWEIGHT"
   },
-
   {
-    "id": 3,
+    "id": 19,
+    "name": "인클라인 푸쉬업",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 20,
+    "name": "디클라인 푸쉬업",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 21,
+    "name": "와이드 푸쉬업",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 22,
+    "name": "딥스 (가슴)",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 23,
+    "name": "플레이트 프레스",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 24,
+    "name": "스벤드 프레스",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 25,
+    "name": "덤벨 풀오버",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 26,
+    "name": "바벨 풀오버",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 27,
+    "name": "체스트 딥 머신",
+    "categoryId": 1,
+    "imageName": "img_chest",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 28,
     "name": "랫 풀다운 (머신)",
     "categoryId": 2,
     "imageName": "img_back",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 4,
-    "name": "시티드 로우 (머신)",
+    "id": 29,
+    "name": "시티드 케이블 로우",
     "categoryId": 2,
     "imageName": "img_back",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 19,
-    "name": "바벨 로우",
+    "id": 30,
+    "name": "머신 로우",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 31,
+    "name": "어시스트 풀업 머신",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 32,
+    "name": "T바 로우 (머신)",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 33,
+    "name": "바벨 벤트오버 로우",
     "categoryId": 2,
     "imageName": "img_back",
     "equipmentType": "BARBELL"
   },
   {
-    "id": 20,
-    "name": "원암 덤벨 로우",
+    "id": 34,
+    "name": "바벨 데드리프트",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 35,
+    "name": "바벨 루마니안 데드리프트",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 36,
+    "name": "T바 로우 (바벨)",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 37,
+    "name": "덤벨 원암 로우",
     "categoryId": 2,
     "imageName": "img_back",
     "equipmentType": "DUMBBELL"
   },
-
   {
-    "id": 5,
+    "id": 38,
+    "name": "덤벨 벤트오버 로우",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 39,
+    "name": "덤벨 데드리프트",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 40,
+    "name": "케틀벨 데드리프트",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 41,
+    "name": "케틀벨 스윙",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 42,
+    "name": "풀업",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 43,
+    "name": "친업",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 44,
+    "name": "인버티드 로우",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 45,
+    "name": "슈퍼맨",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 46,
+    "name": "백 익스텐션",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 47,
+    "name": "굿모닝",
+    "categoryId": 2,
+    "imageName": "img_back",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 48,
+    "name": "숄더 프레스 (머신)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 49,
     "name": "숄더 프레스 (바벨)",
     "categoryId": 3,
     "imageName": "img_shoulder",
     "equipmentType": "BARBELL"
   },
   {
-    "id": 6,
-    "name": "사이드 레터럴 레이즈",
+    "id": 50,
+    "name": "숄더 프레스 (덤벨)",
     "categoryId": 3,
     "imageName": "img_shoulder",
     "equipmentType": "DUMBBELL"
   },
   {
-    "id": 21,
-    "name": "리어 델트 플라이",
-    "categoryId": 3,
-    "imageName": "img_shoulder",
-    "equipmentType": "OTHER"
-  },
-  {
-    "id": 22,
+    "id": 51,
     "name": "아놀드 프레스",
     "categoryId": 3,
     "imageName": "img_shoulder",
     "equipmentType": "DUMBBELL"
   },
-
   {
-    "id": 7,
-    "name": "트라이셉스 푸시다운",
-    "categoryId": 4,
-    "imageName": "img_triceps",
+    "id": 52,
+    "name": "비하인드 넥 프레스",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 53,
+    "name": "레터럴 레이즈 (머신)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 54,
+    "name": "레터럴 레이즈 (덤벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 55,
+    "name": "프론트 레이즈 (바벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 56,
+    "name": "프론트 레이즈 (덤벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 57,
+    "name": "프론트 레이즈 (케틀벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 58,
+    "name": "벤트오버 레터럴 레이즈",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 59,
+    "name": "리어 델트 플라이 (머신)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 60,
+    "name": "리어 델트 플라이 (덤벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 61,
+    "name": "업라이트 로우 (바벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 62,
+    "name": "업라이트 로우 (덤벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 63,
+    "name": "업라이트 로우 (케틀벨)",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 64,
+    "name": "페이스 풀",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 65,
+    "name": "케이블 레터럴 레이즈",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 66,
+    "name": "케이블 프론트 레이즈",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 67,
+    "name": "케이블 리어 델트 플라이",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 68,
+    "name": "덤벨 슈러그",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 69,
+    "name": "바벨 슈러그",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 70,
+    "name": "케틀벨 프레스",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 71,
+    "name": "핸드스탠드 푸시업",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 72,
+    "name": "파이크 푸시업",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 73,
+    "name": "플레이트 프론트 레이즈",
+    "categoryId": 3,
+    "imageName": "img_shoulder",
     "equipmentType": "OTHER"
   },
   {
-    "id": 8,
-    "name": "오버헤드 트라이셉스 익스텐션",
+    "id": 74,
+    "name": "트라이셉스 푸시다운 (머신)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 75,
+    "name": "오버헤드 트라이셉스 익스텐션 (머신)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 76,
+    "name": "트라이셉스 킥백 (덤벨)",
     "categoryId": 4,
     "imageName": "img_triceps",
     "equipmentType": "DUMBBELL"
   },
   {
-    "id": 23,
-    "name": "클로즈그립 벤치 프레스",
+    "id": 77,
+    "name": "오버헤드 트라이셉스 익스텐션 (덤벨)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 78,
+    "name": "라잉 트라이셉스 익스텐션 (덤벨)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 79,
+    "name": "오버헤드 트라이셉스 익스텐션 (바벨)",
     "categoryId": 4,
     "imageName": "img_triceps",
     "equipmentType": "BARBELL"
   },
   {
-    "id": 24,
+    "id": 80,
+    "name": "라잉 트라이셉스 익스텐션 (바벨)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 81,
+    "name": "클로즈 그립 벤치 프레스 (바벨)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 82,
+    "name": "트라이셉스 익스텐션 (케틀벨)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 83,
+    "name": "오버헤드 트라이셉스 익스텐션 (케틀벨)",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 84,
+    "name": "벤치 딥스",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 85,
     "name": "딥스",
     "categoryId": 4,
     "imageName": "img_triceps",
     "equipmentType": "BODYWEIGHT"
   },
-
   {
-    "id": 9,
+    "id": 86,
+    "name": "클로즈 그립 푸시업",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 87,
+    "name": "원암 트라이셉스 익스텐션",
+    "categoryId": 4,
+    "imageName": "img_triceps",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 88,
     "name": "바벨 컬",
     "categoryId": 5,
     "imageName": "img_biceps",
     "equipmentType": "BARBELL"
   },
   {
-    "id": 10,
+    "id": 89,
+    "name": "이지바 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 90,
+    "name": "덤벨 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 91,
+    "name": "얼터네이팅 덤벨 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 92,
     "name": "해머 컬",
     "categoryId": 5,
     "imageName": "img_biceps",
     "equipmentType": "DUMBBELL"
   },
   {
-    "id": 25,
-    "name": "프리처 컬",
+    "id": 93,
+    "name": "인클라인 덤벨 컬",
     "categoryId": 5,
     "imageName": "img_biceps",
-    "equipmentType": "OTHER"
+    "equipmentType": "DUMBBELL"
   },
   {
-    "id": 26,
+    "id": 94,
+    "name": "컨센트레이션 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 95,
+    "name": "프리처 컬 (덤벨)",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 96,
+    "name": "프리처 컬 (바벨)",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 97,
+    "name": "프리처 컬 (머신)",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 98,
     "name": "케이블 컬",
     "categoryId": 5,
     "imageName": "img_biceps",
-    "equipmentType": "OTHER"
-  },
-
-  {
-    "id": 11,
-    "name": "레그 프레스 (머신)",
-    "categoryId": 6,
-    "imageName": "img_lower_body",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 12,
-    "name": "레그 익스텐션 (머신)",
-    "categoryId": 6,
-    "imageName": "img_lower_body",
+    "id": 99,
+    "name": "케이블 해머 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 27,
+    "id": 100,
+    "name": "리버스 컬 (바벨)",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 101,
+    "name": "리버스 컬 (덤벨)",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 102,
+    "name": "머신 바이셉 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 103,
+    "name": "친업",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 104,
+    "name": "언더그립 인버티드 로우",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 105,
+    "name": "케틀벨 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 106,
+    "name": "조트만 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 107,
+    "name": "스파이더 컬",
+    "categoryId": 5,
+    "imageName": "img_biceps",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 108,
     "name": "스쿼트 (바벨)",
     "categoryId": 6,
     "imageName": "img_lower_body",
     "equipmentType": "BARBELL"
   },
   {
-    "id": 28,
-    "name": "루마니안 데드리프트",
+    "id": 109,
+    "name": "스쿼트 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 110,
+    "name": "고블릿 스쿼트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 111,
+    "name": "프론트 스쿼트",
     "categoryId": 6,
     "imageName": "img_lower_body",
     "equipmentType": "BARBELL"
   },
   {
-    "id": 29,
-    "name": "레그 컬 (머신)",
+    "id": 112,
+    "name": "백 스쿼트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 113,
+    "name": "해크 스쿼트",
     "categoryId": 6,
     "imageName": "img_lower_body",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 30,
-    "name": "카프 레이즈",
+    "id": 114,
+    "name": "레그 프레스",
     "categoryId": 6,
     "imageName": "img_lower_body",
-    "equipmentType": "OTHER"
+    "equipmentType": "MACHINE"
   },
-
   {
-    "id": 13,
+    "id": 115,
+    "name": "레그 익스텐션",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 116,
+    "name": "레그 컬",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 117,
+    "name": "루마니안 데드리프트 (바벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 118,
+    "name": "루마니안 데드리프트 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 119,
+    "name": "데드리프트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 120,
+    "name": "스티프 레그 데드리프트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 121,
+    "name": "런지 (바벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 122,
+    "name": "런지 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 123,
+    "name": "워킹 런지 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 124,
+    "name": "리버스 런지",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 125,
+    "name": "불가리안 스플릿 스쿼트 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 126,
+    "name": "불가리안 스플릿 스쿼트 (맨몸)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 127,
+    "name": "스텝업 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 128,
+    "name": "스텝업 (맨몸)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 129,
+    "name": "힙 쓰러스트 (바벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 130,
+    "name": "힙 쓰러스트 (머신)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 131,
+    "name": "글루트 브리지",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 132,
+    "name": "카프 레이즈 (머신)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 133,
+    "name": "카프 레이즈 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 134,
+    "name": "시티드 카프 레이즈",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 135,
+    "name": "도키 킥",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 136,
+    "name": "힙 어브덕션",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 137,
+    "name": "힙 애덕션",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 138,
+    "name": "케이블 킥백",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 139,
+    "name": "케이블 풀스루",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 140,
+    "name": "시시 스쿼트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 141,
+    "name": "점프 스쿼트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 142,
+    "name": "월 시트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 143,
+    "name": "피스톨 스쿼트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 144,
+    "name": "힙 쓰러스트 (덤벨)",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 145,
+    "name": "스모 데드리프트",
+    "categoryId": 6,
+    "imageName": "img_lower_body",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 146,
     "name": "크런치",
     "categoryId": 7,
     "imageName": "img_abs",
     "equipmentType": "BODYWEIGHT"
   },
   {
-    "id": 14,
+    "id": 147,
+    "name": "싯업",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 148,
+    "name": "리버스 크런치",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 149,
     "name": "레그 레이즈",
     "categoryId": 7,
     "imageName": "img_abs",
     "equipmentType": "BODYWEIGHT"
   },
   {
-    "id": 31,
+    "id": 150,
+    "name": "행잉 레그 레이즈",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 151,
+    "name": "행잉 니 레이즈",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 152,
     "name": "플랭크",
     "categoryId": 7,
     "imageName": "img_abs",
     "equipmentType": "BODYWEIGHT"
   },
   {
-    "id": 32,
+    "id": 153,
+    "name": "사이드 플랭크",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 154,
     "name": "바이시클 크런치",
     "categoryId": 7,
     "imageName": "img_abs",
     "equipmentType": "BODYWEIGHT"
   },
-
   {
-    "id": 15,
+    "id": 155,
+    "name": "마운틴 클라이머",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 156,
+    "name": "V업",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 157,
+    "name": "토 터치 크런치",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 158,
+    "name": "데드 버그",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 159,
+    "name": "러시안 트위스트",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 160,
+    "name": "러시안 트위스트 (덤벨)",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 161,
+    "name": "러시안 트위스트 (케틀벨)",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "KETTLEBELL"
+  },
+  {
+    "id": 162,
+    "name": "우드초퍼 (머신)",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 163,
+    "name": "케이블 크런치",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 164,
+    "name": "앱도미널 크런치 (머신)",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 165,
+    "name": "디클라인 싯업",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 166,
+    "name": "디클라인 싯업 (플레이트)",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 167,
+    "name": "드래곤 플래그",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 168,
+    "name": "앱 롤아웃",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 169,
+    "name": "바벨 롤아웃",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "BARBELL"
+  },
+  {
+    "id": 170,
+    "name": "덤벨 사이드 벤드",
+    "categoryId": 7,
+    "imageName": "img_abs",
+    "equipmentType": "DUMBBELL"
+  },
+  {
+    "id": 171,
     "name": "러닝",
     "categoryId": 8,
     "imageName": "img_aerobic",
     "equipmentType": "BODYWEIGHT"
   },
   {
-    "id": 16,
-    "name": "사이클",
+    "id": 172,
+    "name": "조깅",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 173,
+    "name": "걷기",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 174,
+    "name": "파워 워킹",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 175,
+    "name": "트레드밀 걷기",
     "categoryId": 8,
     "imageName": "img_aerobic",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 33,
+    "id": 176,
+    "name": "트레드밀 러닝",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 177,
+    "name": "실내 사이클",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 178,
+    "name": "스피닝",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 179,
+    "name": "고정식 자전거",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 180,
+    "name": "야외 자전거",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 181,
+    "name": "일립티컬",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 182,
+    "name": "스텝퍼",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 183,
+    "name": "스텝밀",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "MACHINE"
+  },
+  {
+    "id": 184,
+    "name": "계단 오르기",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 185,
     "name": "로잉 머신",
     "categoryId": 8,
     "imageName": "img_aerobic",
     "equipmentType": "MACHINE"
   },
   {
-    "id": 34,
+    "id": 186,
     "name": "줄넘기",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 187,
+    "name": "버피 테스트",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 188,
+    "name": "마운틴 클라이머",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 189,
+    "name": "점핑잭",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 190,
+    "name": "하이 니",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 191,
+    "name": "제자리 뛰기",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 192,
+    "name": "배틀 로프",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 193,
+    "name": "수영",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 194,
+    "name": "아쿠아 워킹",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "OTHER"
+  },
+  {
+    "id": 195,
+    "name": "등산",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 196,
+    "name": "하이킹",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 197,
+    "name": "댄스 유산소",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 198,
+    "name": "에어로빅",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 199,
+    "name": "킥복싱 유산소",
+    "categoryId": 8,
+    "imageName": "img_aerobic",
+    "equipmentType": "BODYWEIGHT"
+  },
+  {
+    "id": 200,
+    "name": "서킷 트레이닝",
     "categoryId": 8,
     "imageName": "img_aerobic",
     "equipmentType": "BODYWEIGHT"
