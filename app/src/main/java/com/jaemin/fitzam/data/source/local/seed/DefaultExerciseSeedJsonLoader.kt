@@ -53,6 +53,11 @@ class DefaultExerciseSeedJsonLoader(
                         name = item.getString("name"),
                         categoryId = item.getLong("categoryId"),
                         imageName = item.getString("imageName"),
+                        equipmentType = if (item.has("equipmentType")) {
+                            item.getString("equipmentType")
+                        } else {
+                            null
+                        },
                     )
                 )
             }
@@ -94,4 +99,5 @@ data class SeedExercise(
     val name: String,
     val categoryId: Long,
     val imageName: String,
+    val equipmentType: String?,
 )

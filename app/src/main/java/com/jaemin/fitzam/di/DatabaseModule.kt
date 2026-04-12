@@ -10,6 +10,7 @@ import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.MIGRATION_1_2
 import com.jaemin.fitzam.data.source.local.MIGRATION_2_3
 import com.jaemin.fitzam.data.source.local.MIGRATION_3_4
+import com.jaemin.fitzam.data.source.local.MIGRATION_4_5
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
@@ -40,7 +41,7 @@ object DatabaseModule {
             FitzamDatabase::class.java,
             DatabaseConfig.localDbFileName()
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)

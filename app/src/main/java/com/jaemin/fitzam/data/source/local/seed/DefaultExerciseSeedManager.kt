@@ -2,6 +2,7 @@ package com.jaemin.fitzam.data.source.local.seed
 
 import android.content.Context
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.jaemin.fitzam.model.defaultEquipmentTypeForExercise
 import com.jaemin.fitzam.model.defaultMetricTypesForExercise
 import com.jaemin.fitzam.model.serializeMetricTypes
 
@@ -43,6 +44,7 @@ class DefaultExerciseSeedManager(
                         exercise.name,
                         exercise.categoryId,
                         exercise.imageName,
+                        resolveEquipmentType(exercise),
                         resolveRecordSchema(exercise.name),
                     )
                 )
@@ -71,7 +73,7 @@ class DefaultExerciseSeedManager(
     }
 
     companion object {
-        private const val EXERCISE_SEED_VERSION = 3
+        private const val EXERCISE_SEED_VERSION = 4
         private const val SEED_KEY_EXERCISE_DEFAULT_DATA = "exercise_default_data"
 
         private val CREATE_SEED_META_TABLE_SQL =
@@ -96,13 +98,18 @@ class DefaultExerciseSeedManager(
 
         private val UPSERT_EXERCISE_SQL =
             """
-            INSERT INTO exercise (id, name, categoryId, imageName, recordSchema) VALUES (?, ?, ?, ?, ?)
+            INSERT INTO exercise (id, name, categoryId, imageName, equipmentType, recordSchema) VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 name = excluded.name,
                 categoryId = excluded.categoryId,
                 imageName = excluded.imageName,
+                equipmentType = excluded.equipmentType,
                 recordSchema = excluded.recordSchema
             """.trimIndent()
+    }
+
+    private fun resolveEquipmentType(exercise: SeedExercise): String {
+        return exercise.equipmentType ?: defaultEquipmentTypeForExercise(exercise.name).name
     }
 
     private fun resolveRecordSchema(exerciseName: String): String {

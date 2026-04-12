@@ -355,23 +355,43 @@ class DriveSyncRepository @Inject constructor(
         }
 
         val columns = getTableColumns(db, "backup", "exercise")
-        if (columns.contains("recordSchema")) {
-            mergeTable(db, "exercise")
-            return
+        val equipmentTypeSource = if (columns.contains("equipmentType")) {
+            "equipmentType"
+        } else {
+            exerciseEquipmentTypeSql("name")
+        }
+        val recordSchemaSource = if (columns.contains("recordSchema")) {
+            "recordSchema"
+        } else {
+            "CASE WHEN name IN ('러닝', '사이클') THEN 'DISTANCE_DURATION' ELSE 'WEIGHT_REPS' END"
         }
 
         val before = queryCount(db, "exercise")
         db.execSQL(
             """
-            INSERT OR IGNORE INTO exercise (id, name, categoryId, imageName, recordSchema)
+            INSERT OR IGNORE INTO exercise (id, name, categoryId, imageName, equipmentType, recordSchema)
             SELECT id, name, categoryId, imageName,
-                CASE WHEN name IN ('러닝', '사이클') THEN 'DISTANCE_DURATION' ELSE 'WEIGHT_REPS' END
+                $equipmentTypeSource,
+                $recordSchemaSource
             FROM backup.exercise
             """
                 .trimIndent(),
         )
         val after = queryCount(db, "exercise")
-        Log.i(TAG, "Drive restore: exercise merged with schema mapping, inserted=${after - before}")
+        Log.i(TAG, "Drive restore: exercise merged with compatibility mapping, inserted=${after - before}")
+    }
+
+    private fun exerciseEquipmentTypeSql(nameExpression: String): String {
+        return """
+            CASE
+                WHEN $nameExpression LIKE '%머신%' THEN 'MACHINE'
+                WHEN $nameExpression LIKE '%바벨%' THEN 'BARBELL'
+                WHEN $nameExpression LIKE '%덤벨%' THEN 'DUMBBELL'
+                WHEN $nameExpression LIKE '%케틀벨%' THEN 'KETTLEBELL'
+                WHEN $nameExpression IN ('푸시업', '딥스', '크런치', '레그 레이즈', '플랭크', '바이시클 크런치', '러닝', '줄넘기') THEN 'BODYWEIGHT'
+                ELSE 'OTHER'
+            END
+        """.trimIndent()
     }
 
     private fun mergeWorkoutRecordExerciseSetMetricTable(db: SQLiteDatabase) {

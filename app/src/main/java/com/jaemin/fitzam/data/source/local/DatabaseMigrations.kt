@@ -230,3 +230,29 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         )
     }
 }
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            ALTER TABLE exercise
+            ADD COLUMN equipmentType TEXT NOT NULL DEFAULT 'OTHER'
+            """
+                .trimIndent(),
+        )
+        db.execSQL(
+            """
+            UPDATE exercise
+            SET equipmentType = CASE
+                WHEN name LIKE '%머신%' THEN 'MACHINE'
+                WHEN name LIKE '%바벨%' THEN 'BARBELL'
+                WHEN name LIKE '%덤벨%' THEN 'DUMBBELL'
+                WHEN name LIKE '%케틀벨%' THEN 'KETTLEBELL'
+                WHEN name IN ('푸시업', '딥스', '크런치', '레그 레이즈', '플랭크', '바이시클 크런치', '러닝', '줄넘기') THEN 'BODYWEIGHT'
+                ELSE 'OTHER'
+            END
+            """
+                .trimIndent(),
+        )
+    }
+}

@@ -1,6 +1,6 @@
-﻿# Fitzam DB ERD
+# Fitzam DB ERD
 
-기준: Room DB `version = 3` (`FitzamDatabase`)
+기준: Room DB `version = 5` (`FitzamDatabase`)
 
 ```mermaid
 erDiagram
@@ -21,6 +21,7 @@ erDiagram
         string name
         long categoryId "logical ref -> EXERCISE_CATEGORY.id (DB FK 없음)"
         string imageName
+        string equipmentType "MACHINE | BARBELL | DUMBBELL | KETTLEBELL | BODYWEIGHT | OTHER"
         string recordSchema "WEIGHT_REPS | DISTANCE_DURATION"
     }
 
@@ -34,6 +35,7 @@ erDiagram
         string workoutRecordDate FK
         long exerciseId FK
         int orderIndex
+        string recordSchema "운동 기록 당시 입력 메트릭 스키마"
     }
 
     WORKOUT_RECORD_EXERCISE_SET {
@@ -77,7 +79,7 @@ erDiagram
 - `workout_record_exercise_set`: 운동 항목별 세트 식별자 (복합 PK)
 - `workout_record_exercise_set_metric`: 세트별 측정값(가변 메트릭) 저장
 - `exercise_category`: 운동 카테고리 마스터
-- `exercise`: 운동 종목 마스터 (`categoryId`는 DB FK 없이 코드 레벨 참조, `recordSchema` 포함)
+- `exercise`: 운동 종목 마스터 (`categoryId`는 DB FK 없이 코드 레벨 참조, `equipmentType`, `recordSchema` 포함)
 - `favorite_exercise`: 즐겨찾기 운동 종목
 - `seed_meta`: 시드 데이터 버전 메타 (`DefaultExerciseSeedManager`에서 생성/관리)
 
@@ -96,6 +98,12 @@ erDiagram
   - `exercise.recordSchema` 컬럼 추가 (기본값 `WEIGHT_REPS`, 일부 종목 `DISTANCE_DURATION` 업데이트)
   - `workout_record_exercise_set`에서 기존 `weightKg`, `reps` 제거
   - `workout_record_exercise_set_metric` 테이블/인덱스 신설
+- `MIGRATION_3_4`:
+  - `workout_record_exercise.recordSchema` 컬럼 추가
+  - 기존 기록의 메트릭 데이터를 기준으로 기록 당시 스키마 보정
+- `MIGRATION_4_5`:
+  - `exercise.equipmentType` 컬럼 추가
+  - 운동명 기반으로 머신/바벨/덤벨/케틀벨/맨몸/기타 기본값 보정
 
 ## Source Files
 - `app/src/main/java/com/jaemin/fitzam/data/source/local/FitzamDatabase.kt`

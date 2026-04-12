@@ -44,4 +44,16 @@ interface ExerciseDao {
         exerciseId: Long,
         recordSchema: String,
     )
+
+    @Query(
+        """
+        UPDATE exercise
+        SET equipmentType = :equipmentType
+        WHERE id = :exerciseId
+    """
+    )
+    suspend fun updateEquipmentType(
+        exerciseId: Long,
+        equipmentType: String,
+    )
 }
