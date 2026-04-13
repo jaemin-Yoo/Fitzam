@@ -1,11 +1,15 @@
 package com.jaemin.fitzam.data.source.local.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 
 @Dao
 interface ExerciseDao {
+
+    @Insert
+    suspend fun insert(exercise: ExerciseEntity): Long
 
     @Query(
         """

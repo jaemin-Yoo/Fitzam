@@ -4,6 +4,7 @@ import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
+import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.FavoriteExerciseEntity
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseEquipmentType
@@ -17,6 +18,24 @@ class ExerciseRepository @Inject constructor(
     private val exerciseDao: ExerciseDao,
     private val favoriteExerciseDao: FavoriteExerciseDao,
 ) {
+
+    suspend fun addExercise(
+        name: String,
+        categoryId: Long,
+        imageName: String,
+        equipmentType: ExerciseEquipmentType,
+        metricTypes: List<WorkoutMetricType>,
+    ): Long {
+        return exerciseDao.insert(
+            ExerciseEntity(
+                name = name,
+                categoryId = categoryId,
+                imageName = imageName,
+                equipmentType = equipmentType.name,
+                recordSchema = serializeMetricTypes(metricTypes),
+            )
+        )
+    }
 
     suspend fun getExercisesByCategoryIds(categoryIds: Set<Long>): List<Exercise> {
         if (categoryIds.isEmpty()) {

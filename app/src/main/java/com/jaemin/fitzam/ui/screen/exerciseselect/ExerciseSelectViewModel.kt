@@ -41,6 +41,7 @@ class ExerciseSelectViewModel @Inject constructor(
     val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
     private var lastLoadedDate: LocalDate? = null
     private var lastLoadedCategoryIds: Set<Long>? = null
+    private var lastRefreshVersion: Long? = null
     private var hasInitializedSelection = false
 
     fun toggleSelectedExercise(exerciseId: Long) {
@@ -58,13 +59,15 @@ class ExerciseSelectViewModel @Inject constructor(
         selectedCategoryIds: Set<Long>,
         incomingSelectedExerciseIds: Set<Long>,
         preselectSavedExercises: Boolean,
+        refreshVersion: Long,
     ) {
         if (lastLoadedDate != selectedDate) {
             hasInitializedSelection = false
         }
         val shouldSkipReload = _uiState.value is ExerciseSelectUiState.Success &&
             lastLoadedDate == selectedDate &&
-            lastLoadedCategoryIds == selectedCategoryIds
+            lastLoadedCategoryIds == selectedCategoryIds &&
+            lastRefreshVersion == refreshVersion
         if (shouldSkipReload) return
 
         viewModelScope.launch {
@@ -125,6 +128,7 @@ class ExerciseSelectViewModel @Inject constructor(
                 }
                 lastLoadedDate = selectedDate
                 lastLoadedCategoryIds = selectedCategoryIds
+                lastRefreshVersion = refreshVersion
             }
         }
     }

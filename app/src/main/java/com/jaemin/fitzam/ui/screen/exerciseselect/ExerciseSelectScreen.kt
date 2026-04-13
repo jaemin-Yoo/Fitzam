@@ -76,7 +76,9 @@ fun ExerciseSelectScreen(
     selectedExerciseIds: Set<Long>,
     preselectSavedExercises: Boolean,
     sessionId: Long,
+    refreshVersion: Long,
     onBackClick: () -> Unit,
+    onAddExerciseClick: () -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     val viewModel: ExerciseSelectViewModel = hiltViewModel(
@@ -86,12 +88,13 @@ fun ExerciseSelectScreen(
     val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds, preselectSavedExercises) {
+    LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds, preselectSavedExercises, refreshVersion) {
         viewModel.loadExercises(
             selectedDate = selectedDate,
             selectedCategoryIds = selectedCategoryIds,
             incomingSelectedExerciseIds = selectedExerciseIds,
             preselectSavedExercises = preselectSavedExercises,
+            refreshVersion = refreshVersion,
         )
     }
 
@@ -109,6 +112,7 @@ fun ExerciseSelectScreen(
                 selectedDate = selectedDate,
                 selectedCategoryIds = selectedCategoryIds,
                 onBackClick = onBackClick,
+                onAddExerciseClick = onAddExerciseClick,
                 onCompleteClick = onCompleteClick,
                 exercises = emptyList(),
                 selectedExerciseIds = selectedExerciseIds,
@@ -135,6 +139,7 @@ fun ExerciseSelectScreen(
                 selectedDate = selectedDate,
                 selectedCategoryIds = selectedCategoryIds,
                 onBackClick = onBackClick,
+                onAddExerciseClick = onAddExerciseClick,
                 onCompleteClick = onCompleteClick,
                 exercises = value.exercises,
                 selectedExerciseIds = selectedExerciseIds,
@@ -161,6 +166,7 @@ fun ExerciseSelectScreen(
     selectedDate: LocalDate,
     selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
+    onAddExerciseClick: () -> Unit,
     onCompleteClick: () -> Unit,
     exercises: List<Exercise>,
     selectedExerciseIds: Set<Long>,
@@ -193,7 +199,14 @@ fun ExerciseSelectScreen(
                     icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
-                )
+                ),
+                actions = listOf(
+                    TopAppBarItem(
+                        icon = IconSource.Vector(ImageVector.vectorResource(id = R.drawable.ic_plus)),
+                        contentDescription = "운동 추가",
+                        onClick = onAddExerciseClick,
+                    )
+                ),
             )
         },
         bottomBar = {
@@ -575,6 +588,7 @@ private fun ExerciseSelectScreenPreview() {
             selectedDate = LocalDate.now(),
             selectedCategoryIds = setOf(1L, 2L),
             onBackClick = {},
+            onAddExerciseClick = {},
             onCompleteClick = {},
             exercises = sampleExercises(),
             selectedExerciseIds = setOf(1L, 2L),

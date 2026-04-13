@@ -5,11 +5,16 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEvent
+import com.jaemin.fitzam.ui.screen.exerciseadd.ExerciseAddScreen
 import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectScreen
 import com.jaemin.fitzam.ui.screen.exerciseselect.ExerciseSelectScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
@@ -34,6 +39,10 @@ sealed interface Screen {
         val closeScreenCount: Int = 2,
         val sessionId: Long,
     ) : NavKey
+    @Serializable data class ExerciseAdd(
+        val selectedCategoryIds: String,
+        val sessionId: Long,
+    ) : NavKey
     @Serializable data class WorkoutDetail(
         val selectedDate: String,
         val workoutExerciseId: Long,
@@ -52,6 +61,7 @@ sealed interface Screen {
 @Composable
 fun FitzamApp() {
     val backStack = rememberNavBackStack(Screen.Home)
+    var exerciseSelectRefreshVersion by remember { mutableLongStateOf(0L) }
     val pushSlideDurationMillis = 300
     val popSlideDurationMillis = 380
     val popBackStack: () -> Unit = {
@@ -169,11 +179,34 @@ fun FitzamApp() {
                         .toSet(),
                     preselectSavedExercises = screen.preselectSavedExercises,
                     sessionId = screen.sessionId,
+                    refreshVersion = exerciseSelectRefreshVersion,
                     onBackClick = popBackStack,
+                    onAddExerciseClick = {
+                        backStack.add(
+                            Screen.ExerciseAdd(
+                                selectedCategoryIds = screen.selectedCategoryIds,
+                                sessionId = System.currentTimeMillis(),
+                            )
+                        )
+                    },
                     onCompleteClick = {
                         repeat(screen.closeScreenCount) {
                             popBackStack()
                         }
+                    },
+                )
+            }
+            entry<Screen.ExerciseAdd> { screen ->
+                ExerciseAddScreen(
+                    selectedCategoryIds = screen.selectedCategoryIds
+                        .split(",")
+                        .mapNotNull { value -> value.toLongOrNull() }
+                        .toSet(),
+                    sessionId = screen.sessionId,
+                    onBackClick = popBackStack,
+                    onExerciseAdded = {
+                        exerciseSelectRefreshVersion += 1
+                        popBackStack()
                     },
                 )
             }
