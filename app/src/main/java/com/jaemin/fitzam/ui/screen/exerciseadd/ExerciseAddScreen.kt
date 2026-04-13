@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.ui.screen.exerciseadd
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -439,10 +440,11 @@ private fun RoundOption(
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = option.symbol,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Black,
+            Icon(
+                painter = painterResource(option.iconRes),
+                contentDescription = option.label,
+                tint = Color.Black,
+                modifier = Modifier.size(24.dp),
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -470,34 +472,34 @@ private fun SectionLabel(
 private data class ExerciseAddOption(
     val key: String,
     val label: String,
-    val symbol: String,
+    @DrawableRes val iconRes: Int,
 )
 
 private val EquipmentOptions = listOf(
     ExerciseAddOption(
         key = ExerciseEquipmentType.BARBELL.name,
         label = ExerciseEquipmentType.BARBELL.displayName,
-        symbol = "BB",
+        iconRes = R.drawable.ic_barbell,
     ),
     ExerciseAddOption(
         key = ExerciseEquipmentType.DUMBBELL.name,
         label = ExerciseEquipmentType.DUMBBELL.displayName,
-        symbol = "DB",
+        iconRes = R.drawable.ic_dumbbell,
     ),
     ExerciseAddOption(
         key = ExerciseEquipmentType.KETTLEBELL.name,
         label = ExerciseEquipmentType.KETTLEBELL.displayName,
-        symbol = "KB",
+        iconRes = R.drawable.ic_kettlebell,
     ),
     ExerciseAddOption(
         key = ExerciseEquipmentType.MACHINE.name,
         label = ExerciseEquipmentType.MACHINE.displayName,
-        symbol = "M",
+        iconRes = R.drawable.ic_machine,
     ),
     ExerciseAddOption(
         key = ExerciseEquipmentType.BODYWEIGHT.name,
         label = ExerciseEquipmentType.BODYWEIGHT.displayName,
-        symbol = "맨",
+        iconRes = R.drawable.ic_body_weight,
     ),
 )
 
@@ -505,22 +507,22 @@ private val MetricOptions = listOf(
     ExerciseAddOption(
         key = WorkoutMetricType.WEIGHT_KG.name,
         label = "무게",
-        symbol = "KG",
+        iconRes = R.drawable.ic_kg,
     ),
     ExerciseAddOption(
         key = WorkoutMetricType.REPS.name,
         label = "횟수",
-        symbol = "회",
+        iconRes = R.drawable.ic_count,
     ),
     ExerciseAddOption(
         key = WorkoutMetricType.DISTANCE_KM.name,
         label = "거리",
-        symbol = "KM",
+        iconRes = R.drawable.ic_distance,
     ),
     ExerciseAddOption(
         key = WorkoutMetricType.DURATION_SEC.name,
         label = "시간",
-        symbol = "초",
+        iconRes = R.drawable.ic_time,
     ),
 )
 
