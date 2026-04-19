@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew :app:compileDebugKotlin)",
-      "Bash(./gradlew :app:compileDevDebugKotlin)"
+      "Bash(./gradlew :app:compileDevDebugKotlin)",
+      "Bash(git ls-tree *)"
     ]
   }
 }
