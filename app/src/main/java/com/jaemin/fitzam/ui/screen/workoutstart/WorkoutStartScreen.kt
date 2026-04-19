@@ -34,9 +34,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -359,17 +361,7 @@ private fun MetricValueDisplay(
         modifier = Modifier.width(if (metricType == WorkoutMetricType.DURATION_SEC) 156.dp else 128.dp),
     ) {
         if (metricType == WorkoutMetricType.DURATION_SEC) {
-            Text(
-                text = formatDurationClock(value.toIntOrNull() ?: 0),
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 36.sp,
-                    lineHeight = 44.sp,
-                    textAlign = TextAlign.Center,
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-            )
+            DurationValueDisplay(value = value, onValueChange = onValueChange)
         } else {
             BasicTextField(
                 value = value,
@@ -406,6 +398,139 @@ private fun MetricValueDisplay(
             )
         }
     }
+}
+
+@Composable
+private fun DurationValueDisplay(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    val totalSeconds = value.toIntOrNull() ?: 0
+    var hoursText by remember { mutableStateOf((totalSeconds / 3600).toString().padStart(2, '0')) }
+    var minutesText by remember { mutableStateOf(((totalSeconds % 3600) / 60).toString().padStart(2, '0')) }
+    var secondsText by remember { mutableStateOf((totalSeconds % 60).toString().padStart(2, '0')) }
+    val suppressSync = remember { mutableStateOf(false) }
+
+    LaunchedEffect(value) {
+        if (suppressSync.value) {
+            suppressSync.value = false
+            return@LaunchedEffect
+        }
+        val total = value.toIntOrNull() ?: 0
+        hoursText = (total / 3600).toString().padStart(2, '0')
+        minutesText = ((total % 3600) / 60).toString().padStart(2, '0')
+        secondsText = (total % 60).toString().padStart(2, '0')
+    }
+
+    fun emit() {
+        val h = hoursText.toIntOrNull() ?: 0
+        val m = (minutesText.toIntOrNull() ?: 0).coerceIn(0, 59)
+        val s = (secondsText.toIntOrNull() ?: 0).coerceIn(0, 59)
+        suppressSync.value = true
+        onValueChange(((h * 3600) + (m * 60) + s).toString())
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        DurationPartField(
+            value = hoursText,
+            label = "시",
+            onValueChange = { new ->
+                if (new.length <= 2 && new.matches(IntInputRegex)) {
+                    hoursText = new
+                    emit()
+                }
+            },
+            modifier = Modifier.weight(1f),
+        )
+        DurationSeparatorText()
+        DurationPartField(
+            value = minutesText,
+            label = "분",
+            onValueChange = { new ->
+                if (new.length <= 2 && new.matches(IntInputRegex)) {
+                    minutesText = new
+                    emit()
+                }
+            },
+            modifier = Modifier.weight(1f),
+        )
+        DurationSeparatorText()
+        DurationPartField(
+            value = secondsText,
+            label = "초",
+            onValueChange = { new ->
+                if (new.length <= 2 && new.matches(IntInputRegex)) {
+                    secondsText = new
+                    emit()
+                }
+            },
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun DurationPartField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = modifier,
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done,
+            ),
+            textStyle = MaterialTheme.typography.displaySmall.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 36.sp,
+                lineHeight = 44.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    innerTextField()
+                }
+            },
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun DurationSeparatorText() {
+    Text(
+        text = ":",
+        style = MaterialTheme.typography.displaySmall.copy(
+            fontWeight = FontWeight.Medium,
+            fontSize = 36.sp,
+            lineHeight = 44.sp,
+        ),
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(bottom = 16.dp),
+    )
 }
 
 @Composable
