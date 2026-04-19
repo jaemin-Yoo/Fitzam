@@ -237,10 +237,6 @@ class WorkoutRecordViewModel @Inject constructor(
         metricTypes: List<WorkoutMetricType>,
         metricValues: Map<WorkoutMetricType, String>,
     ) {
-        val exerciseId = _exerciseItems.value.firstOrNull { item ->
-            item.workoutExerciseId == workoutExerciseId
-        }?.exercise?.id
-
         _exerciseItems.value = _exerciseItems.value.map { item ->
             if (item.workoutExerciseId != workoutExerciseId) {
                 item
@@ -262,15 +258,6 @@ class WorkoutRecordViewModel @Inject constructor(
             }
         }
         updateDirtyState()
-
-        if (exerciseId != null) {
-            viewModelScope.launch(Dispatchers.IO) {
-                exerciseRepository.updateExerciseMetricTypes(
-                    exerciseId = exerciseId,
-                    metricTypes = metricTypes,
-                )
-            }
-        }
     }
 
     fun saveWorkout(
@@ -304,6 +291,12 @@ class WorkoutRecordViewModel @Inject constructor(
                         date = selectedDate,
                         exercises = saveTarget,
                     )
+                    saveTarget.forEach { exercise ->
+                        exerciseRepository.updateExerciseMetricTypes(
+                            exerciseId = exercise.exerciseId,
+                            metricTypes = exercise.metricTypes,
+                        )
+                    }
                 }
             }.onSuccess {
                 originalExerciseItems = _exerciseItems.value
