@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -39,8 +40,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -64,11 +71,15 @@ import com.jaemin.fitzam.ui.util.formatMetricValue
 import com.jaemin.fitzam.ui.util.metricLabel
 import com.jaemin.fitzam.ui.util.metricStep
 import java.time.LocalDate
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val DecimalInputRegex = Regex("^\\d*(\\.\\d{0,2})?$")
 private val IntInputRegex = Regex("^\\d*$")
 private const val MetricSelectionLimitErrorMessage = "최대 2개까지만 선택할 수 있습니다."
+private const val AdjustRepeatInitialDelayMillis = 350L
+private const val AdjustRepeatDelayMillis = 70L
 private val WorkoutStartSurfaceVariant = Color(0xFFDFDFDF)
 private val WorkoutStartOnSurfaceVariant = Color(0xFF808080)
 
@@ -473,10 +484,15 @@ private fun SquareAdjustButton(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable(
-                    onClickLabel = contentDescription,
-                    onClick = onClick,
-                ),
+                .repeatOnPress(onClick)
+                .semantics {
+                    this.contentDescription = contentDescription
+                    role = Role.Button
+                    onClick(label = contentDescription) {
+                        onClick()
+                        true
+                    }
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -491,6 +507,25 @@ private fun SquareAdjustButton(
             )
         }
     }
+}
+
+private fun Modifier.repeatOnPress(onClick: () -> Unit): Modifier = pointerInput(onClick) {
+    detectTapGestures(
+        onPress = {
+            onClick()
+            coroutineScope {
+                val repeatJob = launch {
+                    delay(AdjustRepeatInitialDelayMillis)
+                    while (true) {
+                        onClick()
+                        delay(AdjustRepeatDelayMillis)
+                    }
+                }
+                tryAwaitRelease()
+                repeatJob.cancel()
+            }
+        },
+    )
 }
 
 private fun displaySecondaryValue(
@@ -510,6 +545,7 @@ private fun displaySecondaryValue(
 
 private fun workoutStartStep(metricType: WorkoutMetricType): Double {
     return when (metricType) {
+        WorkoutMetricType.WEIGHT_KG -> 0.5
         WorkoutMetricType.DURATION_SEC -> 1.0
         else -> metricStep(metricType)
     }
