@@ -39,6 +39,7 @@ object DatabaseModule {
             DatabaseConfig.localDbFileName()
         )
             .addMigrations(MIGRATION_1_2)
+            .fallbackToDestructiveMigrationOnDowngrade()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
