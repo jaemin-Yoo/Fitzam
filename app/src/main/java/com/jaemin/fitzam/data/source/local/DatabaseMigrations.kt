@@ -13,15 +13,13 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                 date TEXT NOT NULL,
                 PRIMARY KEY(date)
             )
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             INSERT OR IGNORE INTO workout_record (date)
             SELECT date FROM workout
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
 
         db.execSQL(
@@ -33,15 +31,13 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                 FOREIGN KEY(workoutRecordDate) REFERENCES workout_record(date) ON DELETE CASCADE,
                 FOREIGN KEY(exerciseCategoryId) REFERENCES exercise_category(id) ON DELETE CASCADE
             )
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             INSERT OR IGNORE INTO workout_record_exercise_category (workoutRecordDate, exerciseCategoryId)
             SELECT workoutDate, exerciseCategoryId FROM workout_category
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
 
         db.execSQL(
@@ -51,32 +47,29 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                 workoutRecordDate TEXT NOT NULL,
                 exerciseId INTEGER NOT NULL,
                 orderIndex INTEGER NOT NULL,
+                recordSchema TEXT NOT NULL DEFAULT 'WEIGHT_REPS',
                 FOREIGN KEY(workoutRecordDate) REFERENCES workout_record(date) ON DELETE CASCADE,
                 FOREIGN KEY(exerciseId) REFERENCES exercise(id) ON DELETE RESTRICT
             )
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             INSERT OR IGNORE INTO workout_record_exercise (id, workoutRecordDate, exerciseId, orderIndex)
             SELECT id, workoutDate, exerciseId, orderIndex FROM workout_exercise
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             CREATE INDEX IF NOT EXISTS index_workout_record_exercise_workoutRecordDate
             ON workout_record_exercise(workoutRecordDate)
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             CREATE INDEX IF NOT EXISTS index_workout_record_exercise_exerciseId
             ON workout_record_exercise(exerciseId)
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
 
         db.execSQL(
@@ -84,84 +77,22 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
             CREATE TABLE IF NOT EXISTS workout_record_exercise_set (
                 workoutRecordExerciseId INTEGER NOT NULL,
                 setIndex INTEGER NOT NULL,
-                weightKg REAL NOT NULL,
-                reps INTEGER NOT NULL,
                 PRIMARY KEY(workoutRecordExerciseId, setIndex),
                 FOREIGN KEY(workoutRecordExerciseId) REFERENCES workout_record_exercise(id) ON DELETE CASCADE
             )
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
-            INSERT OR IGNORE INTO workout_record_exercise_set (workoutRecordExerciseId, setIndex, weightKg, reps)
-            SELECT workoutExerciseId, setIndex, weightKg, reps FROM workout_set
-            """
-                .trimIndent(),
+            INSERT OR IGNORE INTO workout_record_exercise_set (workoutRecordExerciseId, setIndex)
+            SELECT workoutExerciseId, setIndex FROM workout_set
+            """.trimIndent(),
         )
         db.execSQL(
             """
             CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_workoutRecordExerciseId
             ON workout_record_exercise_set(workoutRecordExerciseId)
-            """
-                .trimIndent(),
-        )
-
-        db.execSQL("DROP TABLE IF EXISTS workout_set")
-        db.execSQL("DROP TABLE IF EXISTS workout_exercise")
-        db.execSQL("DROP TABLE IF EXISTS workout_category")
-        db.execSQL("DROP TABLE IF EXISTS workout")
-
-        db.execSQL("PRAGMA foreign_keys=ON")
-    }
-}
-
-val MIGRATION_2_3 = object : Migration(2, 3) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("PRAGMA foreign_keys=OFF")
-
-        db.execSQL(
-            """
-            ALTER TABLE exercise
-            ADD COLUMN recordSchema TEXT NOT NULL DEFAULT 'WEIGHT_REPS'
-            """
-                .trimIndent(),
-        )
-        db.execSQL(
-            """
-            UPDATE exercise
-            SET recordSchema = 'DISTANCE_DURATION'
-            WHERE name IN ('러닝', '사이클')
-            """
-                .trimIndent(),
-        )
-
-        db.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS workout_record_exercise_set_new (
-                workoutRecordExerciseId INTEGER NOT NULL,
-                setIndex INTEGER NOT NULL,
-                PRIMARY KEY(workoutRecordExerciseId, setIndex),
-                FOREIGN KEY(workoutRecordExerciseId) REFERENCES workout_record_exercise(id) ON DELETE CASCADE
-            )
-            """
-                .trimIndent(),
-        )
-        db.execSQL(
-            """
-            INSERT OR IGNORE INTO workout_record_exercise_set_new (workoutRecordExerciseId, setIndex)
-            SELECT workoutRecordExerciseId, setIndex FROM workout_record_exercise_set
-            """
-                .trimIndent(),
-        )
-        db.execSQL("DROP TABLE workout_record_exercise_set")
-        db.execSQL("ALTER TABLE workout_record_exercise_set_new RENAME TO workout_record_exercise_set")
-        db.execSQL(
-            """
-            CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_workoutRecordExerciseId
-            ON workout_record_exercise_set(workoutRecordExerciseId)
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
 
         db.execSQL(
@@ -176,37 +107,40 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
                     REFERENCES workout_record_exercise_set(workoutRecordExerciseId, setIndex)
                     ON DELETE CASCADE
             )
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_metric_workoutRecordExerciseId
             ON workout_record_exercise_set_metric(workoutRecordExerciseId)
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
             CREATE INDEX IF NOT EXISTS index_workout_record_exercise_set_metric_workoutRecordExerciseId_setIndex
             ON workout_record_exercise_set_metric(workoutRecordExerciseId, setIndex)
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
 
-        db.execSQL("PRAGMA foreign_keys=ON")
-    }
-}
+        db.execSQL("DROP TABLE IF EXISTS workout_set")
+        db.execSQL("DROP TABLE IF EXISTS workout_exercise")
+        db.execSQL("DROP TABLE IF EXISTS workout_category")
+        db.execSQL("DROP TABLE IF EXISTS workout")
 
-val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
-            ALTER TABLE workout_record_exercise
+            ALTER TABLE exercise
             ADD COLUMN recordSchema TEXT NOT NULL DEFAULT 'WEIGHT_REPS'
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
+        db.execSQL(
+            """
+            UPDATE exercise
+            SET recordSchema = 'DISTANCE_DURATION'
+            WHERE name IN ('러닝', '사이클')
+            """.trimIndent(),
+        )
+
         db.execSQL(
             """
             UPDATE workout_record_exercise
@@ -225,20 +159,14 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
                 ) THEN 'DISTANCE_DURATION'
                 ELSE 'WEIGHT_REPS'
             END
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
-    }
-}
 
-val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
             ALTER TABLE exercise
             ADD COLUMN equipmentType TEXT NOT NULL DEFAULT 'OTHER'
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
         db.execSQL(
             """
@@ -251,8 +179,9 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
                 WHEN name IN ('푸시업', '딥스', '크런치', '레그 레이즈', '플랭크', '바이시클 크런치', '러닝', '줄넘기') THEN 'BODYWEIGHT'
                 ELSE 'OTHER'
             END
-            """
-                .trimIndent(),
+            """.trimIndent(),
         )
+
+        db.execSQL("PRAGMA foreign_keys=ON")
     }
 }
