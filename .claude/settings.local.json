@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew :app:compileDebugKotlin)",
-      "Bash(./gradlew :app:compileDevDebugKotlin)"
+      "Bash(./gradlew :app:compileDevDebugKotlin)",
+      "Bash(xargs grep *)",
+      "Bash(mv 'C:/Projects/0. My Repository/Fitzam/app/src/main/java/com/jaemin/fitzam/model/Workout.kt' 'C:/Projects/0. My Repository/Fitzam/app/src/main/java/com/jaemin/fitzam/model/WorkoutRecord.kt')",
+      "Bash(mv 'C:/Projects/0. My Repository/Fitzam/app/src/main/java/com/jaemin/fitzam/model/WorkoutExercise.kt' 'C:/Projects/0. My Repository/Fitzam/app/src/main/java/com/jaemin/fitzam/model/Workout.kt')"
     ]
   }
 }
