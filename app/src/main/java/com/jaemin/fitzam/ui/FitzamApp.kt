@@ -45,13 +45,13 @@ sealed interface Screen {
     ) : NavKey
     @Serializable data class WorkoutDetail(
         val selectedDate: String,
-        val workoutExerciseId: Long,
+        val workoutId: Long,
         val exerciseId: Long,
         val sessionId: Long,
     ) : NavKey
     @Serializable data class WorkoutStart(
         val selectedDate: String,
-        val workoutExerciseId: Long,
+        val workoutId: Long,
         val exerciseId: Long,
         val exerciseName: String,
         val sessionId: Long,
@@ -133,11 +133,11 @@ fun FitzamApp() {
                             )
                         )
                     },
-                    onWorkoutDetailClick = { selectedDate, workoutExerciseId, exerciseId ->
+                    onWorkoutDetailClick = { selectedDate, workoutId, exerciseId ->
                         backStack.add(
                             Screen.WorkoutDetail(
                                 selectedDate = selectedDate.toString(),
-                                workoutExerciseId = workoutExerciseId,
+                                workoutId = workoutId,
                                 exerciseId = exerciseId,
                                 sessionId = System.currentTimeMillis(),
                             )
@@ -213,15 +213,15 @@ fun FitzamApp() {
             entry<Screen.WorkoutDetail> { screen ->
                 WorkoutDetailScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
-                    workoutExerciseId = screen.workoutExerciseId,
+                    workoutId = screen.workoutId,
                     exerciseId = screen.exerciseId,
                     sessionId = screen.sessionId,
                     onDismissRequest = popBackStack,
-                    onWorkoutStartClick = { workoutExerciseId, exerciseId, exerciseName ->
+                    onWorkoutStartClick = { workoutId, exerciseId, exerciseName ->
                         backStack.add(
                             Screen.WorkoutStart(
                                 selectedDate = screen.selectedDate,
-                                workoutExerciseId = workoutExerciseId,
+                                workoutId = workoutId,
                                 exerciseId = exerciseId,
                                 exerciseName = exerciseName,
                                 sessionId = screen.sessionId,
@@ -233,7 +233,7 @@ fun FitzamApp() {
             entry<Screen.WorkoutStart> { screen ->
                 WorkoutStartScreen(
                     selectedDate = LocalDate.parse(screen.selectedDate),
-                    workoutExerciseId = screen.workoutExerciseId,
+                    workoutId = screen.workoutId,
                     exerciseId = screen.exerciseId,
                     exerciseName = screen.exerciseName,
                     sessionId = screen.sessionId,

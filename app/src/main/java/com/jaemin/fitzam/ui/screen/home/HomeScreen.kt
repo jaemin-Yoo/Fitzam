@@ -53,7 +53,7 @@ import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.Workout
-import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
@@ -88,13 +88,13 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val workouts by viewModel.workouts.collectAsStateWithLifecycle()
-    val selectedDateWorkoutExercises by viewModel.selectedDateWorkoutExercises.collectAsStateWithLifecycle()
+    val workoutRecords by viewModel.workoutRecords.collectAsStateWithLifecycle()
+    val selectedDateWorkouts by viewModel.selectedDateWorkouts.collectAsStateWithLifecycle()
     val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
     val calendarState = rememberFitzamCalendarState()
 
     LaunchedEffect(calendarState.displayedYearMonth) {
-        viewModel.loadWorkoutsForYearMonth(calendarState.displayedYearMonth)
+        viewModel.loadWorkoutRecordsForYearMonth(calendarState.displayedYearMonth)
     }
 
     LaunchedEffect(calendarState.selectedDate) {
@@ -102,25 +102,25 @@ fun HomeScreen(
     }
 
     HomeScreen(
-        workouts = workouts,
-        selectedDateWorkoutExercises = selectedDateWorkoutExercises,
+        workoutRecords = workoutRecords,
+        selectedDateWorkouts = selectedDateWorkouts,
         isEditMode = isEditMode,
         calendarState = calendarState,
         onAddOrEditWorkout = onAddOrEditWorkout,
         onAddWorkout = onAddWorkout,
         onSettingsClick = {
-            viewModel.discardExerciseEdit()
+            viewModel.discardWorkoutEdit()
             onSettingsClick()
         },
-        onWorkoutExerciseClick = { workoutExerciseId, exerciseId ->
-            onWorkoutDetailClick(calendarState.selectedDate, workoutExerciseId, exerciseId)
+        onWorkoutClick = { workoutId, exerciseId ->
+            onWorkoutDetailClick(calendarState.selectedDate, workoutId, exerciseId)
         },
-        onWorkoutExerciseLongClick = viewModel::enterExerciseEdit,
-        onMoveExerciseUp = viewModel::moveExerciseUp,
-        onMoveExerciseDown = viewModel::moveExerciseDown,
-        onDeleteExercise = viewModel::deleteExercise,
+        onWorkoutLongClick = viewModel::enterWorkoutEdit,
+        onMoveWorkoutUp = viewModel::moveWorkoutUp,
+        onMoveWorkoutDown = viewModel::moveWorkoutDown,
+        onDeleteWorkout = viewModel::deleteWorkout,
         onEditComplete = {
-            viewModel.saveExerciseEdit(onSuccess = {})
+            viewModel.saveWorkoutEdit(onSuccess = {})
         },
     )
 }
@@ -128,28 +128,28 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    workouts: List<Workout>,
-    selectedDateWorkoutExercises: List<WorkoutExercise>,
+    workoutRecords: List<WorkoutRecord>,
+    selectedDateWorkouts: List<Workout>,
     isEditMode: Boolean,
     calendarState: FitzamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
     onAddWorkout: (LocalDate, Set<Long>) -> Unit,
     onSettingsClick: () -> Unit,
-    onWorkoutExerciseClick: (Long, Long) -> Unit,
-    onWorkoutExerciseLongClick: () -> Unit,
-    onMoveExerciseUp: (Long) -> Unit,
-    onMoveExerciseDown: (Long) -> Unit,
-    onDeleteExercise: (Long) -> Unit,
+    onWorkoutClick: (Long, Long) -> Unit,
+    onWorkoutLongClick: () -> Unit,
+    onMoveWorkoutUp: (Long) -> Unit,
+    onMoveWorkoutDown: (Long) -> Unit,
+    onDeleteWorkout: (Long) -> Unit,
     onEditComplete: () -> Unit,
 ) {
-    var deleteConfirmExerciseId by rememberSaveable { mutableLongStateOf(NO_DELETE_TARGET) }
-    val deleteConfirmTarget = selectedDateWorkoutExercises.firstOrNull { workoutExercise ->
-        workoutExercise.id == deleteConfirmExerciseId
+    var deleteConfirmWorkoutId by rememberSaveable { mutableLongStateOf(NO_DELETE_TARGET) }
+    val deleteConfirmTarget = selectedDateWorkouts.firstOrNull { workout ->
+        workout.id == deleteConfirmWorkoutId
     }
-    val selectedDateWorkout = workouts.firstOrNull { it.date == calendarState.selectedDate }
-    val hasRecordedCategories = selectedDateWorkout?.exerciseCategories?.isNotEmpty() == true
-    val hasWorkoutExercises = selectedDateWorkoutExercises.isNotEmpty()
-    val selectedCategoryIds = selectedDateWorkout?.exerciseCategories
+    val selectedDateWorkoutRecord = workoutRecords.firstOrNull { it.date == calendarState.selectedDate }
+    val hasRecordedCategories = selectedDateWorkoutRecord?.exerciseCategories?.isNotEmpty() == true
+    val hasWorkouts = selectedDateWorkouts.isNotEmpty()
+    val selectedCategoryIds = selectedDateWorkoutRecord?.exerciseCategories
         ?.map { category -> category.id }
         ?.toSet()
         .orEmpty()
@@ -176,7 +176,7 @@ fun HomeScreen(
         floatingActionButton = {
             if (!isEditMode) {
                 FitzamFloatingActionButton(
-                    icon = if (workouts.any { it.date == calendarState.selectedDate }) {
+                    icon = if (workoutRecords.any { it.date == calendarState.selectedDate }) {
                         ImageVector.vectorResource(R.drawable.ic_edit)
                     } else {
                         ImageVector.vectorResource(R.drawable.ic_plus)
@@ -228,10 +228,10 @@ fun HomeScreen(
                 state = calendarState,
                 modifier = Modifier.padding(vertical = 8.dp),
                 dayContent = { date ->
-                    workouts.forEach { workout ->
-                        if (date == workout.date) {
+                    workoutRecords.forEach { workoutRecord ->
+                        if (date == workoutRecord.date) {
                             FitzamCalendarDayList(
-                                itemList = workout.exerciseCategories.map { category ->
+                                itemList = workoutRecord.exerciseCategories.map { category ->
                                     CalendarDayItem(
                                         text = category.name,
                                         color = Color(category.colorHex),
@@ -260,7 +260,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                selectedDateWorkout?.exerciseCategories?.forEach { category ->
+                selectedDateWorkoutRecord?.exerciseCategories?.forEach { category ->
                     ExerciseCategoryTag(
                         name = category.name,
                         borderColor = Color(category.colorHex),
@@ -268,29 +268,29 @@ fun HomeScreen(
                 }
             }
 
-            if (hasWorkoutExercises) {
+            if (hasWorkouts) {
                 Spacer(Modifier.height(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    selectedDateWorkoutExercises.forEachIndexed { index, workoutExercise ->
-                        HomeWorkoutExerciseCard(
-                            workoutExercise = workoutExercise,
+                    selectedDateWorkouts.forEachIndexed { index, workout ->
+                        HomeWorkoutCard(
+                            workout = workout,
                             isEditMode = isEditMode,
                             canMoveUp = index > 0,
-                            canMoveDown = index < selectedDateWorkoutExercises.lastIndex,
+                            canMoveDown = index < selectedDateWorkouts.lastIndex,
                             onClick = {
-                                onWorkoutExerciseClick(
-                                    workoutExercise.id,
-                                    workoutExercise.exercise.id,
+                                onWorkoutClick(
+                                    workout.id,
+                                    workout.exercise.id,
                                 )
                             },
-                            onLongClick = onWorkoutExerciseLongClick,
-                            onMoveUp = { onMoveExerciseUp(workoutExercise.id) },
-                            onMoveDown = { onMoveExerciseDown(workoutExercise.id) },
+                            onLongClick = onWorkoutLongClick,
+                            onMoveUp = { onMoveWorkoutUp(workout.id) },
+                            onMoveDown = { onMoveWorkoutDown(workout.id) },
                             onDelete = {
-                                if (workoutExercise.sets.isEmpty()) {
-                                    onDeleteExercise(workoutExercise.id)
+                                if (workout.sets.isEmpty()) {
+                                    onDeleteWorkout(workout.id)
                                 } else {
-                                    deleteConfirmExerciseId = workoutExercise.id
+                                    deleteConfirmWorkoutId = workout.id
                                 }
                             },
                         )
@@ -331,11 +331,11 @@ fun HomeScreen(
             title = "운동 삭제",
             text = "세트 기록이 있는 운동입니다.\n운동을 정말 삭제할까요?",
             onConfirm = {
-                onDeleteExercise(deleteConfirmTarget.id)
-                deleteConfirmExerciseId = NO_DELETE_TARGET
+                onDeleteWorkout(deleteConfirmTarget.id)
+                deleteConfirmWorkoutId = NO_DELETE_TARGET
             },
             onCancel = {
-                deleteConfirmExerciseId = NO_DELETE_TARGET
+                deleteConfirmWorkoutId = NO_DELETE_TARGET
             },
             confirmText = "삭제",
             cancelText = "취소",
@@ -345,8 +345,8 @@ fun HomeScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun HomeWorkoutExerciseCard(
-    workoutExercise: WorkoutExercise,
+private fun HomeWorkoutCard(
+    workout: Workout,
     isEditMode: Boolean,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
@@ -397,8 +397,8 @@ private fun HomeWorkoutExerciseCard(
                     )
                 }
 
-                HomeWorkoutExerciseCardContent(
-                    workoutExercise = workoutExercise,
+                HomeWorkoutCardContent(
+                    workout = workout,
                     showSets = false,
                     modifier = Modifier.weight(1f),
                 )
@@ -414,9 +414,9 @@ private fun HomeWorkoutExerciseCard(
                 }
             }
         } else {
-            HomeWorkoutExerciseCardContent(
-                workoutExercise = workoutExercise,
-                showSets = workoutExercise.sets.isNotEmpty(),
+            HomeWorkoutCardContent(
+                workout = workout,
+                showSets = workout.sets.isNotEmpty(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -426,8 +426,8 @@ private fun HomeWorkoutExerciseCard(
 }
 
 @Composable
-private fun HomeWorkoutExerciseCardContent(
-    workoutExercise: WorkoutExercise,
+private fun HomeWorkoutCardContent(
+    workout: Workout,
     showSets: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -440,8 +440,8 @@ private fun HomeWorkoutExerciseCardContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                painter = painterResource(drawableResIdByName(workoutExercise.exercise.imageName)),
-                contentDescription = workoutExercise.exercise.name,
+                painter = painterResource(drawableResIdByName(workout.exercise.imageName)),
+                contentDescription = workout.exercise.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(52.dp)
@@ -453,21 +453,21 @@ private fun HomeWorkoutExerciseCardContent(
                 horizontalAlignment = Alignment.Start,
             ) {
                 Text(
-                    text = workoutExercise.exercise.name,
+                    text = workout.exercise.name,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 ExerciseCategoryTag(
-                    name = workoutExercise.exercise.category.name,
-                    borderColor = Color(workoutExercise.exercise.category.colorHex),
+                    name = workout.exercise.category.name,
+                    borderColor = Color(workout.exercise.category.colorHex),
                 )
             }
         }
 
         if (showSets) {
             HomeWorkoutSetTable(
-                metricTypes = workoutExercise.exercise.metricTypes,
-                sets = workoutExercise.sets,
+                metricTypes = workout.exercise.metricTypes,
+                sets = workout.sets,
             )
         }
     }
@@ -631,8 +631,8 @@ fun HomeScreenPreview() {
         colorDarkHex = 0xFF950AFF,
     )
 
-    val workouts = listOf(
-        Workout(
+    val workoutRecords = listOf(
+        WorkoutRecord(
             date = previewDate.minusDays(2),
             exerciseCategories = listOf(
                 ExerciseCategory(
@@ -651,14 +651,14 @@ fun HomeScreenPreview() {
                 ),
             ),
         ),
-        Workout(
+        WorkoutRecord(
             date = previewDate,
             exerciseCategories = listOf(chest, shoulder),
         ),
     )
 
-    val selectedDateWorkoutExercises = listOf(
-        WorkoutExercise(
+    val selectedDateWorkouts = listOf(
+        Workout(
             id = 1,
             exercise = Exercise(
                 id = 1,
@@ -690,7 +690,7 @@ fun HomeScreenPreview() {
                 ),
             ),
         ),
-        WorkoutExercise(
+        Workout(
             id = 2,
             exercise = Exercise(
                 id = 2,
@@ -704,18 +704,18 @@ fun HomeScreenPreview() {
 
     FitzamTheme {
         HomeScreen(
-            workouts = workouts,
-            selectedDateWorkoutExercises = selectedDateWorkoutExercises,
+            workoutRecords = workoutRecords,
+            selectedDateWorkouts = selectedDateWorkouts,
             isEditMode = true,
             calendarState = rememberFitzamCalendarState(),
             onAddOrEditWorkout = {},
             onAddWorkout = { _, _ -> },
             onSettingsClick = {},
-            onWorkoutExerciseClick = { _, _ -> },
-            onWorkoutExerciseLongClick = {},
-            onMoveExerciseUp = {},
-            onMoveExerciseDown = {},
-            onDeleteExercise = {},
+            onWorkoutClick = { _, _ -> },
+            onWorkoutLongClick = {},
+            onMoveWorkoutUp = {},
+            onMoveWorkoutDown = {},
+            onDeleteWorkout = {},
             onEditComplete = {},
         )
     }
