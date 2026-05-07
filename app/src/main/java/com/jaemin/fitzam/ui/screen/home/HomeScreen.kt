@@ -60,6 +60,7 @@ import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.CalendarDayItem
 import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.dzam.DZamButton
+import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
 import com.jaemin.fitzam.ui.dzam.FitzamCalendar
 import com.jaemin.fitzam.ui.dzam.FitzamCalendarDayList
 import com.jaemin.fitzam.ui.dzam.FitzamCalendarState
@@ -478,10 +479,11 @@ private fun HomeAddWorkoutButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    DZamButton(
-        text = "운동 추가",
+    DZamOutlinedButton(
+        text = "운동 추가하기",
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
+        trailingIcon = ImageVector.vectorResource(R.drawable.ic_plus),
     )
 }
 
