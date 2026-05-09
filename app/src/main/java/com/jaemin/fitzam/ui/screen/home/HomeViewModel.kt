@@ -2,11 +2,11 @@ package com.jaemin.fitzam.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
+import com.jaemin.fitzam.data.repository.WorkoutDraft
 import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.data.repository.WorkoutSetDraft
 import com.jaemin.fitzam.model.Workout
-import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.WorkoutRecord
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -22,108 +22,108 @@ import java.time.YearMonth
 class HomeViewModel @Inject constructor(
     private val repository: WorkoutRepository,
 ) : ViewModel() {
-    private val _workouts = MutableStateFlow<List<Workout>>(emptyList())
-    val workouts = _workouts.asStateFlow()
+    private val _workoutRecords = MutableStateFlow<List<WorkoutRecord>>(emptyList())
+    val workoutRecords = _workoutRecords.asStateFlow()
 
-    private val _selectedDateWorkoutExercises = MutableStateFlow<List<WorkoutExercise>>(emptyList())
-    val selectedDateWorkoutExercises = _selectedDateWorkoutExercises.asStateFlow()
+    private val _selectedDateWorkouts = MutableStateFlow<List<Workout>>(emptyList())
+    val selectedDateWorkouts = _selectedDateWorkouts.asStateFlow()
 
     private val _isEditMode = MutableStateFlow(false)
     val isEditMode = _isEditMode.asStateFlow()
 
-    private var workoutsJob: Job? = null
-    private var selectedDateExercisesJob: Job? = null
-    private var latestLoadedWorkoutExercises: List<WorkoutExercise> = emptyList()
+    private var workoutRecordsJob: Job? = null
+    private var selectedDateWorkoutsJob: Job? = null
+    private var latestLoadedWorkouts: List<Workout> = emptyList()
     private var selectedDate: LocalDate = LocalDate.now()
 
-    fun loadWorkoutsForYearMonth(yearMonth: YearMonth) {
-        workoutsJob?.cancel()
-        workoutsJob = viewModelScope.launch(Dispatchers.IO) {
-            repository.getWorkoutsForYearMonth(yearMonth).collect { workouts ->
-                _workouts.value = workouts
+    fun loadWorkoutRecordsForYearMonth(yearMonth: YearMonth) {
+        workoutRecordsJob?.cancel()
+        workoutRecordsJob = viewModelScope.launch(Dispatchers.IO) {
+            repository.getWorkoutRecordsForYearMonth(yearMonth).collect { workoutRecords ->
+                _workoutRecords.value = workoutRecords
             }
         }
     }
 
     fun onSelectedDateChanged(date: LocalDate) {
-        if (selectedDate == date && selectedDateExercisesJob != null) {
+        if (selectedDate == date && selectedDateWorkoutsJob != null) {
             return
         }
 
         if (_isEditMode.value) {
-            discardExerciseEdit()
+            discardWorkoutEdit()
         }
 
         selectedDate = date
-        selectedDateExercisesJob?.cancel()
-        selectedDateExercisesJob = viewModelScope.launch(Dispatchers.IO) {
-            repository.getWorkoutExercises(date).collect { exercises ->
-                latestLoadedWorkoutExercises = exercises
+        selectedDateWorkoutsJob?.cancel()
+        selectedDateWorkoutsJob = viewModelScope.launch(Dispatchers.IO) {
+            repository.getWorkouts(date).collect { workouts ->
+                latestLoadedWorkouts = workouts
                 if (!_isEditMode.value) {
-                    _selectedDateWorkoutExercises.value = exercises
+                    _selectedDateWorkouts.value = workouts
                 }
             }
         }
     }
 
-    fun enterExerciseEdit() {
-        if (_selectedDateWorkoutExercises.value.isEmpty() || _isEditMode.value) {
+    fun enterWorkoutEdit() {
+        if (_selectedDateWorkouts.value.isEmpty() || _isEditMode.value) {
             return
         }
-        _selectedDateWorkoutExercises.value = latestLoadedWorkoutExercises
+        _selectedDateWorkouts.value = latestLoadedWorkouts
         _isEditMode.value = true
     }
 
-    fun discardExerciseEdit() {
+    fun discardWorkoutEdit() {
         _isEditMode.value = false
-        _selectedDateWorkoutExercises.value = latestLoadedWorkoutExercises
+        _selectedDateWorkouts.value = latestLoadedWorkouts
     }
 
-    fun moveExerciseUp(workoutExerciseId: Long) {
+    fun moveWorkoutUp(workoutId: Long) {
         if (!_isEditMode.value) {
             return
         }
-        moveExercise(workoutExerciseId = workoutExerciseId, offset = -1)
+        moveWorkout(workoutId = workoutId, offset = -1)
     }
 
-    fun moveExerciseDown(workoutExerciseId: Long) {
+    fun moveWorkoutDown(workoutId: Long) {
         if (!_isEditMode.value) {
             return
         }
-        moveExercise(workoutExerciseId = workoutExerciseId, offset = 1)
+        moveWorkout(workoutId = workoutId, offset = 1)
     }
 
-    fun deleteExercise(workoutExerciseId: Long) {
+    fun deleteWorkout(workoutId: Long) {
         if (!_isEditMode.value) {
             return
         }
-        _selectedDateWorkoutExercises.value = _selectedDateWorkoutExercises.value.filterNot { workoutExercise ->
-            workoutExercise.id == workoutExerciseId
+        _selectedDateWorkouts.value = _selectedDateWorkouts.value.filterNot { workout ->
+            workout.id == workoutId
         }
     }
 
-    fun saveExerciseEdit(onSuccess: () -> Unit) {
+    fun saveWorkoutEdit(onSuccess: () -> Unit) {
         if (!_isEditMode.value) {
             return
         }
 
-        val exercisesToSave = _selectedDateWorkoutExercises.value
+        val workoutsToSave = _selectedDateWorkouts.value
         viewModelScope.launch {
             runCatching {
                 withContext(Dispatchers.IO) {
-                    repository.replaceWorkoutExercises(
+                    repository.replaceWorkouts(
                         date = selectedDate,
-                        exercises = exercisesToSave.mapIndexed { index, workoutExercise ->
-                            WorkoutExerciseDraft(
-                                exerciseId = workoutExercise.exercise.id,
-                                categoryId = workoutExercise.exercise.category.id,
+                        workouts = workoutsToSave.mapIndexed { index, workout ->
+                            WorkoutDraft(
+                                exerciseId = workout.exercise.id,
+                                categoryId = workout.exercise.category.id,
                                 orderIndex = index,
-                                metricTypes = workoutExercise.exercise.metricTypes,
-                                sets = workoutExercise.sets.map { set ->
+                                metricTypes = workout.exercise.metricTypes,
+                                sets = workout.sets.map { set ->
                                     WorkoutSetDraft(
                                         setIndex = set.index,
                                         metrics = set.metrics.filterKeys { metricType ->
-                                            metricType in workoutExercise.exercise.metricTypes
+                                            metricType in workout.exercise.metricTypes
                                         },
                                     )
                                 },
@@ -133,31 +133,31 @@ class HomeViewModel @Inject constructor(
                 }
             }.onSuccess {
                 _isEditMode.value = false
-                latestLoadedWorkoutExercises = exercisesToSave
-                _selectedDateWorkoutExercises.value = exercisesToSave
+                latestLoadedWorkouts = workoutsToSave
+                _selectedDateWorkouts.value = workoutsToSave
                 onSuccess()
             }
         }
     }
 
-    private fun moveExercise(workoutExerciseId: Long, offset: Int) {
-        val currentExercises = _selectedDateWorkoutExercises.value
-        val currentIndex = currentExercises.indexOfFirst { workoutExercise ->
-            workoutExercise.id == workoutExerciseId
+    private fun moveWorkout(workoutId: Long, offset: Int) {
+        val currentWorkouts = _selectedDateWorkouts.value
+        val currentIndex = currentWorkouts.indexOfFirst { workout ->
+            workout.id == workoutId
         }
         if (currentIndex < 0) {
             return
         }
 
         val targetIndex = currentIndex + offset
-        if (targetIndex !in currentExercises.indices) {
+        if (targetIndex !in currentWorkouts.indices) {
             return
         }
 
-        val reorderedExercises = currentExercises.toMutableList()
-        val targetExercise = reorderedExercises[targetIndex]
-        reorderedExercises[targetIndex] = reorderedExercises[currentIndex]
-        reorderedExercises[currentIndex] = targetExercise
-        _selectedDateWorkoutExercises.value = reorderedExercises.toList()
+        val reorderedWorkouts = currentWorkouts.toMutableList()
+        val targetWorkout = reorderedWorkouts[targetIndex]
+        reorderedWorkouts[targetIndex] = reorderedWorkouts[currentIndex]
+        reorderedWorkouts[currentIndex] = targetWorkout
+        _selectedDateWorkouts.value = reorderedWorkouts.toList()
     }
 }

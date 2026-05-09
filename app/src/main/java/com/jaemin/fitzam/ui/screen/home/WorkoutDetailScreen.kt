@@ -63,7 +63,7 @@ import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.screen.workoutrecord.EditableWorkoutSetUi
-import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordExerciseUiModel
+import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutUiModel
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordUiState
 import com.jaemin.fitzam.ui.screen.workoutrecord.WorkoutRecordViewModel
 import com.jaemin.fitzam.ui.theme.ErrorRed
@@ -77,7 +77,7 @@ private val INT_INPUT_REGEX = Regex("^\\d*$")
 @Composable
 fun WorkoutDetailScreen(
     selectedDate: LocalDate,
-    workoutExerciseId: Long,
+    workoutId: Long,
     exerciseId: Long,
     sessionId: Long,
     onDismissRequest: () -> Unit,
@@ -87,7 +87,7 @@ fun WorkoutDetailScreen(
         key = "workout-add-$sessionId",
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val exerciseItems by viewModel.exerciseItems.collectAsStateWithLifecycle()
+    val workoutItems by viewModel.workoutItems.collectAsStateWithLifecycle()
     val hasUnsavedChanges by viewModel.hasUnsavedChanges.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
 
@@ -95,9 +95,9 @@ fun WorkoutDetailScreen(
         viewModel.loadWorkoutForDate(selectedDate)
     }
 
-    val selectedWorkoutExercise = exerciseItems.firstOrNull { item ->
-        item.workoutExerciseId == workoutExerciseId
-    } ?: exerciseItems.firstOrNull { item ->
+    val selectedWorkout = workoutItems.firstOrNull { item ->
+        item.workoutId == workoutId
+    } ?: workoutItems.firstOrNull { item ->
         item.exercise.id == exerciseId
     }
 
@@ -106,8 +106,8 @@ fun WorkoutDetailScreen(
         return
     }
 
-    if (selectedWorkoutExercise == null) {
-        LaunchedEffect(selectedDate, workoutExerciseId) {
+    if (selectedWorkout == null) {
+        LaunchedEffect(selectedDate, workoutId) {
             onDismissRequest()
         }
         return
@@ -128,7 +128,7 @@ fun WorkoutDetailScreen(
     Scaffold(
         topBar = {
             WorkoutDetailTopAppBar(
-                title = selectedWorkoutExercise.exercise.name,
+                title = selectedWorkout.exercise.name,
                 onBackClick = handleDismissRequest,
             )
         },
@@ -145,7 +145,7 @@ fun WorkoutDetailScreen(
         },
     ) { paddingValues ->
         WorkoutDetailContent(
-            exerciseItem = selectedWorkoutExercise,
+            workoutItem = selectedWorkout,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
@@ -156,7 +156,7 @@ fun WorkoutDetailScreen(
                 ),
             onMetricChange = { setIndex, metricType, value ->
                 viewModel.updateSetMetric(
-                    workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
+                    workoutId = selectedWorkout.workoutId,
                     setIndex = setIndex,
                     metricType = metricType,
                     value = value,
@@ -164,14 +164,14 @@ fun WorkoutDetailScreen(
             },
             onStartClick = {
                 onWorkoutStartClick(
-                    selectedWorkoutExercise.workoutExerciseId,
-                    selectedWorkoutExercise.exercise.id,
-                    selectedWorkoutExercise.exercise.name,
+                    selectedWorkout.workoutId,
+                    selectedWorkout.exercise.id,
+                    selectedWorkout.exercise.name,
                 )
             },
             onSetDeleteClick = { setIndex ->
                 viewModel.deleteSet(
-                    workoutExerciseId = selectedWorkoutExercise.workoutExerciseId,
+                    workoutId = selectedWorkout.workoutId,
                     setIndex = setIndex,
                 )
             },
@@ -252,7 +252,7 @@ private fun WorkoutDetailTopAppBar(
 
 @Composable
 private fun WorkoutDetailContent(
-    exerciseItem: WorkoutRecordExerciseUiModel,
+    workoutItem: WorkoutUiModel,
     modifier: Modifier = Modifier,
     onMetricChange: (Int, WorkoutMetricType, String) -> Unit,
     onStartClick: () -> Unit,
@@ -280,8 +280,8 @@ private fun WorkoutDetailContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Image(
-                        painter = painterResource(drawableResIdByName(exerciseItem.exercise.imageName)),
-                        contentDescription = exerciseItem.exercise.name,
+                        painter = painterResource(drawableResIdByName(workoutItem.exercise.imageName)),
+                        contentDescription = workoutItem.exercise.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(52.dp)
@@ -292,18 +292,18 @@ private fun WorkoutDetailContent(
                         horizontalAlignment = Alignment.Start,
                     ) {
                         Text(
-                            text = exerciseItem.exercise.name,
+                            text = workoutItem.exercise.name,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         ExerciseCategoryTag(
-                            name = exerciseItem.exercise.category.name,
-                            borderColor = Color(exerciseItem.exercise.category.colorHex),
+                            name = workoutItem.exercise.category.name,
+                            borderColor = Color(workoutItem.exercise.category.colorHex),
                         )
                     }
                 }
 
-                if (exerciseItem.sets.isEmpty()) {
+                if (workoutItem.sets.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -318,8 +318,8 @@ private fun WorkoutDetailContent(
                     }
                 } else {
                     EditableWorkoutSetTable(
-                        metricTypes = exerciseItem.exercise.metricTypes,
-                        sets = exerciseItem.sets,
+                        metricTypes = workoutItem.exercise.metricTypes,
+                        sets = workoutItem.sets,
                         onMetricChange = onMetricChange,
                         onRemoveSet = onSetDeleteClick,
                     )

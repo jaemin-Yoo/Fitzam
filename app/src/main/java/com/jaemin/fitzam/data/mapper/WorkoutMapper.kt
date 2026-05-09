@@ -9,15 +9,15 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetric
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.Workout
-import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
 import com.jaemin.fitzam.model.parseExerciseEquipmentType
 import com.jaemin.fitzam.model.parseMetricTypes
 import java.time.LocalDate
 
-fun WorkoutRecordEntity.toModel(exerciseCategories: List<ExerciseCategory>): Workout {
-    return Workout(
+fun WorkoutRecordEntity.toModel(exerciseCategories: List<ExerciseCategory>): WorkoutRecord {
+    return WorkoutRecord(
         date = LocalDate.parse(date),
         exerciseCategories = exerciseCategories,
     )
@@ -58,8 +58,8 @@ fun WorkoutRecordExerciseSetEntity.toModel(
 fun WorkoutRecordExerciseEntity.toModel(
     exercise: Exercise,
     sets: List<WorkoutSet>,
-): WorkoutExercise {
-    return WorkoutExercise(
+): Workout {
+    return Workout(
         id = id,
         exercise = exercise.copy(
             metricTypes = parseMetricTypes(recordSchema, exerciseName = exercise.name),

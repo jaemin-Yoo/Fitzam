@@ -3,7 +3,7 @@ package com.jaemin.fitzam.ui.screen.exerciseselect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseRepository
-import com.jaemin.fitzam.data.repository.WorkoutExerciseDraft
+import com.jaemin.fitzam.data.repository.WorkoutDraft
 import com.jaemin.fitzam.data.repository.WorkoutRepository
 import com.jaemin.fitzam.data.repository.WorkoutSetDraft
 import com.jaemin.fitzam.model.Exercise
@@ -78,9 +78,9 @@ class ExerciseSelectViewModel @Inject constructor(
                 withContext(Dispatchers.IO) {
                     val exercises = exerciseRepository.getExercisesByCategoryIds(selectedCategoryIds)
                     val favoriteIds = exerciseRepository.getFavoriteExerciseIds()
-                    val savedExerciseIds = workoutRepository.getWorkoutExercises(selectedDate)
+                    val savedExerciseIds = workoutRepository.getWorkouts(selectedDate)
                         .first()
-                        .map { workoutExercise -> workoutExercise.exercise.id }
+                        .map { workout -> workout.exercise.id }
                         .toSet()
                     ExerciseLoadResult(
                         uiState = ExerciseSelectUiState.Success(
@@ -184,13 +184,13 @@ class ExerciseSelectViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 withContext(Dispatchers.IO) {
-                    val savedExercises = workoutRepository.getWorkoutExercises(selectedDate)
+                    val savedExercises = workoutRepository.getWorkouts(selectedDate)
                         .first()
-                        .filter { workoutExercise ->
-                            workoutExercise.exercise.category.id in selectedCategoryIds
+                        .filter { workout ->
+                            workout.exercise.category.id in selectedCategoryIds
                         }
-                    val savedExerciseIds = savedExercises.map { workoutExercise ->
-                        workoutExercise.exercise.id
+                    val savedExerciseIds = savedExercises.map { workout ->
+                        workout.exercise.id
                     }
                     val lookupExerciseIds = (savedExerciseIds + selectedIds).toSet()
                     val exercisesById = exerciseRepository.getExercisesByIds(lookupExerciseIds)
@@ -200,16 +200,16 @@ class ExerciseSelectViewModel @Inject constructor(
                         .associateBy { exercise ->
                             exercise.id
                         }
-                    val drafts = buildList {
-                        savedExercises.forEachIndexed { index, savedExercise ->
-                            val metricTypes = savedExercise.exercise.metricTypes
+                    val drafts = buildList<WorkoutDraft> {
+                        savedExercises.forEachIndexed { index, savedWorkout ->
+                            val metricTypes = savedWorkout.exercise.metricTypes
                             add(
-                                WorkoutExerciseDraft(
-                                    exerciseId = savedExercise.exercise.id,
-                                    categoryId = savedExercise.exercise.category.id,
+                                WorkoutDraft(
+                                    exerciseId = savedWorkout.exercise.id,
+                                    categoryId = savedWorkout.exercise.category.id,
                                     orderIndex = index,
                                     metricTypes = metricTypes,
-                                    sets = savedExercise.sets.map { set ->
+                                    sets = savedWorkout.sets.map { set ->
                                         WorkoutSetDraft(
                                             setIndex = set.index,
                                             metrics = set.metrics.filterKeys { metricType ->
@@ -231,7 +231,7 @@ class ExerciseSelectViewModel @Inject constructor(
                             val metricTypes = workoutRepository.getLatestMetricTypes(exerciseId)
                                 ?: exercise.metricTypes
                             add(
-                                WorkoutExerciseDraft(
+                                WorkoutDraft(
                                     exerciseId = exercise.id,
                                     categoryId = exercise.category.id,
                                     orderIndex = savedExercises.size + appendIndex,
@@ -242,9 +242,9 @@ class ExerciseSelectViewModel @Inject constructor(
                         }
                     }
 
-                    workoutRepository.replaceWorkoutExercises(
+                    workoutRepository.replaceWorkouts(
                         date = selectedDate,
-                        exercises = drafts,
+                        workouts = drafts,
                     )
                 }
             }.onSuccess {

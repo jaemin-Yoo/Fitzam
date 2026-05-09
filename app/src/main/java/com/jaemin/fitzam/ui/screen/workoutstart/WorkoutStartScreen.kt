@@ -88,7 +88,7 @@ private val WorkoutStartOnSurfaceVariant = Color(0xFF808080)
 @Composable
 fun WorkoutStartScreen(
     selectedDate: LocalDate,
-    workoutExerciseId: Long,
+    workoutId: Long,
     exerciseId: Long,
     exerciseName: String,
     sessionId: Long,
@@ -98,28 +98,28 @@ fun WorkoutStartScreen(
     val viewModel: WorkoutRecordViewModel = hiltViewModel(
         key = "workout-add-$sessionId",
     )
-    val exerciseItems by viewModel.exerciseItems.collectAsStateWithLifecycle()
+    val workoutItems by viewModel.workoutItems.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedDate) {
         viewModel.loadWorkoutForDate(selectedDate)
     }
 
-    val sourceItem = exerciseItems.firstOrNull { item -> item.workoutExerciseId == workoutExerciseId }
+    val sourceItem = workoutItems.firstOrNull { item -> item.workoutId == workoutId }
     val initialValue = remember(
-        workoutExerciseId,
+        workoutId,
         sourceItem?.sets?.size,
         sourceItem?.exercise?.metricTypes,
     ) {
-        viewModel.getEditorInitialValue(workoutExerciseId)
+        viewModel.getEditorInitialValue(workoutId)
     }
     val selectedMetricNames = rememberSaveable(
-        workoutExerciseId,
+        workoutId,
         sourceItem?.sets?.size,
         sourceItem?.exercise?.metricTypes,
     ) {
         mutableStateListOf(*initialValue.metricTypes.map { metricType -> metricType.name }.toTypedArray())
     }
-    val metricInputs = remember(workoutExerciseId) {
+    val metricInputs = remember(workoutId) {
         mutableStateMapOf<WorkoutMetricType, String>().apply {
             WorkoutMetricType.entries.forEach { metricType ->
                 put(metricType, initialValue.metricValues[metricType].orZero())
@@ -168,7 +168,7 @@ fun WorkoutStartScreen(
                             return@DZamButton
                         }
                         viewModel.appendSet(
-                            workoutExerciseId = workoutExerciseId,
+                            workoutId = workoutId,
                             metricTypes = selectedMetricTypes,
                             metricValues = selectedMetricTypes.associateWith { metricType ->
                                 metricInputs[metricType].orZero()

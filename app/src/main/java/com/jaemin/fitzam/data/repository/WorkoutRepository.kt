@@ -15,7 +15,7 @@ import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
 import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 import com.jaemin.fitzam.model.Workout
-import com.jaemin.fitzam.model.WorkoutExercise
+import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.parseMetricTypes
 import com.jaemin.fitzam.model.serializeMetricTypes
@@ -35,7 +35,7 @@ data class WorkoutSetDraft(
     val metrics: Map<WorkoutMetricType, Double>,
 )
 
-data class WorkoutExerciseDraft(
+data class WorkoutDraft(
     val exerciseId: Long,
     val categoryId: Long,
     val orderIndex: Int,
@@ -54,7 +54,7 @@ class WorkoutRepository @Inject constructor(
     private val setMetricDao: WorkoutRecordExerciseSetMetricDao,
 ) {
 
-    fun getWorkoutsForYearMonth(yearMonth: YearMonth): Flow<List<Workout>> {
+    fun getWorkoutRecordsForYearMonth(yearMonth: YearMonth): Flow<List<WorkoutRecord>> {
         val startDate = yearMonth.atDay(1).toString()
         val endDate = yearMonth.atEndOfMonth().toString()
 
@@ -73,7 +73,7 @@ class WorkoutRepository @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getWorkoutExercises(date: LocalDate): Flow<List<WorkoutExercise>> {
+    fun getWorkouts(date: LocalDate): Flow<List<Workout>> {
         return workoutRecordExerciseDao.getWorkoutRecordExerciseEntities(date.toString())
             .flatMapLatest { entities ->
                 if (entities.isEmpty()) {
@@ -115,7 +115,7 @@ class WorkoutRepository @Inject constructor(
     ) {
         database.withTransaction {
             if (categoryIds.isEmpty()) {
-                deleteWorkout(date)
+                deleteWorkoutRecord(date)
                 return@withTransaction
             }
 
@@ -157,13 +157,13 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
-    suspend fun replaceWorkoutExercises(
+    suspend fun replaceWorkouts(
         date: LocalDate,
-        exercises: List<WorkoutExerciseDraft>,
+        workouts: List<WorkoutDraft>,
     ) {
         database.withTransaction {
-            if (exercises.isEmpty()) {
-                deleteWorkout(date)
+            if (workouts.isEmpty()) {
+                deleteWorkoutRecord(date)
                 return@withTransaction
             }
 
@@ -172,8 +172,8 @@ class WorkoutRepository @Inject constructor(
             )
 
             workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
-            exercises
-                .map { exercise -> exercise.categoryId }
+            workouts
+                .map { workout -> workout.categoryId }
                 .distinct()
                 .forEach { categoryId ->
                     workoutRecordExerciseCategoryDao.insert(
@@ -185,30 +185,30 @@ class WorkoutRepository @Inject constructor(
                 }
 
             workoutRecordExerciseDao.deleteByDate(date.toString())
-            exercises.sortedBy { exercise -> exercise.orderIndex }.forEach { exercise ->
-                val workoutExerciseId = workoutRecordExerciseDao.insert(
+            workouts.sortedBy { workout -> workout.orderIndex }.forEach { workout ->
+                val workoutId = workoutRecordExerciseDao.insert(
                     WorkoutRecordExerciseEntity(
                         workoutRecordDate = date.toString(),
-                        exerciseId = exercise.exerciseId,
-                        orderIndex = exercise.orderIndex,
-                        recordSchema = serializeMetricTypes(exercise.metricTypes),
+                        exerciseId = workout.exerciseId,
+                        orderIndex = workout.orderIndex,
+                        recordSchema = serializeMetricTypes(workout.metricTypes),
                     ),
                 )
 
-                if (exercise.sets.isNotEmpty()) {
+                if (workout.sets.isNotEmpty()) {
                     setDao.insertOrUpdateAll(
-                        exercise.sets.map { set ->
+                        workout.sets.map { set ->
                             WorkoutRecordExerciseSetEntity(
-                                workoutRecordExerciseId = workoutExerciseId,
+                                workoutRecordExerciseId = workoutId,
                                 setIndex = set.setIndex,
                             )
                         },
                     )
                     setMetricDao.insertOrUpdateAll(
-                        exercise.sets.flatMap { set ->
+                        workout.sets.flatMap { set ->
                             set.metrics.map { (metricType, value) ->
                                 WorkoutRecordExerciseSetMetricEntity(
-                                    workoutRecordExerciseId = workoutExerciseId,
+                                    workoutRecordExerciseId = workoutId,
                                     setIndex = set.setIndex,
                                     metricType = metricType.name,
                                     value = value,
@@ -221,7 +221,7 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
-    private suspend fun deleteWorkout(date: LocalDate) {
+    private suspend fun deleteWorkoutRecord(date: LocalDate) {
         workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
         workoutRecordDao.deleteByDate(date.toString())
     }
