@@ -1,20 +1,33 @@
 package com.jaemin.fitzam.data.source.local.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 
 @Dao
 interface ExerciseDao {
 
+    @Insert
+    suspend fun insert(exercise: ExerciseEntity): Long
+
     @Query(
         """
         SELECT * FROM exercise
-        WHERE categoryId = :partCode
+        WHERE categoryId IN (:categoryIds)
         ORDER BY id
     """
     )
-    fun getExerciseEntities(partCode: String): List<ExerciseEntity>
+    suspend fun getExerciseEntitiesByCategoryIds(categoryIds: List<Long>): List<ExerciseEntity>
+
+    @Query(
+        """
+        SELECT * FROM exercise
+        WHERE id IN (:ids)
+        ORDER BY id
+    """
+    )
+    suspend fun getExerciseEntitiesByIds(ids: List<Long>): List<ExerciseEntity>
 
     @Query(
         """
@@ -23,4 +36,28 @@ interface ExerciseDao {
         """
     )
     fun getExerciseEntity(id: Long): ExerciseEntity
+
+    @Query(
+        """
+        UPDATE exercise
+        SET recordSchema = :recordSchema
+        WHERE id = :exerciseId
+    """
+    )
+    suspend fun updateRecordSchema(
+        exerciseId: Long,
+        recordSchema: String,
+    )
+
+    @Query(
+        """
+        UPDATE exercise
+        SET equipmentType = :equipmentType
+        WHERE id = :exerciseId
+    """
+    )
+    suspend fun updateEquipmentType(
+        exerciseId: Long,
+        equipmentType: String,
+    )
 }

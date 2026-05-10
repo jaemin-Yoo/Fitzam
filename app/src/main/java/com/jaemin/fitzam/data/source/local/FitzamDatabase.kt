@@ -4,41 +4,41 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.ImageUrlCacheDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutSetDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseSetMetricDao
 import com.jaemin.fitzam.data.source.local.entity.ExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.FavoriteExerciseEntity
-import com.jaemin.fitzam.data.source.local.entity.ImageUrlCacheEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutExerciseEntity
 import com.jaemin.fitzam.data.source.local.entity.ExerciseCategoryEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutCategoryEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutEntity
-import com.jaemin.fitzam.data.source.local.entity.WorkoutSetEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseCategoryEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetEntity
+import com.jaemin.fitzam.data.source.local.entity.WorkoutRecordExerciseSetMetricEntity
 
 @Database(
     entities = [
-        WorkoutEntity::class,
-        WorkoutCategoryEntity::class,
-        WorkoutExerciseEntity::class,
-        WorkoutSetEntity::class,
+        WorkoutRecordEntity::class,
+        WorkoutRecordExerciseCategoryEntity::class,
+        WorkoutRecordExerciseEntity::class,
+        WorkoutRecordExerciseSetEntity::class,
+        WorkoutRecordExerciseSetMetricEntity::class,
         ExerciseCategoryEntity::class,
         ExerciseEntity::class,
         FavoriteExerciseEntity::class,
-        ImageUrlCacheEntity::class,
     ],
-    version = 1
+    version = 2
 )
 abstract class FitzamDatabase : RoomDatabase() {
-    abstract fun workoutDao(): WorkoutDao
-    abstract fun workoutCategoryDao(): WorkoutCategoryDao
-    abstract fun workoutExerciseDao(): WorkoutExerciseDao
-    abstract fun workoutSetDao(): WorkoutSetDao
+    abstract fun workoutRecordDao(): WorkoutRecordDao
+    abstract fun workoutRecordExerciseCategoryDao(): WorkoutRecordExerciseCategoryDao
+    abstract fun workoutRecordExerciseDao(): WorkoutRecordExerciseDao
+    abstract fun workoutRecordExerciseSetDao(): WorkoutRecordExerciseSetDao
+    abstract fun workoutRecordExerciseSetMetricDao(): WorkoutRecordExerciseSetMetricDao
     abstract fun exerciseCategoryDao(): ExerciseCategoryDao
     abstract fun exerciseDao(): ExerciseDao
     abstract fun favoriteExerciseDao(): FavoriteExerciseDao
-    abstract fun imageUrlCacheDao(): ImageUrlCacheDao
 }

@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -40,19 +43,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.util.drawableResIdByName
-import com.jaemin.fitzam.ui.common.DZamButton
-import com.jaemin.fitzam.ui.common.FitzamTopAppBar
-import com.jaemin.fitzam.ui.common.TopAppBarItem
+import com.jaemin.fitzam.ui.dzam.DZamButton
+import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
+import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
+import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
 
 @Composable
 fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
+    sessionId: Long,
     onBackClick: () -> Unit,
+    onDetailAddClick: (Set<Long>) -> Unit,
     onCompleteClick: () -> Unit,
-    viewModel: ExerciseCategorySelectViewModel = hiltViewModel(),
 ) {
+    val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
+        key = "exercise-category-select-$sessionId",
+    )
     val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
     val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
 
@@ -66,6 +75,7 @@ fun ExerciseCategorySelectScreen(
         selectedCategoryIds = selectedCategoryIds,
         onBackClick = onBackClick,
         onCategoryClick = { category -> viewModel.toggleCategory(category.id) },
+        onDetailAddClick = { onDetailAddClick(selectedCategoryIds) },
         onCompleteClick = {
             viewModel.applyWorkoutChanges(selectedDate)
             onCompleteClick()
@@ -79,6 +89,7 @@ fun ExerciseCategorySelectScreen(
     selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
     onCategoryClick: (ExerciseCategory) -> Unit,
+    onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     Scaffold(
@@ -86,11 +97,39 @@ fun ExerciseCategorySelectScreen(
             FitzamTopAppBar(
                 title = "운동 유형 선택",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 )
             )
+        },
+        bottomBar = {
+            if (uiState is ExerciseCategorySelectUiState.Success) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 8.dp,
+                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
+                        ),
+                ) {
+                    DZamOutlinedButton(
+                        text = "운동 선택하기",
+                        onClick = onDetailAddClick,
+                        enabled = selectedCategoryIds.isNotEmpty(),
+                        trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    DZamButton(
+                        text = "완료",
+                        onClick = onCompleteClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
         },
     ) { paddingValues ->
         when (uiState) {
@@ -116,32 +155,22 @@ fun ExerciseCategorySelectScreen(
             }
             is ExerciseCategorySelectUiState.Success -> {
                 val categories = uiState.exerciseCategories
-                Column(
-                    modifier = Modifier.padding(
+                ExerciseCategoryGrid(
+                    categories = categories,
+                    selectedIds = selectedCategoryIds,
+                    onCategoryClick = { category ->
+                        onCategoryClick(category)
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
                         top = paddingValues.calculateTopPadding(),
                         bottom = paddingValues.calculateBottomPadding(),
                         start = 16.dp,
                         end = 16.dp,
                     )
-                ) {
-                    ExerciseCategoryGrid(
-                        categories = categories,
-                        selectedIds = selectedCategoryIds,
-                        onCategoryClick = { category ->
-                            onCategoryClick(category)
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 24.dp),
-                    )
-
-                    DZamButton(
-                        text = "완료",
-                        onClick = onCompleteClick,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(24.dp))
-                }
+                        .padding(vertical = 24.dp),
+                )
             }
         }
     }
@@ -256,7 +285,9 @@ fun ExerciseCategorySelectScreenPreview() {
             selectedCategoryIds = setOf(1, 2),
             onBackClick = {},
             onCategoryClick = {},
+            onDetailAddClick = {},
             onCompleteClick = {},
         )
     }
 }
+

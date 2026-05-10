@@ -2,13 +2,13 @@ package com.jaemin.fitzam.data.repository
 
 import com.jaemin.fitzam.data.mapper.toModel
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
-import com.jaemin.fitzam.data.source.local.dao.WorkoutCategoryDao
+import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
 import com.jaemin.fitzam.model.ExerciseCategory
 import java.time.LocalDate
 import javax.inject.Inject
 
 class ExerciseCategoryRepository @Inject constructor(
-    private val workoutCategoryDao: WorkoutCategoryDao,
+    private val workoutRecordExerciseCategoryDao: WorkoutRecordExerciseCategoryDao,
     private val exerciseCategoryDao: ExerciseCategoryDao,
 ) {
 
@@ -19,6 +19,6 @@ class ExerciseCategoryRepository @Inject constructor(
     }
 
     suspend fun getExerciseCategoryIds(date: LocalDate): List<Long> {
-        return workoutCategoryDao.getExerciseCategoryIds(date.toString())
+        return workoutRecordExerciseCategoryDao.getExerciseCategoryIds(date.toString())
     }
 }

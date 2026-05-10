@@ -1,11 +1,9 @@
-﻿package com.jaemin.fitzam.ui.screen.settings
+package com.jaemin.fitzam.ui.screen.settings
 
 import android.accounts.AccountManager
 import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -47,12 +45,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jaemin.fitzam.BuildConfig
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.data.sync.NetworkStatus
-import com.jaemin.fitzam.ui.common.DZamAlertDialog
-import com.jaemin.fitzam.ui.common.DZamButton
-import com.jaemin.fitzam.ui.common.FitzamTopAppBar
-import com.jaemin.fitzam.ui.common.TopAppBarItem
+import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
+import com.jaemin.fitzam.ui.dzam.DZamButton
+import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
+import com.jaemin.fitzam.ui.dzam.IconSource
+import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -119,7 +119,7 @@ fun SettingsScreen(
             FitzamTopAppBar(
                 title = "설정",
                 navigation = TopAppBarItem(
-                    icon = ImageVector.vectorResource(R.drawable.ic_back),
+                    icon = IconSource.Vector(ImageVector.vectorResource(R.drawable.ic_back)),
                     contentDescription = "뒤로 가기",
                     onClick = onBackClick,
                 ),
@@ -147,7 +147,9 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(24.dp))
 
-            InfoSection(onTermsClick = onTermsClick)
+            InfoSection(
+                onTermsClick = onTermsClick,
+            )
         }
     }
 
@@ -321,7 +323,10 @@ private fun SyncConnectedCard(
 }
 
 @Composable
-private fun InfoSection(onTermsClick: () -> Unit) {
+private fun InfoSection(
+    onTermsClick: () -> Unit,
+) {
+    val context = LocalContext.current
     SectionTitle(text = "정보")
     Spacer(Modifier.height(8.dp))
 
@@ -332,12 +337,15 @@ private fun InfoSection(onTermsClick: () -> Unit) {
     ) {
         SettingRow(
             title = "앱 버전",
-            trailingText = "v 1.0.0",
+            trailingText = "v ${BuildConfig.VERSION_NAME}",
         )
         SettingRow(
             title = "약관 및 정책",
             trailingIcon = R.drawable.ic_right_arrow,
-            onClick = onTermsClick,
+            onClick = {
+                Toast.makeText(context, "준비 중", Toast.LENGTH_SHORT).show()
+                onTermsClick()
+            },
         )
     }
 }

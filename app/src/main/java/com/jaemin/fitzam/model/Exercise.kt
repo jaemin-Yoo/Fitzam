@@ -5,4 +5,6 @@ data class Exercise(
     val name: String,
     val category: ExerciseCategory,
     val imageName: String,
+    val equipmentType: ExerciseEquipmentType = ExerciseEquipmentType.OTHER,
+    val metricTypes: List<WorkoutMetricType> = defaultMetricTypesForExercise(null),
 )

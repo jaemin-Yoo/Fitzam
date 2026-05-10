@@ -1,6 +1,7 @@
 ﻿package com.jaemin.fitzam.ui.screen.exercisecategoryselect
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseCategoryRepository
 import com.jaemin.fitzam.data.repository.WorkoutRepository
@@ -21,6 +22,7 @@ import javax.inject.Inject
 class ExerciseCategorySelectViewModel @Inject constructor(
     val workoutRepository: WorkoutRepository,
     val exerciseCategoryRepository: ExerciseCategoryRepository,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     val exerciseCategorySelectUiState = flow {
@@ -39,12 +41,26 @@ class ExerciseCategorySelectViewModel @Inject constructor(
             initialValue = ExerciseCategorySelectUiState.Loading,
         )
 
-    private val _selectedCategoryIds = MutableStateFlow<Set<Long>>(emptySet())
+    private val _selectedCategoryIds = MutableStateFlow(
+        savedStateHandle.get<LongArray>(SELECTED_CATEGORY_IDS_KEY)
+            ?.toSet()
+            ?: emptySet()
+    )
     val selectedCategoryIds = _selectedCategoryIds.asStateFlow()
 
+    private var loadedDate: LocalDate? = savedStateHandle.get<String>(LOADED_DATE_KEY)?.let { value ->
+        LocalDate.parse(value)
+    }
+
     fun loadSelectedCategories(date: LocalDate) {
+        if (loadedDate == date) {
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
-            _selectedCategoryIds.value = exerciseCategoryRepository.getExerciseCategoryIds(date).toSet()
+            val selectedIds = exerciseCategoryRepository.getExerciseCategoryIds(date).toSet()
+            _selectedCategoryIds.value = selectedIds
+            loadedDate = date
+            saveSelectedState(date = date, selectedIds = selectedIds)
         }
     }
 
@@ -53,6 +69,9 @@ class ExerciseCategorySelectViewModel @Inject constructor(
             _selectedCategoryIds.value - id
         } else {
             _selectedCategoryIds.value + id
+        }
+        loadedDate?.let { date ->
+            saveSelectedState(date = date, selectedIds = _selectedCategoryIds.value)
         }
     }
 
@@ -63,6 +82,16 @@ class ExerciseCategorySelectViewModel @Inject constructor(
                 date = date,
             )
         }
+    }
+
+    private fun saveSelectedState(date: LocalDate, selectedIds: Set<Long>) {
+        savedStateHandle[LOADED_DATE_KEY] = date.toString()
+        savedStateHandle[SELECTED_CATEGORY_IDS_KEY] = selectedIds.toLongArray()
+    }
+
+    companion object {
+        private const val SELECTED_CATEGORY_IDS_KEY = "selected_category_ids"
+        private const val LOADED_DATE_KEY = "loaded_date"
     }
 }
 

@@ -10,4 +10,6 @@ data class ExerciseEntity(
     val name: String,
     val categoryId: Long,
     val imageName: String,
+    val equipmentType: String,
+    val recordSchema: String,
 )
