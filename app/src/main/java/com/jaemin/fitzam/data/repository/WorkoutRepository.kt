@@ -160,9 +160,10 @@ class WorkoutRepository @Inject constructor(
     suspend fun replaceWorkouts(
         date: LocalDate,
         workouts: List<WorkoutDraft>,
+        categoryIds: List<Long> = emptyList(),
     ) {
         database.withTransaction {
-            if (workouts.isEmpty()) {
+            if (workouts.isEmpty() && categoryIds.isEmpty()) {
                 deleteWorkoutRecord(date)
                 return@withTransaction
             }
@@ -171,18 +172,18 @@ class WorkoutRepository @Inject constructor(
                 WorkoutRecordEntity(date = date.toString()),
             )
 
+            val categoriesToSave = categoryIds.ifEmpty {
+                workouts.map { workout -> workout.categoryId }.distinct()
+            }
             workoutRecordExerciseCategoryDao.deleteByDate(date.toString())
-            workouts
-                .map { workout -> workout.categoryId }
-                .distinct()
-                .forEach { categoryId ->
-                    workoutRecordExerciseCategoryDao.insert(
-                        WorkoutRecordExerciseCategoryEntity(
-                            workoutRecordDate = date.toString(),
-                            exerciseCategoryId = categoryId,
-                        ),
-                    )
-                }
+            categoriesToSave.forEach { categoryId ->
+                workoutRecordExerciseCategoryDao.insert(
+                    WorkoutRecordExerciseCategoryEntity(
+                        workoutRecordDate = date.toString(),
+                        exerciseCategoryId = categoryId,
+                    ),
+                )
+            }
 
             workoutRecordExerciseDao.deleteByDate(date.toString())
             workouts.sortedBy { workout -> workout.orderIndex }.forEach { workout ->

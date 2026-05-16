@@ -245,6 +245,7 @@ class ExerciseSelectViewModel @Inject constructor(
                     workoutRepository.replaceWorkouts(
                         date = selectedDate,
                         workouts = drafts,
+                        categoryIds = selectedCategoryIds.toList(),
                     )
                 }
             }.onSuccess {
