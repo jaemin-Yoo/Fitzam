@@ -76,8 +76,7 @@ class ExerciseSelectViewModel @Inject constructor(
 
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    val exercises = exerciseRepository.getExercisesByCategoryIds(selectedCategoryIds)
-                    val favoriteIds = exerciseRepository.getFavoriteExerciseIds()
+                    val exercises = exerciseRepository.getCustomExercisesByCategoryIds(selectedCategoryIds)
                     val savedExerciseIds = workoutRepository.getWorkouts(selectedDate)
                         .first()
                         .map { workout -> workout.exercise.id }
@@ -85,7 +84,6 @@ class ExerciseSelectViewModel @Inject constructor(
                     ExerciseLoadResult(
                         uiState = ExerciseSelectUiState.Success(
                             exercises = exercises,
-                            favoriteIds = favoriteIds,
                         ),
                         savedExerciseIds = savedExerciseIds,
                     )
@@ -129,47 +127,6 @@ class ExerciseSelectViewModel @Inject constructor(
                 lastLoadedDate = selectedDate
                 lastLoadedCategoryIds = selectedCategoryIds
                 lastRefreshVersion = refreshVersion
-            }
-        }
-    }
-
-    fun toggleFavorite(exerciseId: Long) {
-        val currentState = _uiState.value as? ExerciseSelectUiState.Success ?: return
-        val wasFavorite = currentState.favoriteIds.contains(exerciseId)
-        val updatedFavoriteIds = if (wasFavorite) {
-            currentState.favoriteIds - exerciseId
-        } else {
-            currentState.favoriteIds + exerciseId
-        }
-
-        _uiState.update { state ->
-            if (state is ExerciseSelectUiState.Success) {
-                state.copy(favoriteIds = updatedFavoriteIds)
-            } else {
-                state
-            }
-        }
-
-        viewModelScope.launch {
-            val saveResult = runCatching {
-                withContext(Dispatchers.IO) {
-                    if (wasFavorite) {
-                        exerciseRepository.removeFavoriteExercise(exerciseId)
-                    } else {
-                        exerciseRepository.addFavoriteExercise(exerciseId)
-                    }
-                }
-            }
-
-            if (saveResult.isFailure) {
-                _uiState.update { state ->
-                    if (state is ExerciseSelectUiState.Success) {
-                        state.copy(favoriteIds = currentState.favoriteIds)
-                    } else {
-                        state
-                    }
-                }
-                _event.emit(ExerciseSelectEvent.FavoriteSaveFailed)
             }
         }
     }
@@ -259,9 +216,7 @@ data class ExerciseLoadResult(
     val savedExerciseIds: Set<Long>,
 )
 
-sealed interface ExerciseSelectEvent {
-    data object FavoriteSaveFailed : ExerciseSelectEvent
-}
+sealed interface ExerciseSelectEvent
 
 sealed interface ExerciseSelectUiState {
     data object Loading : ExerciseSelectUiState
@@ -270,6 +225,5 @@ sealed interface ExerciseSelectUiState {
 
     data class Success(
         val exercises: List<Exercise>,
-        val favoriteIds: Set<Long>,
     ) : ExerciseSelectUiState
 }

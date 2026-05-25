@@ -98,7 +98,7 @@ class DefaultExerciseSeedManager(
 
         private val UPSERT_EXERCISE_SQL =
             """
-            INSERT INTO exercise (id, name, categoryId, imageName, equipmentType, recordSchema) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO exercise (id, name, categoryId, imageName, equipmentType, recordSchema, isCustom) VALUES (?, ?, ?, ?, ?, ?, 0)
             ON CONFLICT(id) DO UPDATE SET
                 name = excluded.name,
                 categoryId = excluded.categoryId,

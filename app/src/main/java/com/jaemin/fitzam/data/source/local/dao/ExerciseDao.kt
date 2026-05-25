@@ -39,6 +39,27 @@ interface ExerciseDao {
 
     @Query(
         """
+        SELECT * FROM exercise
+        WHERE isCustom = 1
+        AND categoryId IN (:categoryIds)
+        ORDER BY id
+    """
+    )
+    suspend fun getCustomExerciseEntitiesByCategoryIds(categoryIds: List<Long>): List<ExerciseEntity>
+
+    @Query(
+        """
+        SELECT * FROM exercise
+        WHERE isCustom = 0
+        AND name LIKE '%' || :query || '%'
+        ORDER BY name
+        LIMIT 10
+    """
+    )
+    suspend fun searchPresetExercisesByName(query: String): List<ExerciseEntity>
+
+    @Query(
+        """
         UPDATE exercise
         SET recordSchema = :recordSchema
         WHERE id = :exerciseId

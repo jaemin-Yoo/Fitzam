@@ -1,5 +1,6 @@
 package com.jaemin.fitzam.data.source.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -12,4 +13,6 @@ data class ExerciseEntity(
     val imageName: String,
     val equipmentType: String,
     val recordSchema: String,
+    @ColumnInfo(defaultValue = "0")
+    val isCustom: Boolean = false,
 )

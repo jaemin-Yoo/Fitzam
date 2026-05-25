@@ -8,9 +8,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jaemin.fitzam.data.source.local.DatabaseConfig
 import com.jaemin.fitzam.data.source.local.FitzamDatabase
 import com.jaemin.fitzam.data.source.local.MIGRATION_1_2
+import com.jaemin.fitzam.data.source.local.MIGRATION_2_3
 import com.jaemin.fitzam.data.source.local.dao.ExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.ExerciseDao
-import com.jaemin.fitzam.data.source.local.dao.FavoriteExerciseDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseCategoryDao
 import com.jaemin.fitzam.data.source.local.dao.WorkoutRecordExerciseDao
@@ -38,7 +38,7 @@ object DatabaseModule {
             FitzamDatabase::class.java,
             DatabaseConfig.localDbFileName()
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .fallbackToDestructiveMigrationOnDowngrade()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
@@ -98,10 +98,6 @@ object DatabaseModule {
     @Provides
     fun provideExerciseDao(db: FitzamDatabase): ExerciseDao =
         db.exerciseDao()
-
-    @Provides
-    fun provideFavoriteExerciseDao(db: FitzamDatabase): FavoriteExerciseDao =
-        db.favoriteExerciseDao()
 
     private const val DATABASE_SEED_LOG_TAG = "DatabaseSeed"
 }
