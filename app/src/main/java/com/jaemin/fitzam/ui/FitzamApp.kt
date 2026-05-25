@@ -15,7 +15,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEvent
 import com.jaemin.fitzam.ui.screen.exerciseadd.ExerciseAddScreen
-import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectScreen
 import com.jaemin.fitzam.ui.screen.exerciseselect.ExerciseSelectScreen
 import com.jaemin.fitzam.ui.screen.home.HomeScreen
 import com.jaemin.fitzam.ui.screen.home.WorkoutDetailScreen
@@ -27,10 +26,6 @@ import kotlinx.serialization.Serializable
 sealed interface Screen {
     @Serializable data object Home : NavKey
     @Serializable data object Settings : NavKey
-    @Serializable data class ExerciseCategorySelect(
-        val selectedDate: String,
-        val sessionId: Long,
-    ) : NavKey
     @Serializable data class ExerciseSelect(
         val selectedDate: String,
         val selectedCategoryIds: String,
@@ -113,14 +108,6 @@ fun FitzamApp() {
         entryProvider = entryProvider {
             entry<Screen.Home> {
                 HomeScreen(
-                    onAddOrEditWorkout = { selectedDate ->
-                        backStack.add(
-                            Screen.ExerciseCategorySelect(
-                                selectedDate = selectedDate.toString(),
-                                sessionId = System.currentTimeMillis(),
-                            )
-                        )
-                    },
                     onAddWorkout = { selectedDate, selectedCategoryIds ->
                         backStack.add(
                             Screen.ExerciseSelect(
@@ -144,26 +131,6 @@ fun FitzamApp() {
                         )
                     },
                     onSettingsClick = { backStack.add(Screen.Settings) },
-                )
-            }
-            entry<Screen.ExerciseCategorySelect> { screen ->
-                ExerciseCategorySelectScreen(
-                    selectedDate = LocalDate.parse(screen.selectedDate),
-                    sessionId = screen.sessionId,
-                    onBackClick = popBackStack,
-                    onDetailAddClick = { selectedCategoryIds ->
-                        backStack.add(
-                            Screen.ExerciseSelect(
-                                selectedDate = screen.selectedDate,
-                                selectedCategoryIds = selectedCategoryIds.joinToString(","),
-                                selectedExerciseIds = "",
-                                preselectSavedExercises = true,
-                                closeScreenCount = 2,
-                                sessionId = System.currentTimeMillis(),
-                            )
-                        )
-                    },
-                    onCompleteClick = popBackStack,
                 )
             }
             entry<Screen.ExerciseSelect> { screen ->
