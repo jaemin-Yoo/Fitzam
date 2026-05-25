@@ -46,7 +46,6 @@ import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import com.jaemin.fitzam.ui.dzam.DZamButton
-import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
@@ -58,7 +57,6 @@ fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
     sessionId: Long,
     onBackClick: () -> Unit,
-    onDetailAddClick: (Set<Long>) -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
@@ -77,7 +75,6 @@ fun ExerciseCategorySelectScreen(
         selectedCategoryIds = selectedCategoryIds,
         onBackClick = onBackClick,
         onCategoryClick = { category -> viewModel.toggleCategory(category.id) },
-        onDetailAddClick = { onDetailAddClick(selectedCategoryIds) },
         onCompleteClick = {
             viewModel.applyWorkoutChanges(selectedDate)
             onCompleteClick()
@@ -91,7 +88,6 @@ fun ExerciseCategorySelectScreen(
     selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
     onCategoryClick: (ExerciseCategory) -> Unit,
-    onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     Scaffold(
@@ -117,14 +113,6 @@ fun ExerciseCategorySelectScreen(
                             bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
                         ),
                 ) {
-                    DZamOutlinedButton(
-                        text = "운동 선택하기",
-                        onClick = onDetailAddClick,
-                        enabled = selectedCategoryIds.isNotEmpty(),
-                        trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(16.dp))
                     DZamButton(
                         text = "완료",
                         onClick = onCompleteClick,
@@ -251,7 +239,6 @@ private fun ExerciseCategoryGridItem(
 fun ExerciseCategorySelectBottomSheet(
     selectedDate: LocalDate,
     sessionId: Long,
-    onDetailAddClick: (Set<Long>) -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
@@ -330,14 +317,6 @@ fun ExerciseCategorySelectBottomSheet(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
-                DZamOutlinedButton(
-                    text = "운동 선택하기",
-                    onClick = { onDetailAddClick(selectedCategoryIds) },
-                    enabled = selectedCategoryIds.isNotEmpty(),
-                    trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(16.dp))
                 DZamButton(
                     text = "완료",
                     onClick = {
@@ -391,7 +370,6 @@ fun ExerciseCategorySelectScreenPreview() {
             selectedCategoryIds = setOf(1, 2),
             onBackClick = {},
             onCategoryClick = {},
-            onDetailAddClick = {},
             onCompleteClick = {},
         )
     }

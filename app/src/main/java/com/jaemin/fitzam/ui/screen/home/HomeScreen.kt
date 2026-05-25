@@ -140,10 +140,6 @@ fun HomeScreen(
             ExerciseCategorySelectBottomSheet(
                 selectedDate = calendarState.selectedDate,
                 sessionId = categoryBottomSheetSessionId,
-                onDetailAddClick = { selectedCategoryIds ->
-                    showCategoryBottomSheet = false
-                    onAddWorkout(calendarState.selectedDate, selectedCategoryIds)
-                },
                 onCompleteClick = { showCategoryBottomSheet = false },
             )
         }
