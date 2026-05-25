@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -134,8 +135,10 @@ fun HomeScreen(
     )
 
     if (showCategoryBottomSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { showCategoryBottomSheet = false },
+            sheetState = sheetState,
         ) {
             ExerciseCategorySelectBottomSheet(
                 selectedDate = calendarState.selectedDate,
