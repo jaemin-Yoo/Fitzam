@@ -27,12 +27,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -86,7 +83,6 @@ fun ExerciseSelectScreen(
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds, preselectSavedExercises, refreshVersion) {
         viewModel.loadExercises(
@@ -96,14 +92,6 @@ fun ExerciseSelectScreen(
             preselectSavedExercises = preselectSavedExercises,
             refreshVersion = refreshVersion,
         )
-    }
-
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
-            if (event is ExerciseSelectEvent.FavoriteSaveFailed) {
-                snackbarHostState.showSnackbar("즐겨찾기 저장에 실패했습니다.")
-            }
-        }
     }
 
     when (val value = uiState) {
@@ -117,9 +105,6 @@ fun ExerciseSelectScreen(
                 exercises = emptyList(),
                 selectedExerciseIds = selectedExerciseIds,
                 onToggleSelected = viewModel::toggleSelectedExercise,
-                favoriteExerciseIds = emptySet(),
-                onToggleFavorite = viewModel::toggleFavorite,
-                snackbarHostState = snackbarHostState,
                 isLoading = true,
                 onSelectionComplete = {
                     viewModel.completeSelection(
@@ -144,9 +129,6 @@ fun ExerciseSelectScreen(
                 exercises = value.exercises,
                 selectedExerciseIds = selectedExerciseIds,
                 onToggleSelected = viewModel::toggleSelectedExercise,
-                favoriteExerciseIds = value.favoriteIds,
-                onToggleFavorite = viewModel::toggleFavorite,
-                snackbarHostState = snackbarHostState,
                 isLoading = false,
                 onSelectionComplete = {
                     viewModel.completeSelection(
@@ -171,9 +153,6 @@ fun ExerciseSelectScreen(
     exercises: List<Exercise>,
     selectedExerciseIds: Set<Long>,
     onToggleSelected: (Long) -> Unit,
-    favoriteExerciseIds: Set<Long>,
-    onToggleFavorite: (Long) -> Unit,
-    snackbarHostState: SnackbarHostState,
     isLoading: Boolean = false,
     onSelectionComplete: () -> Unit,
 ) {
@@ -181,9 +160,6 @@ fun ExerciseSelectScreen(
 
     val filteredExercises = exercises.filter { exercise ->
         exercise.name.contains(searchQuery, ignoreCase = true)
-    }
-    val favoriteExercises = filteredExercises.filter { exercise ->
-        favoriteExerciseIds.contains(exercise.id)
     }
     val exercisesById = exercises.associateBy { exercise -> exercise.id }
     val selectedExercises = selectedExerciseIds
@@ -229,9 +205,6 @@ fun ExerciseSelectScreen(
                 )
             }
         },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -270,12 +243,9 @@ fun ExerciseSelectScreen(
                     .fillMaxWidth(),
             ) {
                 ExerciseSelectList(
-                    favoriteExercises = favoriteExercises,
                     exercises = filteredExercises,
                     selectedExerciseIds = selectedExerciseIds,
-                    favoriteExerciseIds = favoriteExerciseIds,
                     onToggleSelected = onToggleSelected,
-                    onToggleFavorite = onToggleFavorite,
                     isLoading = isLoading,
                     contentPadding = PaddingValues(
                         start = 16.dp,
@@ -379,12 +349,9 @@ private fun ExerciseSelectFailedScreen(
 
 @Composable
 private fun ExerciseSelectList(
-    favoriteExercises: List<Exercise>,
     exercises: List<Exercise>,
     selectedExerciseIds: Set<Long>,
-    favoriteExerciseIds: Set<Long>,
     onToggleSelected: (Long) -> Unit,
-    onToggleFavorite: (Long) -> Unit,
     isLoading: Boolean,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -409,50 +376,34 @@ private fun ExerciseSelectList(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (exercises.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "아직 추가한 운동이 없습니다.\n+ 버튼을 눌러 운동을 추가해보세요.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (favoriteExercises.isNotEmpty()) {
-                    item {
-                        SectionTitle(text = "즐겨찾는 운동")
-                    }
-                    items(
-                        items = favoriteExercises,
-                        key = { "favorite-${it.id}" },
-                    ) { exercise ->
-                        ExerciseSelectItem(
-                            exercise = exercise,
-                            isSelected = selectedExerciseIds.contains(exercise.id),
-                            isFavorite = favoriteExerciseIds.contains(exercise.id),
-                            onToggleSelected = { onToggleSelected(exercise.id) },
-                            onToggleFavorite = { onToggleFavorite(exercise.id) },
-                        )
-                    }
-                }
-
-                item {
-                    SectionTitle(
-                        text = "전체 보기",
-                        modifier = if (favoriteExercises.isNotEmpty()) {
-                            Modifier.padding(top = 16.dp)
-                        } else {
-                            Modifier
-                        },
-                    )
-                }
                 items(
                     items = exercises,
-                    key = { "all-${it.id}" },
+                    key = { it.id },
                 ) { exercise ->
                     ExerciseSelectItem(
                         exercise = exercise,
                         isSelected = selectedExerciseIds.contains(exercise.id),
-                        isFavorite = favoriteExerciseIds.contains(exercise.id),
                         onToggleSelected = { onToggleSelected(exercise.id) },
-                        onToggleFavorite = { onToggleFavorite(exercise.id) },
                     )
                 }
                 item {
@@ -479,9 +430,7 @@ private fun SectionTitle(
 private fun ExerciseSelectItem(
     exercise: Exercise,
     isSelected: Boolean,
-    isFavorite: Boolean,
     onToggleSelected: () -> Unit,
-    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -522,18 +471,8 @@ private fun ExerciseSelectItem(
                 borderColor = Color(exercise.category.colorHex),
             )
         }
-
-        IconButton(onClick = onToggleFavorite) {
-            Icon(
-                painter = if (isFavorite) painterResource(R.drawable.ic_filled_star) else painterResource(R.drawable.ic_outline_star),
-                contentDescription = if (isFavorite) "즐겨찾기 해제" else "즐겨찾기",
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
     }
 }
-
-private val sampleFavoriteIds = setOf(0L, 1L)
 
 private fun sampleExercises(): List<Exercise> {
     val chest = ExerciseCategory(
@@ -593,9 +532,6 @@ private fun ExerciseSelectScreenPreview() {
             exercises = sampleExercises(),
             selectedExerciseIds = setOf(1L, 2L),
             onToggleSelected = {},
-            onToggleFavorite = {},
-            snackbarHostState = remember { SnackbarHostState() },
-            favoriteExerciseIds = sampleFavoriteIds,
             onSelectionComplete = {},
         )
     }

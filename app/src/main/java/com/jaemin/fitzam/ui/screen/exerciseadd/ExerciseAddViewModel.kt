@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaemin.fitzam.data.repository.ExerciseCategoryRepository
 import com.jaemin.fitzam.data.repository.ExerciseRepository
+import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.ExerciseEquipmentType
 import com.jaemin.fitzam.model.WorkoutMetricType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -25,6 +27,28 @@ class ExerciseAddViewModel @Inject constructor(
 
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
+
+    private val _presetSuggestions = MutableStateFlow<List<Exercise>>(emptyList())
+    val presetSuggestions = _presetSuggestions.asStateFlow()
+
+    private var suggestionJob: Job? = null
+
+    fun onExerciseNameChange(query: String) {
+        suggestionJob?.cancel()
+        if (query.isBlank()) {
+            _presetSuggestions.value = emptyList()
+            return
+        }
+        suggestionJob = viewModelScope.launch {
+            _presetSuggestions.value = withContext(Dispatchers.IO) {
+                exerciseRepository.searchPresetExercises(query)
+            }
+        }
+    }
+
+    fun clearPresetSuggestions() {
+        _presetSuggestions.value = emptyList()
+    }
 
     fun loadCategories(selectedCategoryIds: Set<Long>) {
         if (_uiState.value is ExerciseAddUiState.Success) return

@@ -27,6 +27,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,8 +36,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectBottomSheet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,9 +84,9 @@ import java.util.Locale
 
 private const val NO_DELETE_TARGET = -1L
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onAddOrEditWorkout: (LocalDate) -> Unit,
     onAddWorkout: (LocalDate, Set<Long>) -> Unit,
     onWorkoutDetailClick: (LocalDate, Long, Long) -> Unit,
     onSettingsClick: () -> Unit,
@@ -92,6 +96,8 @@ fun HomeScreen(
     val selectedDateWorkouts by viewModel.selectedDateWorkouts.collectAsStateWithLifecycle()
     val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
     val calendarState = rememberDZamCalendarState()
+    var showCategoryBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var categoryBottomSheetSessionId by rememberSaveable { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(calendarState.displayedYearMonth) {
         viewModel.loadWorkoutRecordsForYearMonth(calendarState.displayedYearMonth)
@@ -106,7 +112,10 @@ fun HomeScreen(
         selectedDateWorkouts = selectedDateWorkouts,
         isEditMode = isEditMode,
         calendarState = calendarState,
-        onAddOrEditWorkout = onAddOrEditWorkout,
+        onAddOrEditWorkout = {
+            categoryBottomSheetSessionId = System.currentTimeMillis()
+            showCategoryBottomSheet = true
+        },
         onAddWorkout = onAddWorkout,
         onSettingsClick = {
             viewModel.discardWorkoutEdit()
@@ -123,6 +132,20 @@ fun HomeScreen(
             viewModel.saveWorkoutEdit(onSuccess = {})
         },
     )
+
+    if (showCategoryBottomSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showCategoryBottomSheet = false },
+            sheetState = sheetState,
+        ) {
+            ExerciseCategorySelectBottomSheet(
+                selectedDate = calendarState.selectedDate,
+                sessionId = categoryBottomSheetSessionId,
+                onCompleteClick = { showCategoryBottomSheet = false },
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

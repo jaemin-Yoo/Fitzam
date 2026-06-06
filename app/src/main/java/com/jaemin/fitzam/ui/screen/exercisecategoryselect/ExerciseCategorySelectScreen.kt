@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,7 +46,6 @@ import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.util.drawableResIdByName
 import com.jaemin.fitzam.ui.dzam.DZamButton
-import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
@@ -56,7 +57,6 @@ fun ExerciseCategorySelectScreen(
     selectedDate: LocalDate,
     sessionId: Long,
     onBackClick: () -> Unit,
-    onDetailAddClick: (Set<Long>) -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
@@ -75,7 +75,6 @@ fun ExerciseCategorySelectScreen(
         selectedCategoryIds = selectedCategoryIds,
         onBackClick = onBackClick,
         onCategoryClick = { category -> viewModel.toggleCategory(category.id) },
-        onDetailAddClick = { onDetailAddClick(selectedCategoryIds) },
         onCompleteClick = {
             viewModel.applyWorkoutChanges(selectedDate)
             onCompleteClick()
@@ -89,7 +88,6 @@ fun ExerciseCategorySelectScreen(
     selectedCategoryIds: Set<Long>,
     onBackClick: () -> Unit,
     onCategoryClick: (ExerciseCategory) -> Unit,
-    onDetailAddClick: () -> Unit,
     onCompleteClick: () -> Unit,
 ) {
     Scaffold(
@@ -115,14 +113,6 @@ fun ExerciseCategorySelectScreen(
                             bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
                         ),
                 ) {
-                    DZamOutlinedButton(
-                        text = "운동 선택하기",
-                        onClick = onDetailAddClick,
-                        enabled = selectedCategoryIds.isNotEmpty(),
-                        trailingIcon = ImageVector.vectorResource(R.drawable.ic_right_arrow),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(16.dp))
                     DZamButton(
                         text = "완료",
                         onClick = onCompleteClick,
@@ -245,6 +235,101 @@ private fun ExerciseCategoryGridItem(
     }
 }
 
+@Composable
+fun ExerciseCategorySelectBottomSheet(
+    selectedDate: LocalDate,
+    sessionId: Long,
+    onCompleteClick: () -> Unit,
+) {
+    val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
+        key = "exercise-category-select-$sessionId",
+    )
+    val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
+    val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedDate) {
+        viewModel.loadSelectedCategories(selectedDate)
+    }
+
+    val currentUiState = uiState
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "운동 유형 선택",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            textAlign = TextAlign.Center,
+        )
+        when (currentUiState) {
+            ExerciseCategorySelectUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            ExerciseCategorySelectUiState.Failed -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = "로딩에 실패했습니다. 다시 시도해 주세요.")
+                }
+            }
+            is ExerciseCategorySelectUiState.Success -> {
+                val categories = currentUiState.exerciseCategories
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    categories.chunked(3).forEach { rowItems ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            rowItems.forEach { category ->
+                                ExerciseCategoryGridItem(
+                                    category = category,
+                                    isSelected = selectedCategoryIds.contains(category.id),
+                                    onClick = { viewModel.toggleCategory(category.id) },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            repeat(3 - rowItems.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (currentUiState is ExerciseCategorySelectUiState.Success) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                DZamButton(
+                    text = "완료",
+                    onClick = {
+                        viewModel.applyWorkoutChanges(selectedDate)
+                        onCompleteClick()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 fun ExerciseCategorySelectScreenPreview() {
@@ -285,7 +370,6 @@ fun ExerciseCategorySelectScreenPreview() {
             selectedCategoryIds = setOf(1, 2),
             onBackClick = {},
             onCategoryClick = {},
-            onDetailAddClick = {},
             onCompleteClick = {},
         )
     }

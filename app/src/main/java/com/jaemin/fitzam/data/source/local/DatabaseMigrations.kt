@@ -185,3 +185,30 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         db.execSQL("PRAGMA foreign_keys=ON")
     }
 }
+
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("PRAGMA foreign_keys=OFF")
+
+        db.execSQL(
+            """
+            ALTER TABLE exercise
+            ADD COLUMN isCustom INTEGER NOT NULL DEFAULT 0
+            """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            UPDATE exercise
+            SET isCustom = 1
+            WHERE id IN (
+                SELECT DISTINCT exerciseId FROM workout_record_exercise
+            )
+            """.trimIndent()
+        )
+
+        db.execSQL("DROP TABLE IF EXISTS favorite_exercise")
+
+        db.execSQL("PRAGMA foreign_keys=ON")
+    }
+}

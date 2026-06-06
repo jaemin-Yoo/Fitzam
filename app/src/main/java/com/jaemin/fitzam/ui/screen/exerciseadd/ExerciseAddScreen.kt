@@ -23,8 +23,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -44,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -51,12 +54,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
+import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.model.ExerciseEquipmentType
 import com.jaemin.fitzam.model.WorkoutMetricType
+import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamInputField
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
@@ -77,6 +83,7 @@ fun ExerciseAddScreen(
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val presetSuggestions by viewModel.presetSuggestions.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var saveErrorVersion by remember { mutableIntStateOf(0) }
 
@@ -93,8 +100,11 @@ fun ExerciseAddScreen(
     ExerciseAddScreen(
         uiState = uiState,
         isSaving = isSaving,
+        presetSuggestions = presetSuggestions,
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
+        onExerciseNameChange = viewModel::onExerciseNameChange,
+        onSuggestionSelected = { viewModel.clearPresetSuggestions() },
         onSaveClick = { name, category, equipmentType, metricTypes ->
             viewModel.addExercise(
                 name = name,
@@ -114,8 +124,11 @@ fun ExerciseAddScreen(
 fun ExerciseAddScreen(
     uiState: ExerciseAddUiState,
     isSaving: Boolean,
+    presetSuggestions: List<Exercise>,
     snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
+    onExerciseNameChange: (String) -> Unit,
+    onSuggestionSelected: () -> Unit,
     onSaveClick: (String, ExerciseCategory, ExerciseEquipmentType, List<WorkoutMetricType>) -> Unit,
 ) {
     Scaffold(
@@ -160,7 +173,10 @@ fun ExerciseAddScreen(
                 ExerciseAddContent(
                     categories = uiState.categories,
                     isSaving = isSaving,
+                    presetSuggestions = presetSuggestions,
                     contentPadding = paddingValues,
+                    onExerciseNameChange = onExerciseNameChange,
+                    onSuggestionSelected = onSuggestionSelected,
                     onSaveClick = onSaveClick,
                 )
             }
@@ -172,7 +188,10 @@ fun ExerciseAddScreen(
 private fun ExerciseAddContent(
     categories: List<ExerciseCategory>,
     isSaving: Boolean,
+    presetSuggestions: List<Exercise>,
     contentPadding: PaddingValues,
+    onExerciseNameChange: (String) -> Unit,
+    onSuggestionSelected: () -> Unit,
     onSaveClick: (String, ExerciseCategory, ExerciseEquipmentType, List<WorkoutMetricType>) -> Unit,
 ) {
     var exerciseName by rememberSaveable { mutableStateOf("") }
@@ -215,21 +234,69 @@ private fun ExerciseAddContent(
         Spacer(modifier = Modifier.height(28.dp))
         ExerciseImagePreview(category = selectedCategory)
         Spacer(modifier = Modifier.height(24.dp))
-        DZamInputField(
-            value = exerciseName,
-            onValueChange = { exerciseName = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = "운동 이름",
-            placeholder = "운동 이름",
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                errorContainerColor = MaterialTheme.colorScheme.surface,
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Black,
-            ),
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            DZamInputField(
+                value = exerciseName,
+                onValueChange = { newName ->
+                    exerciseName = newName
+                    onExerciseNameChange(newName)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = "운동 이름",
+                placeholder = "운동 이름",
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    errorContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = Color.Black,
+                    unfocusedBorderColor = Color.Black,
+                ),
+            )
+            if (presetSuggestions.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 64.dp)
+                        .zIndex(1f)
+                        .shadow(elevation = 4.dp, shape = RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surface),
+                ) {
+                    presetSuggestions.forEachIndexed { index, exercise ->
+                        if (index > 0) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    exerciseName = exercise.name
+                                    selectedCategoryId = exercise.category.id
+                                    selectedEquipmentName = exercise.equipmentType.name
+                                    selectedMetricNames = exercise.metricTypes
+                                        .map { it.name }
+                                        .toSet()
+                                    onSuggestionSelected()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = exercise.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            ExerciseCategoryTag(
+                                name = exercise.category.name,
+                                borderColor = Color(exercise.category.colorHex),
+                            )
+                        }
+                    }
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(24.dp))
         CategorySection(
             categories = categories,
@@ -557,8 +624,11 @@ private fun ExerciseAddScreenPreview() {
                 )
             ),
             isSaving = false,
+            presetSuggestions = emptyList(),
             snackbarHostState = remember { SnackbarHostState() },
             onBackClick = {},
+            onExerciseNameChange = {},
+            onSuggestionSelected = {},
             onSaveClick = { _, _, _, _ -> },
         )
     }
