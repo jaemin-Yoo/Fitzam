@@ -508,23 +508,30 @@ private fun HomeAddWorkoutButton(
 private fun HomeEmptyRecordState(
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.padding(vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_memo),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(52.dp),
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "운동을 기록하세요.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_memo),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(52.dp),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "운동을 기록해보세요",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
