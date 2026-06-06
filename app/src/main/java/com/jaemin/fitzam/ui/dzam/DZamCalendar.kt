@@ -12,10 +12,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -39,11 +42,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -61,7 +67,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import kotlinx.coroutines.CoroutineScope
@@ -75,6 +80,43 @@ data class DZamCalendarEvent(
     val text: String,
     val backgroundColor: Color
 )
+
+@Stable
+class DZamCalendarState(
+    initialSelectedDate: LocalDate,
+    initialDisplayedYearMonth: YearMonth,
+) {
+    var selectedDate by mutableStateOf(initialSelectedDate)
+        internal set
+
+    var displayedYearMonth by mutableStateOf(initialDisplayedYearMonth)
+        internal set
+
+    companion object {
+        val Saver = listSaver<DZamCalendarState, String>(
+            save = { listOf(it.selectedDate.toString(), it.displayedYearMonth.toString()) },
+            restore = { restored ->
+                DZamCalendarState(
+                    initialSelectedDate = LocalDate.parse(restored[0]),
+                    initialDisplayedYearMonth = YearMonth.parse(restored[1]),
+                )
+            }
+        )
+    }
+}
+
+@Composable
+fun rememberDZamCalendarState(
+    initialSelectedDate: LocalDate = LocalDate.now(),
+    initialDisplayedYearMonth: YearMonth = YearMonth.now(),
+): DZamCalendarState {
+    return rememberSaveable(saver = DZamCalendarState.Saver) {
+        DZamCalendarState(
+            initialSelectedDate = initialSelectedDate,
+            initialDisplayedYearMonth = initialDisplayedYearMonth,
+        )
+    }
+}
 
 private const val INITIAL_PAGE = 600
 private const val TOTAL_PAGES = 1200
@@ -105,44 +147,61 @@ private fun findTodayWeekIndex(weeks: List<List<LocalDate>>, today: LocalDate): 
 
 @Composable
 fun DZamCalendar(
-    selectedDate: LocalDate? = null,
+    state: DZamCalendarState,
     events: Map<LocalDate, List<DZamCalendarEvent>> = emptyMap(),
-    calendarBodyHeight: Dp = 300.dp,
-    onDateSelected: (LocalDate) -> Unit = {}
+    calendarBodyHeight: Dp = 400.dp,
 ) {
     val today = remember { LocalDate.now() }
-    val pagerState = rememberPagerState(initialPage = INITIAL_PAGE) { TOTAL_PAGES }
+    val pagerState = rememberPagerState(initialPage = monthToPage(state.displayedYearMonth)) { TOTAL_PAGES }
     val coroutineScope = rememberCoroutineScope()
     val currentMonth = pageToMonth(pagerState.currentPage)
-    val resolvedSelected = selectedDate ?: today
+
+    val selectedYearMonth = YearMonth.from(state.selectedDate)
+    LaunchedEffect(selectedYearMonth) {
+        val targetPage = monthToPage(selectedYearMonth)
+        if (targetPage != pagerState.currentPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
 
     fun defaultDateForMonth(month: YearMonth): LocalDate =
         if (YearMonth.from(today) == month) today else month.atDay(1)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        DZamCalendarHeader(
-            currentMonth = currentMonth,
-            onPrevMonth = {
-                val target = currentMonth.minusMonths(1)
-                onDateSelected(defaultDateForMonth(target))
-                coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
-            },
-            onNextMonth = {
-                val target = currentMonth.plusMonths(1)
-                onDateSelected(defaultDateForMonth(target))
-                coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
-            }
-        )
-        DZamCalendarDayOfWeekRow()
-        DZamCalendarBody(
-            pagerState = pagerState,
-            selectedDate = resolvedSelected,
-            events = events,
-            today = today,
-            onDateSelected = onDateSelected,
-            coroutineScope = coroutineScope,
-            calendarBodyHeight = calendarBodyHeight
-        )
+    fun onDateSelected(date: LocalDate) {
+        state.selectedDate = date
+        state.displayedYearMonth = YearMonth.from(date)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            DZamCalendarHeader(
+                currentMonth = currentMonth,
+                onPrevMonth = {
+                    val target = currentMonth.minusMonths(1)
+                    onDateSelected(defaultDateForMonth(target))
+                    coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+                },
+                onNextMonth = {
+                    val target = currentMonth.plusMonths(1)
+                    onDateSelected(defaultDateForMonth(target))
+                    coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+                }
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            DZamCalendarDayOfWeekRow()
+            DZamCalendarBody(
+                pagerState = pagerState,
+                selectedDate = state.selectedDate,
+                events = events,
+                today = today,
+                onDateSelected = ::onDateSelected,
+                coroutineScope = coroutineScope,
+                calendarBodyHeight = calendarBodyHeight
+            )
+        }
     }
 }
 
@@ -153,9 +212,7 @@ private fun DZamCalendarHeader(
     onNextMonth: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -178,8 +235,7 @@ private fun DZamCalendarHeader(
         ) { month ->
             Text(
                 text = "${month.year}년 ${month.monthValue}월",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium
             )
         }
 
@@ -202,17 +258,16 @@ private fun DZamCalendarDayOfWeekRow() {
                 text = label,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.labelMedium,
                 color = when (index) {
-                    0 -> Color.Red
-                    6 -> Color.Blue
+                    0 -> Color(0xFFFB2C36)
+                    6 -> Color(0xFF2B7FFF)
                     else -> MaterialTheme.colorScheme.onSurface
                 }
             )
         }
     }
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 }
 
 @Composable
@@ -318,10 +373,11 @@ private fun DZamCalendarPage(
         val idx = weeks.indexOfFirst { selectedDate in it }
         if (idx >= 0) idx else findTodayWeekIndex(weeks, today)
     }
-    val weekHeight = calendarBodyHeight / weeks.size
+    val spacingCount = weeks.size - 1
+    val weekHeight = (calendarBodyHeight - DZAM_GRID_SPACING * spacingCount) / weeks.size
     val clampedProgress = expansionProgress.coerceIn(0f, 1f)
-    val containerHeight = weekHeight + (weeks.size - 1) * weekHeight * clampedProgress
-    val columnOffset = weekHeight * visibleWeekIndex * (1f - clampedProgress)
+    val containerHeight = weekHeight + spacingCount * (weekHeight + DZAM_GRID_SPACING) * clampedProgress
+    val columnOffset = (weekHeight + DZAM_GRID_SPACING) * visibleWeekIndex * (1f - clampedProgress)
     val density = LocalDensity.current
 
     Layout(
@@ -346,12 +402,13 @@ private fun DZamCalendarPage(
         val weekHeightPx = with(density) { weekHeight.roundToPx() }
         val containerHeightPx = with(density) { containerHeight.roundToPx() }
         val columnOffsetPx = with(density) { columnOffset.roundToPx() }
+        val spacingPx = with(density) { DZAM_GRID_SPACING.roundToPx() }
         val placeables = measurables.map { it.measure(constraints.copy(minHeight = weekHeightPx, maxHeight = weekHeightPx)) }
         layout(constraints.maxWidth, containerHeightPx) {
             var y = -columnOffsetPx
             placeables.forEach { placeable ->
                 placeable.place(0, y)
-                y += placeable.height
+                y += placeable.height + spacingPx
             }
         }
     }
@@ -368,7 +425,10 @@ private fun DZamCalendarWeekRow(
     onNavigateToPage: (Int) -> Unit,
     weekHeight: Dp
 ) {
-    Row(modifier = Modifier.fillMaxWidth().height(weekHeight)) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(weekHeight),
+        horizontalArrangement = Arrangement.spacedBy(DZAM_GRID_SPACING)
+    ) {
         week.forEachIndexed { dayIndex, date ->
             val isOtherMonth = YearMonth.from(date) != pageMonth
             val isToday = date == today
@@ -406,8 +466,8 @@ private fun DZamCalendarDateCell(
     modifier: Modifier = Modifier
 ) {
     val dateTextColor = when {
-        dayIndex == 0 -> Color.Red
-        dayIndex == 6 -> Color.Blue
+        dayIndex == 0 -> Color(0xFFFB2C36)
+        dayIndex == 6 -> Color(0xFF2B7FFF)
         else -> MaterialTheme.colorScheme.onSurface
     }
     val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
@@ -417,42 +477,36 @@ private fun DZamCalendarDateCell(
         modifier = modifier
             .alpha(if (isOtherMonth) 0.3f else 1f)
             .then(
-                if (isSelected) Modifier.border(1.dp, primaryColor, RoundedCornerShape(4.dp))
+                if (isSelected) Modifier.border(1.dp, primaryColor, RoundedCornerShape(8.dp))
                 else Modifier
             )
             .clickable(onClick = onClick)
-            .padding(2.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
+            Text(
+                text = date.dayOfMonth.toString(),
                 modifier = Modifier
-                    .size(28.dp)
+                    .padding(start = 2.dp, end = 2.dp, top = 2.dp)
                     .then(
-                        if (isToday) Modifier
-                            .clip(CircleShape)
-                            .background(primaryContainerColor)
-                        else Modifier
+                        if (isToday) Modifier.background(
+                            color = primaryContainerColor,
+                            shape = RoundedCornerShape(8.dp)
+                        ) else Modifier
                     )
-            ) {
-                Text(
-                    text = date.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = dateTextColor,
-                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                    textAlign = TextAlign.Center
-                )
-            }
+                    .fillMaxWidth(),
+                style = MaterialTheme.typography.labelMedium,
+                color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else dateTextColor,
+                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                textAlign = TextAlign.Center
+            )
 
             if (events.isNotEmpty()) {
                 DZamCalendarEventIndicators(
                     events = events,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 2.dp, bottom = 2.dp)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -464,48 +518,78 @@ private fun DZamCalendarEventIndicators(
     events: List<DZamCalendarEvent>,
     modifier: Modifier = Modifier
 ) {
-    BoxWithConstraints(modifier = modifier) {
-        val chipHeightDp = 16.dp
-        val maxChips = (maxHeight / chipHeightDp).toInt().coerceAtLeast(0)
-
-        if (events.size <= maxChips.coerceAtLeast(1)) {
+    SubcomposeLayout(modifier = modifier) { constraints ->
+        val looseConstraints = constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity)
+        val listPlaceable = subcompose("list") {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 events.forEach { event ->
-                    Surface(
-                        color = event.backgroundColor,
-                        shape = RoundedCornerShape(2.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(chipHeightDp)
-                    ) {
+                    Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                        Box(
+                            modifier = Modifier
+                                .width(4.dp)
+                                .padding(vertical = 2.dp)
+                                .fillMaxHeight()
+                                .background(
+                                    color = event.backgroundColor,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
                         Text(
                             text = event.text,
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                            modifier = Modifier.fillMaxWidth(),
+                            style = MaterialTheme.typography.labelMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 2.dp),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
+        }.firstOrNull()?.measure(looseConstraints)
+
+        if (listPlaceable != null && listPlaceable.height <= constraints.maxHeight) {
+            layout(listPlaceable.width, listPlaceable.height) {
+                listPlaceable.place(0, 0)
+            }
         } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                events.forEach { event ->
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(event.backgroundColor)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
+            val dotsPlaceable = subcompose("dots") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    events.chunked(3).forEach { rowEvents ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            rowEvents.forEach { event ->
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .aspectRatio(1f)
+                                        .clip(CircleShape)
+                                        .background(event.backgroundColor)
+                                )
+                            }
+                            repeat(3 - rowEvents.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }.firstOrNull()?.measure(looseConstraints)
+
+            if (dotsPlaceable == null) {
+                layout(constraints.minWidth, constraints.minHeight) {}
+            } else {
+                layout(dotsPlaceable.width, dotsPlaceable.height) {
+                    dotsPlaceable.place(0, 0)
                 }
             }
         }
@@ -537,9 +621,11 @@ private fun DZamCalendarPreview() {
     FitzamTheme {
         Surface {
             DZamCalendar(
-                selectedDate = today,
+                state = rememberDZamCalendarState(),
                 events = sampleEvents
             )
         }
     }
 }
+
+private val DZAM_GRID_SPACING = 8.dp

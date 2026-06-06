@@ -57,18 +57,17 @@ import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
-import com.jaemin.fitzam.ui.dzam.CalendarDayItem
 import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.dzam.DZamButton
+import com.jaemin.fitzam.ui.dzam.DZamCalendar
+import com.jaemin.fitzam.ui.dzam.DZamCalendarEvent
+import com.jaemin.fitzam.ui.dzam.DZamCalendarState
 import com.jaemin.fitzam.ui.dzam.DZamOutlinedButton
-import com.jaemin.fitzam.ui.dzam.FitzamCalendar
-import com.jaemin.fitzam.ui.dzam.FitzamCalendarDayList
-import com.jaemin.fitzam.ui.dzam.FitzamCalendarState
+import com.jaemin.fitzam.ui.dzam.rememberDZamCalendarState
 import com.jaemin.fitzam.ui.dzam.FitzamFloatingActionButton
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
-import com.jaemin.fitzam.ui.dzam.rememberFitzamCalendarState
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
 import com.jaemin.fitzam.ui.util.drawableResIdByName
@@ -92,7 +91,7 @@ fun HomeScreen(
     val workoutRecords by viewModel.workoutRecords.collectAsStateWithLifecycle()
     val selectedDateWorkouts by viewModel.selectedDateWorkouts.collectAsStateWithLifecycle()
     val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
-    val calendarState = rememberFitzamCalendarState()
+    val calendarState = rememberDZamCalendarState()
 
     LaunchedEffect(calendarState.displayedYearMonth) {
         viewModel.loadWorkoutRecordsForYearMonth(calendarState.displayedYearMonth)
@@ -132,7 +131,7 @@ fun HomeScreen(
     workoutRecords: List<WorkoutRecord>,
     selectedDateWorkouts: List<Workout>,
     isEditMode: Boolean,
-    calendarState: FitzamCalendarState,
+    calendarState: DZamCalendarState,
     onAddOrEditWorkout: (LocalDate) -> Unit,
     onAddWorkout: (LocalDate, Set<Long>) -> Unit,
     onSettingsClick: () -> Unit,
@@ -225,24 +224,19 @@ fun HomeScreen(
                 )
                 .verticalScroll(rememberScrollState()),
         ) {
-            FitzamCalendar(
-                state = calendarState,
-                modifier = Modifier.padding(vertical = 8.dp),
-                dayContent = { date ->
-                    workoutRecords.forEach { workoutRecord ->
-                        if (date == workoutRecord.date) {
-                            FitzamCalendarDayList(
-                                itemList = workoutRecord.exerciseCategories.map { category ->
-                                    CalendarDayItem(
-                                        text = category.name,
-                                        color = Color(category.colorHex),
-                                    )
-                                },
+            Box(modifier = Modifier.padding(vertical = 8.dp)) {
+                DZamCalendar(
+                    state = calendarState,
+                    events = workoutRecords.associate { record ->
+                        record.date to record.exerciseCategories.map { category ->
+                            DZamCalendarEvent(
+                                text = category.name,
+                                backgroundColor = Color(category.colorHex),
                             )
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
             Spacer(Modifier.height(8.dp))
 
             Text(
@@ -709,7 +703,7 @@ fun HomeScreenPreview() {
             workoutRecords = workoutRecords,
             selectedDateWorkouts = selectedDateWorkouts,
             isEditMode = true,
-            calendarState = rememberFitzamCalendarState(),
+            calendarState = rememberDZamCalendarState(),
             onAddOrEditWorkout = {},
             onAddWorkout = { _, _ -> },
             onSettingsClick = {},
