@@ -12,7 +12,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.layout.SubcomposeLayout
@@ -557,28 +556,27 @@ private fun DZamCalendarEventIndicators(
             }
         } else {
             val dotsPlaceable = subcompose("dots") {
+                val dotSizePx = (constraints.maxWidth - with(density) { 12.dp.roundToPx() }) / 3
+                val dotSize = with(density) { dotSizePx.toDp() }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     events.chunked(3).forEach { rowEvents ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             rowEvents.forEach { event ->
                                 Box(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
+                                        .size(dotSize)
                                         .clip(CircleShape)
                                         .background(event.backgroundColor)
                                 )
-                            }
-                            repeat(3 - rowEvents.size) {
-                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
