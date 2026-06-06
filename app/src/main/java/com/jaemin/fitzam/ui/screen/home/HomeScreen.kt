@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -454,6 +455,7 @@ private fun HomeWorkoutCardContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -480,12 +482,23 @@ private fun HomeWorkoutCardContent(
                     borderColor = Color(workout.exercise.category.colorHex),
                 )
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Icon(
+                painter = painterResource(R.drawable.ic_right_arrow),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
         }
 
         if (showSets) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.background)
             HomeWorkoutSetTable(
                 metricTypes = workout.exercise.metricTypes,
                 sets = workout.sets,
+                exerciseColor = Color(workout.exercise.category.colorHex),
             )
         }
     }
@@ -568,6 +581,7 @@ private fun EditMoveButton(
 internal fun HomeWorkoutSetTable(
     metricTypes: List<WorkoutMetricType>,
     sets: List<WorkoutSet>,
+    exerciseColor: Color = Color.Unspecified,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -593,7 +607,7 @@ internal fun HomeWorkoutSetTable(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                HomeTableValueCell(text = set.index.toString(), modifier = Modifier.weight(1f))
+                HomeTableValueCell(text = set.index.toString(), color = exerciseColor, modifier = Modifier.weight(1f))
                 metricTypes.forEach { metricType ->
                     val metricValue = set.metrics[metricType] ?: 0.0
                     val metricText = when (metricType) {
@@ -625,6 +639,7 @@ internal fun HomeTableHeaderCell(
 internal fun HomeTableValueCell(
     text: String,
     modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
 ) {
     Box(
         modifier = modifier.fillMaxWidth(),
@@ -632,8 +647,9 @@ internal fun HomeTableValueCell(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center,
+            color = color,
         )
     }
 }

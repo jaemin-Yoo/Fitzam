@@ -26,9 +26,9 @@ fun ExerciseCategoryTag(
     ) {
         Text(
             text = name,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(
-                vertical = 4.dp,
+                vertical = 2.dp,
                 horizontal = 16.dp
             )
         )
