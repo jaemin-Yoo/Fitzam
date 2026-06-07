@@ -9,21 +9,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,207 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.ExerciseCategory
 import com.jaemin.fitzam.ui.util.drawableResIdByName
+import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.dzam.DZamButton
-import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
-import com.jaemin.fitzam.ui.dzam.IconSource
-import com.jaemin.fitzam.ui.dzam.TopAppBarItem
-import com.jaemin.fitzam.ui.theme.FitzamTheme
 import java.time.LocalDate
-
-@Composable
-fun ExerciseCategorySelectScreen(
-    selectedDate: LocalDate,
-    sessionId: Long,
-    onBackClick: () -> Unit,
-    onCompleteClick: () -> Unit,
-) {
-    val viewModel: ExerciseCategorySelectViewModel = hiltViewModel(
-        key = "exercise-category-select-$sessionId",
-    )
-    val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
-    val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
-
-    // 선택된 운동 유형 로딩
-    LaunchedEffect(selectedDate) {
-        viewModel.loadSelectedCategories(selectedDate)
-    }
-
-    ExerciseCategorySelectScreen(
-        uiState = uiState,
-        selectedCategoryIds = selectedCategoryIds,
-        onBackClick = onBackClick,
-        onCategoryClick = { category -> viewModel.toggleCategory(category.id) },
-        onCompleteClick = {
-            viewModel.applyWorkoutChanges(selectedDate)
-            onCompleteClick()
-        },
-    )
-}
-
-@Composable
-fun ExerciseCategorySelectScreen(
-    uiState: ExerciseCategorySelectUiState,
-    selectedCategoryIds: Set<Long>,
-    onBackClick: () -> Unit,
-    onCategoryClick: (ExerciseCategory) -> Unit,
-    onCompleteClick: () -> Unit,
-) {
-    Scaffold(
-        topBar = {
-            FitzamTopAppBar(
-                title = "운동 유형 선택",
-                navigation = TopAppBarItem(
-                    icon = IconSource.Vector(ImageVector.vectorResource(R.drawable.ic_back)),
-                    contentDescription = "뒤로 가기",
-                    onClick = onBackClick,
-                )
-            )
-        },
-        bottomBar = {
-            if (uiState is ExerciseCategorySelectUiState.Success) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 8.dp,
-                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
-                        ),
-                ) {
-                    DZamButton(
-                        text = "완료",
-                        onClick = onCompleteClick,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-        },
-    ) { paddingValues ->
-        when (uiState) {
-            ExerciseCategorySelectUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            ExerciseCategorySelectUiState.Failed -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(text = "로딩에 실패했습니다. 다시 시도해 주세요.")
-                }
-            }
-            is ExerciseCategorySelectUiState.Success -> {
-                val categories = uiState.exerciseCategories
-                ExerciseCategoryGrid(
-                    categories = categories,
-                    selectedIds = selectedCategoryIds,
-                    onCategoryClick = { category ->
-                        onCategoryClick(category)
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                        top = paddingValues.calculateTopPadding(),
-                        bottom = paddingValues.calculateBottomPadding(),
-                        start = 16.dp,
-                        end = 16.dp,
-                    )
-                        .padding(vertical = 24.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ExerciseCategoryGrid(
-    categories: List<ExerciseCategory>,
-    selectedIds: Set<Long>,
-    onCategoryClick: (ExerciseCategory) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        items(
-            count = categories.size,
-            key = { index -> categories[index].id },
-        ) { index ->
-            val category = categories[index]
-            ExerciseCategoryGridItem(
-                category = category,
-                isSelected = selectedIds.contains(category.id),
-                onClick = { onCategoryClick(category) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun ExerciseCategoryGridItem(
-    category: ExerciseCategory,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(CircleShape)
-                .border(
-                    width = if (isSelected) 5.dp else 1.dp,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Black,
-                    shape = CircleShape,
-                )
-                .background(Color.White)
-                .clickable(onClick = onClick),
-        ) {
-            Image(
-                painter = painterResource(drawableResIdByName(category.imageName)),
-                contentDescription = category.name,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp)
-                    .alpha(alpha = if (isSelected) 0.5f else 1f),
-                contentScale = ContentScale.Fit,
-            )
-        }
-        Spacer(modifier = Modifier.size(4.dp))
-        Text(
-            text = category.name,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
 
 @Composable
 fun ExerciseCategorySelectBottomSheet(
@@ -246,9 +50,16 @@ fun ExerciseCategorySelectBottomSheet(
     )
     val uiState by viewModel.exerciseCategorySelectUiState.collectAsStateWithLifecycle()
     val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsStateWithLifecycle()
+    val showDeleteConfirmation by viewModel.showDeleteConfirmation.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedDate) {
         viewModel.loadSelectedCategories(selectedDate)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.completeEvents.collect {
+            onCompleteClick()
+        }
     }
 
     val currentUiState = uiState
@@ -319,59 +130,63 @@ fun ExerciseCategorySelectBottomSheet(
             ) {
                 DZamButton(
                     text = "완료",
-                    onClick = {
-                        viewModel.applyWorkoutChanges(selectedDate)
-                        onCompleteClick()
-                    },
+                    onClick = { viewModel.requestComplete(selectedDate) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
     }
-}
 
-@Preview
-@Composable
-fun ExerciseCategorySelectScreenPreview() {
-    FitzamTheme {
-        ExerciseCategorySelectScreen(
-            uiState = ExerciseCategorySelectUiState.Success(
-                listOf(
-                    ExerciseCategory(
-                        id = 0,
-                        name = "가슴",
-                        imageName = "img_chest",
-                        colorHex = 0xFF1D4ED8,
-                        colorDarkHex = 0xFF2563EB
-                    ),
-                    ExerciseCategory(
-                        id = 1,
-                        name = "등",
-                        imageName = "img_back",
-                        colorHex = 0xFF0891B2,
-                        colorDarkHex = 0xFF14B8A6
-                    ),
-                    ExerciseCategory(
-                        id = 2,
-                        name = "어깨",
-                        imageName = "img_shoulder",
-                        colorHex = 0xFF15803D,
-                        colorDarkHex = 0xFF22C55E
-                    ),
-                    ExerciseCategory(
-                        id = 3,
-                        name = "삼두",
-                        imageName = "img_triceps",
-                        colorHex = 0xFF65A30D,
-                        colorDarkHex = 0xFFA3E635
-                    ),
-                )
-            ),
-            selectedCategoryIds = setOf(1, 2),
-            onBackClick = {},
-            onCategoryClick = {},
-            onCompleteClick = {},
+    if (showDeleteConfirmation) {
+        DZamAlertDialog(
+            title = "정말 삭제하시겠어요?",
+            text = "이미 추가된 운동이 있습니다.\n계속하시겠습니까?",
+            onConfirm = { viewModel.confirmDelete() },
+            onCancel = { viewModel.dismissDeleteConfirmation() },
+            confirmText = "삭제",
+            cancelText = "취소",
         )
     }
 }
 
+@Composable
+private fun ExerciseCategoryGridItem(
+    category: ExerciseCategory,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(CircleShape)
+                .border(
+                    width = if (isSelected) 5.dp else 1.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Black,
+                    shape = CircleShape,
+                )
+                .background(Color.White)
+                .clickable(onClick = onClick),
+        ) {
+            Image(
+                painter = painterResource(drawableResIdByName(category.imageName)),
+                contentDescription = category.name,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+                    .alpha(alpha = if (isSelected) 0.5f else 1f),
+                contentScale = ContentScale.Fit,
+            )
+        }
+        Spacer(modifier = Modifier.size(4.dp))
+        Text(
+            text = category.name,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}

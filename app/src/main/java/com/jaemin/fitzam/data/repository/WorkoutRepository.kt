@@ -227,6 +227,20 @@ class WorkoutRepository @Inject constructor(
         workoutRecordDao.deleteByDate(date.toString())
     }
 
+    suspend fun hasExercisesForRemovedCategories(date: LocalDate, removedCategoryIds: Set<Long>): Boolean {
+        if (removedCategoryIds.isEmpty()) return false
+        val dateString = date.toString()
+        val exerciseRecords = workoutRecordExerciseDao.getWorkoutRecordExerciseEntitiesOnce(dateString)
+        if (exerciseRecords.isEmpty()) return false
+        val exerciseIds = exerciseRecords.map { it.exerciseId }.distinct()
+        val exerciseCategoryByExerciseId = exerciseDao.getExerciseEntitiesByIds(exerciseIds)
+            .associate { entity -> entity.id to entity.categoryId }
+        return exerciseRecords.any { entry ->
+            val categoryId = exerciseCategoryByExerciseId[entry.exerciseId]
+            categoryId != null && categoryId in removedCategoryIds
+        }
+    }
+
     suspend fun getLatestMetricTypes(exerciseId: Long): List<WorkoutMetricType>? {
         val rawSchema = workoutRecordExerciseDao.getLatestRecordSchemaByExerciseId(exerciseId) ?: return null
         return parseMetricTypes(rawSchema)
