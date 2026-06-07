@@ -204,11 +204,6 @@ private fun ExerciseCategoryGridItem(
         animationSpec = tween(animDuration),
         label = "shadowSpotColor",
     )
-    val animatedImageAlpha by animateFloatAsState(
-        targetValue = if (isSelected) 0.5f else 1f,
-        animationSpec = tween(animDuration),
-        label = "imageAlpha",
-    )
     val animatedCheckAlpha by animateFloatAsState(
         targetValue = if (isSelected) 1f else 0f,
         animationSpec = tween(animDuration),
@@ -248,8 +243,7 @@ private fun ExerciseCategoryGridItem(
                     painter = painterResource(drawableResIdByName(category.imageName)),
                     contentDescription = category.name,
                     modifier = Modifier
-                        .size(36.dp)
-                        .alpha(animatedImageAlpha),
+                        .size(36.dp),
                     contentScale = ContentScale.Fit,
                 )
             }
