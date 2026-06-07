@@ -12,10 +12,11 @@ interface WorkoutRecordDao {
 
     @Query(
         """
-        SELECT *
-        FROM workout_record
-        WHERE date BETWEEN :startDate AND :endDate
-        ORDER BY date
+        SELECT DISTINCT wr.*
+        FROM workout_record wr
+        LEFT JOIN workout_record_exercise_category wrec ON wr.date = wrec.workoutRecordDate
+        WHERE wr.date BETWEEN :startDate AND :endDate
+        ORDER BY wr.date
     """
     )
     fun getWorkoutRecordEntities(
