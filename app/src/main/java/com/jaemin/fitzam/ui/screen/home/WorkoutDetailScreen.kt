@@ -256,8 +256,6 @@ private fun WorkoutDetailContent(
         modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
@@ -269,7 +267,10 @@ private fun WorkoutDetailContent(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                ExerciseInfoRow(exercise = workoutItem.exercise)
+                ExerciseInfoRow(
+                    exercise = workoutItem.exercise,
+                    imageSize = 80.dp
+                )
 
                 if (workoutItem.sets.isEmpty()) {
                     Box(
