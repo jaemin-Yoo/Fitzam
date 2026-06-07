@@ -83,6 +83,7 @@ fun ExerciseSelectScreen(
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedExerciseIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
+    val selectedFilterCategoryId by viewModel.selectedFilterCategoryId.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedDate, selectedCategoryIds, selectedExerciseIds, preselectSavedExercises, refreshVersion) {
         viewModel.loadExercises(
@@ -114,6 +115,8 @@ fun ExerciseSelectScreen(
                         onSuccess = onCompleteClick,
                     )
                 },
+                selectedFilterCategoryId = selectedFilterCategoryId,
+                onFilterCategorySelect = viewModel::selectFilterCategory,
             )
         }
         ExerciseSelectUiState.Failed -> {
@@ -138,6 +141,8 @@ fun ExerciseSelectScreen(
                         onSuccess = onCompleteClick,
                     )
                 },
+                selectedFilterCategoryId = selectedFilterCategoryId,
+                onFilterCategorySelect = viewModel::selectFilterCategory,
             )
         }
     }
@@ -155,11 +160,18 @@ fun ExerciseSelectScreen(
     onToggleSelected: (Long) -> Unit,
     isLoading: Boolean = false,
     onSelectionComplete: () -> Unit,
+    selectedFilterCategoryId: Long? = null,
+    onFilterCategorySelect: (Long?) -> Unit = {},
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
+    val filterCategories = remember(exercises) {
+        exercises.map { it.category }.distinctBy { it.id }
+    }
     val filteredExercises = exercises.filter { exercise ->
-        exercise.name.contains(searchQuery, ignoreCase = true)
+        val matchesSearch = exercise.name.contains(searchQuery, ignoreCase = true)
+        val matchesCategory = selectedFilterCategoryId == null || exercise.category.id == selectedFilterCategoryId
+        matchesSearch && matchesCategory
     }
     val exercisesById = exercises.associateBy { exercise -> exercise.id }
     val selectedExercises = selectedExerciseIds
@@ -235,7 +247,36 @@ fun ExerciseSelectScreen(
                     errorContainerColor = MaterialTheme.colorScheme.surface,
                 ),
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            if (filterCategories.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CategoryFilterChip(
+                        label = "전체",
+                        isSelected = selectedFilterCategoryId == null,
+                        selectedColor = MaterialTheme.colorScheme.primary,
+                        dotColor = null,
+                        onClick = { onFilterCategorySelect(null) },
+                    )
+                    filterCategories.forEach { category ->
+                        CategoryFilterChip(
+                            label = category.name,
+                            isSelected = selectedFilterCategoryId == category.id,
+                            selectedColor = Color(category.colorHex),
+                            dotColor = Color(category.colorHex),
+                            onClick = { onFilterCategorySelect(category.id) },
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            } else {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             Box(
                 modifier = Modifier
@@ -469,6 +510,48 @@ private fun ExerciseSelectItem(
             ExerciseCategoryTag(
                 name = exercise.category.name,
                 borderColor = Color(exercise.category.colorHex),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryFilterChip(
+    label: String,
+    isSelected: Boolean,
+    selectedColor: Color,
+    dotColor: Color?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(999.dp),
+        color = if (isSelected) selectedColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isSelected) selectedColor else MaterialTheme.colorScheme.outlineVariant,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            if (dotColor != null) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(dotColor)
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }

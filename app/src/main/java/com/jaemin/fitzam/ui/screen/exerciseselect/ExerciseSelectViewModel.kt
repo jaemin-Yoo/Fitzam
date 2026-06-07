@@ -39,6 +39,8 @@ class ExerciseSelectViewModel @Inject constructor(
     val event = _event.asSharedFlow()
     private val _selectedExerciseIds = MutableStateFlow<Set<Long>>(emptySet())
     val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
+    private val _selectedFilterCategoryId = MutableStateFlow<Long?>(null)
+    val selectedFilterCategoryId = _selectedFilterCategoryId.asStateFlow()
     private var lastLoadedDate: LocalDate? = null
     private var lastLoadedCategoryIds: Set<Long>? = null
     private var lastRefreshVersion: Long? = null
@@ -52,6 +54,10 @@ class ExerciseSelectViewModel @Inject constructor(
                 selectedIds + exerciseId
             }
         }
+    }
+
+    fun selectFilterCategory(categoryId: Long?) {
+        _selectedFilterCategoryId.value = categoryId
     }
 
     fun loadExercises(
@@ -70,6 +76,7 @@ class ExerciseSelectViewModel @Inject constructor(
             lastRefreshVersion == refreshVersion
         if (shouldSkipReload) return
 
+        _selectedFilterCategoryId.value = null
         viewModelScope.launch {
             _uiState.value = ExerciseSelectUiState.Loading
             val startedAt = System.currentTimeMillis()
