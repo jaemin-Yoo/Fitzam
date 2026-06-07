@@ -1,7 +1,6 @@
 package com.jaemin.fitzam.ui.screen.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -43,10 +41,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.jaemin.fitzam.ui.screen.exercisecategoryselect.ExerciseCategorySelectBottomSheet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +58,7 @@ import com.jaemin.fitzam.model.WorkoutRecord
 import com.jaemin.fitzam.model.WorkoutMetricType
 import com.jaemin.fitzam.model.WorkoutSet
 import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
+import com.jaemin.fitzam.ui.common.ExerciseInfoRow
 import com.jaemin.fitzam.ui.dzam.DZamAlertDialog
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamCalendar
@@ -75,7 +72,6 @@ import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
 import com.jaemin.fitzam.ui.theme.SuccessGreen
-import com.jaemin.fitzam.ui.util.drawableResIdByName
 import com.jaemin.fitzam.ui.util.formatDurationDisplayValue
 import com.jaemin.fitzam.ui.util.formatMetricValue
 import com.jaemin.fitzam.ui.util.metricHeader
@@ -460,29 +456,7 @@ private fun HomeWorkoutCardContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(
-                painter = painterResource(drawableResIdByName(workout.exercise.imageName)),
-                contentDescription = workout.exercise.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape),
-            )
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(
-                    text = workout.exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                ExerciseCategoryTag(
-                    name = workout.exercise.category.name,
-                    borderColor = Color(workout.exercise.category.colorHex),
-                )
-            }
+            ExerciseInfoRow(exercise = workout.exercise)
 
             Spacer(modifier = Modifier.weight(1f))
 

@@ -1,7 +1,6 @@
 package com.jaemin.fitzam.ui.screen.exerciseselect
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -45,7 +44,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,14 +54,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jaemin.fitzam.R
 import com.jaemin.fitzam.model.Exercise
 import com.jaemin.fitzam.model.ExerciseCategory
-import com.jaemin.fitzam.ui.common.ExerciseCategoryTag
+import com.jaemin.fitzam.ui.common.ExerciseInfoRow
 import com.jaemin.fitzam.ui.dzam.DZamButton
 import com.jaemin.fitzam.ui.dzam.DZamInputField
 import com.jaemin.fitzam.ui.dzam.FitzamTopAppBar
 import com.jaemin.fitzam.ui.dzam.IconSource
 import com.jaemin.fitzam.ui.dzam.TopAppBarItem
 import com.jaemin.fitzam.ui.theme.FitzamTheme
-import com.jaemin.fitzam.ui.util.drawableResIdByName
 import java.time.LocalDate
 
 @Composable
@@ -492,26 +489,11 @@ private fun ExerciseSelectItem(
             Spacer(modifier = Modifier.width(16.dp))
         }
 
-        Image(
-            painter = painterResource(drawableResIdByName(exercise.imageName)),
-            contentDescription = exercise.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape),
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(
+        ExerciseInfoRow(
+            exercise = exercise,
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(text = exercise.name)
-            ExerciseCategoryTag(
-                name = exercise.category.name,
-                borderColor = Color(exercise.category.colorHex),
-            )
-        }
+            imageSize = 80.dp,
+        )
     }
 }
 
