@@ -139,6 +139,7 @@ fun HomeScreen(
         ModalBottomSheet(
             onDismissRequest = { showCategoryBottomSheet = false },
             sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             ExerciseCategorySelectBottomSheet(
                 selectedDate = calendarState.selectedDate,
