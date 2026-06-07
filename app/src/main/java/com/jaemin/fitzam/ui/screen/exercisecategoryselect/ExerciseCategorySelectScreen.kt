@@ -1,5 +1,9 @@
 package com.jaemin.fitzam.ui.screen.exercisecategoryselect
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,12 +17,16 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,9 +34,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -165,20 +170,61 @@ private fun ExerciseCategoryGridItem(
     val cornerShape = RoundedCornerShape(12.dp)
     val imageCornerShape = RoundedCornerShape(12.dp)
     val categoryColor = Color(category.colorHex)
+    val defaultContentColor = LocalContentColor.current
+    val animDuration = 250
+
+    val animatedBorderWidth by animateDpAsState(
+        targetValue = if (isSelected) 2.dp else 0.dp,
+        animationSpec = tween(animDuration),
+        label = "borderWidth",
+    )
+    val animatedBorderColor by animateColorAsState(
+        targetValue = if (isSelected) categoryColor else Color.Transparent,
+        animationSpec = tween(animDuration),
+        label = "borderColor",
+    )
+    val animatedBackgroundColor by animateColorAsState(
+        targetValue = if (isSelected) categoryColor.copy(alpha = 0.12f)
+                      else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+        animationSpec = tween(animDuration),
+        label = "backgroundColor",
+    )
+    val animatedTextColor by animateColorAsState(
+        targetValue = if (isSelected) categoryColor else defaultContentColor,
+        animationSpec = tween(animDuration),
+        label = "textColor",
+    )
+    val animatedShadowAmbientColor by animateColorAsState(
+        targetValue = if (isSelected) categoryColor.copy(alpha = 0.3f) else Color.Black,
+        animationSpec = tween(animDuration),
+        label = "shadowAmbientColor",
+    )
+    val animatedShadowSpotColor by animateColorAsState(
+        targetValue = if (isSelected) categoryColor.copy(alpha = 0.5f) else Color.Black,
+        animationSpec = tween(animDuration),
+        label = "shadowSpotColor",
+    )
+    val animatedImageAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 0.5f else 1f,
+        animationSpec = tween(animDuration),
+        label = "imageAlpha",
+    )
+    val animatedCheckAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
+        animationSpec = tween(animDuration),
+        label = "checkAlpha",
+    )
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(cornerShape)
             .border(
-                width = if (isSelected) 2.dp else 0.dp,
-                color = if (isSelected) categoryColor else Color.Transparent,
+                width = animatedBorderWidth,
+                color = animatedBorderColor,
                 shape = cornerShape,
             )
-            .background(
-                if (isSelected) categoryColor.copy(alpha = 0.12f)
-                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
-            )
+            .background(animatedBackgroundColor)
             .clickable(onClick = onClick)
             .padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -191,8 +237,8 @@ private fun ExerciseCategoryGridItem(
                     .shadow(
                         elevation = 4.dp,
                         shape = imageCornerShape,
-                        ambientColor = if (isSelected) categoryColor.copy(alpha = 0.3f) else Color.Black,
-                        spotColor = if (isSelected) categoryColor.copy(alpha = 0.5f) else Color.Black,
+                        ambientColor = animatedShadowAmbientColor,
+                        spotColor = animatedShadowSpotColor,
                     )
                     .clip(imageCornerShape)
                     .background(Color.White),
@@ -203,15 +249,18 @@ private fun ExerciseCategoryGridItem(
                     contentDescription = category.name,
                     modifier = Modifier
                         .size(36.dp)
-                        .alpha(alpha = if (isSelected) 0.5f else 1f),
+                        .alpha(animatedImageAlpha),
                     contentScale = ContentScale.Fit,
                 )
             }
-            if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .alpha(animatedCheckAlpha),
+            ) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 4.dp, y = (-4).dp)
                         .size(18.dp)
                         .clip(CircleShape)
                         .background(categoryColor),
@@ -231,7 +280,7 @@ private fun ExerciseCategoryGridItem(
             text = category.name,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
-            color = if (isSelected) categoryColor else Color.Unspecified,
+            color = animatedTextColor,
         )
     }
 }
