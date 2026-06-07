@@ -12,14 +12,14 @@ fun drawableResIdByName(
         .substringBeforeLast(".")
 
     return when (normalizedName) {
-        "img_chest" -> R.drawable.img_chest
-        "img_back" -> R.drawable.img_back
-        "img_shoulder" -> R.drawable.img_shoulder
-        "img_triceps" -> R.drawable.img_triceps
-        "img_biceps" -> R.drawable.img_biceps
-        "img_lower_body" -> R.drawable.img_lower_body
-        "img_abs" -> R.drawable.img_abs
-        "img_aerobic" -> R.drawable.img_aerobic
+        "img_chest" -> R.drawable.ic_chest
+        "img_back" -> R.drawable.ic_back_muscle
+        "img_shoulder" -> R.drawable.ic_shoulder
+        "img_triceps" -> R.drawable.ic_triceps
+        "img_biceps" -> R.drawable.ic_biceps
+        "img_lower_body" -> R.drawable.ic_lower_body
+        "img_abs" -> R.drawable.ic_abs
+        "img_aerobic" -> R.drawable.ic_aerobic
         else -> fallbackResId
     }
 }
